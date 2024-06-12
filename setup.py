@@ -2,6 +2,7 @@ import io
 import os
 import re
 
+import versioneer
 from setuptools import find_packages, setup
 
 
@@ -14,7 +15,8 @@ def read(filename):
 
 setup(
     name="pymorize",
-    version="0.1.0",
+    version=versioneer.get_version(),
+    cmdclass=versioneer.get_cmdclass(),
     url="https://github.com/pgierz/pymorize",
     license="MIT",
     author="Paul Gierz",
