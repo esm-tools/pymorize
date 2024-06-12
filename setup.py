@@ -26,10 +26,12 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
-        "rich-click",
+        "cf_xarray",
         "click-loguru",
-        "xarray",
+        "pint-xarray",
+        "rich-click",
         "versioneer",
+        "xarray",
     ],
     entry_points={
         "console_scripts": [
