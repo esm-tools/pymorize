@@ -29,6 +29,7 @@ setup(
         "cf_xarray",
         "click-loguru",
         "pint-xarray",
+        "questionary",
         "rich-click",
         "versioneer",
         "xarray",
