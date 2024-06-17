@@ -1,6 +1,9 @@
 pymorize
 ========
 
+.. image:: https://github.com/pgierz/pymorize/actions/workflows/CI-test.yaml/badge.svg
+    :target: https://github.com/pgierz/pymorize/actions/workflows/CI-test.yaml
+
 .. image:: https://img.shields.io/pypi/v/pymorize.svg
     :target: https://pypi.python.org/pypi/pymorize
     :alt: Latest PyPI version
