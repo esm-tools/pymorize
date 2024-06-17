@@ -36,3 +36,6 @@ nosetests.xml
 .pydevproject
 .envrc
 .direnv/
+doc/_build/
+doc/api/
+doc/API.rst
