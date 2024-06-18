@@ -36,7 +36,7 @@ jobs:
     steps:
       - name: Build package
         run: |
-          python setup.py sdist
+          python -m build
   publish:
     runs-on: ubuntu-latest
     needs: build
