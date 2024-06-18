@@ -34,6 +34,17 @@ setup(
         "versioneer",
         "xarray",
     ],
+    development_requires=[
+        "black",
+        "flake8",
+        "isort",
+        "pre-commit",
+        "pytest",
+        "pytest-cov",
+        "pytest-xdist",
+        "sphinx",
+        "sphinx_rtd_theme",
+    ],
     entry_points={
         "console_scripts": [
             "pymorize=pymorize.cli:main",
