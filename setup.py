@@ -30,11 +30,11 @@ setup(
         "cf_xarray",
         "click-loguru",
         "pint-xarray",
+        "pyyaml",
         "questionary",
         "rich-click",
         "versioneer",
         "xarray",
-        "yaml",
     ],
     development_requires=[
         "black",
