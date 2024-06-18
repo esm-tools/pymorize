@@ -34,6 +34,7 @@ setup(
         "rich-click",
         "versioneer",
         "xarray",
+        "yaml",
     ],
     development_requires=[
         "black",
