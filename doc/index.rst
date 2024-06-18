@@ -13,6 +13,7 @@ Contents
    :maxdepth: 2
   
    installation
+   pymorize_config_file
    including_subcommand_plugins
    API
 

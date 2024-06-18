@@ -2,8 +2,9 @@ import io
 import os
 import re
 
-import versioneer
 from setuptools import find_packages, setup
+
+import versioneer
 
 
 def read(filename):
@@ -49,7 +50,12 @@ setup(
         "console_scripts": [
             "pymorize=pymorize.cli:main",
         ],
+        "pymorize.cli_subcommands": [
+            "plugins=pymorize.plugins:plugins",
+            "externals=pymorize.externals:externals",
+        ],
     },
+    package_data={},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",
