@@ -21,15 +21,13 @@ The package is designed to be modular and extensible, with a plugin system that 
 
 To get started, you can install it via ``pip``::
   
-    pip install pymorize
+    pip install git+https://github.com/pgierz/pymorize
   
 Then you can run the main command line interface. Start out by getting some help::
   
     pymorize --help
 
-More detailed install instructions can be found in the :ref:`installation` section. ``pymorize`` ships with a *generic* subcommand that can be used to CMORize data not covered by a specific subcommand. Here is an example usage::
-
-    pymorize generic -i input.nc -o output.nc -v tas -f Amon -m CMIP6 -e historical -r r1i1p1f1
+More detailed install instructions can be found in the :ref:`installation` section.
 
 
 Licence
