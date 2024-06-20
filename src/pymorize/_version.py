@@ -50,10 +50,10 @@ def get_config() -> VersioneerConfig:
     cfg = VersioneerConfig()
     cfg.VCS = "git"
     cfg.style = "pep440"
-    cfg.tag_prefix = ""
+    cfg.tag_prefix = "v"
     cfg.parentdir_prefix = "pymorize-"
     cfg.versionfile_source = "src/pymorize/_version.py"
-    cfg.verbose = False
+    cfg.verbose = True
     return cfg
 
 
