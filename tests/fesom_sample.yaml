@@ -1,6 +1,29 @@
-cmor_table_dir: /path/to/table/dir
+cmor_table_dir: ./cmip6-cmor-tables/Tables/
 output_dir: /path/to/output/dir
+pipelines:
+  - id: generic_pipe
+    actions:
+      - set_cmor_metadata: null
+      - convert_units: null
+  - id: custom_a
+    actions:
+      - linear_transform:
+          args: []
+          kwargs:
+            slope: 1.0
+            intercept: 0.0
 rules:
+  - model_variable: w
+    cmor_variable: wo
+    input_patterns:
+      - pattern1
+      - pattern.*.nc
+  - model_variable: u
+    cmor_variable: uo
+    cmor_table: CMIP6_Omon.json
+    input_patterns:
+      - /path/to/fesom/output/files/*_u.nc
+    pipelines: [generic_pipe]
   - model_variable: salt
     model_units: PSU
     cmor_variable: so
