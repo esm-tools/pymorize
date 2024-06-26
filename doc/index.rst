@@ -15,6 +15,7 @@ Contents
    installation
    pymorize_config_file
    including_subcommand_plugins
+   developer_guide
    API
 
 
