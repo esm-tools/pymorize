@@ -37,7 +37,7 @@ class Rule:
         if isinstance(input_pattern, str):
             self.input_patterns = list(re.compile(input_pattern))
         elif isinstance(input_pattern, list):
-            self.input_patterns = [re.compile(p) for p in input_pattern]
+            self.input_patterns = [re.compile(str(p)) for p in input_pattern]
         else:
             raise TypeError("input_pattern must be a string or a list of strings")
         self.cmor_variable = cmor_variable
