@@ -8,8 +8,8 @@ from collections import deque
 #from pathlib import Path 
 #_unitsfile = Path(__file__).parent / "units_en.txt" 
 #u = pint.UnitRegistry(_unitsfile)
-u = pint.UnitRegistry()
-u.define("molC = 12.0107 * g")
+ureg = pint.UnitRegistry()
+ureg.define("molC = 12.0107 * g")
 
 
 def to_slash_notation(txt):
@@ -41,7 +41,7 @@ def to_slash_notation(txt):
         elif name == tokenize.NEWLINE:
             break
         else:
-            res.append()
+            print(f"Ignoreing... {name}, {val}")
     indices = [index for index, (name, val) in enumerate(res) if name == 'NAME']
     indices.append(len(res))
     parts = [dict(res[start:end]) for start, end in zip(indices[:-1], indices[1:])]
@@ -56,7 +56,9 @@ def to_slash_notation(txt):
                 previous['OP'] = '/'
                 records.append(previous)
         records.append(part)
-    t = [record.get('NAME', '') + ' ' + record.get('OP', '') for record in records]
+    last_record = records.pop()
+    t = [record.get('NAME', '') + ' ' + record.get('OP', '*') for record in records]
+    t.append(last_record.get('NAME', '') + ' ' + last_record.get('OP', ''))
     return (" ".join(t)).strip()
 
 
@@ -66,15 +68,15 @@ def convert(a: str, b: str) -> float:
     """
     #print(a, b)
     try:
-        A = u(a)
+        A = ureg(a)
     except: #  DimensionalityError, UndefinedUnitError
         A = to_slash_notation(a)
-        A = u(A)
+        A = ureg(A)
     try:
-        B = u(b)
+        B = ureg(b)
     except:
         B = to_slash_notation(b)
-        B = u(B)
+        B = ureg(B)
     print(A, B)
     return A.to(B).magnitude
 
@@ -84,11 +86,11 @@ def is_equal(a, b):
     ...
 
 def _quicktest():
-    a = 1 * u.mmolC
-    b = 1 * u.kg
+    a = 1 * ureg.mmolC
+    b = 1 * ureg.kg
 
-    aa = 1 * u.mmolC /(u.m * u.m) / u.d
-    bb = 1 * u.kg / (u.m * u.m) / u.s
+    aa = 1 * ureg.mmolC /(ureg.m * ureg.m) / ureg.d
+    bb = 1 * ureg.kg / (ureg.m * ureg.m) / ureg.s
 
     print(a.to(b))
 
