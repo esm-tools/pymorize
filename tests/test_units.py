@@ -3,19 +3,100 @@ import pytest
 
 from pymorize.units import to_slash_notation, convert
 
-si_notation_to_slash = [
-    #  input          expected
-    ("kg m-2 s-1",  "kg / m**2 / s**1"),
-    ("kg m2",        "kg * m**2"),   
-]
+#  input samples that are found in CMIP6 tables and in fesom1 (recom)
+allunits = [
+    # input, expected
+    ('%', '%'),
+    ('(mol/kg) / atm', '(mol/kg) / atm'),
+    ('0.001', '0.001'),
+    ('1', '1'),
+    ('1.e6 J m-1 s-1', '1.e^6 J / m / s'),
+    ('1e-06', '1e-06'),
+    ('1e-09', '1e-09'),
+    ('1e-12', '1e-12'),
+    ('1e-3 kg m-2', '1e-3 kg / m^2'),
+    ('1e-6 m s-1', '1e-6 m / s'),
+    ('1e3 km3', '1e3 km^3'),
+    ('1e6 km2', '1e6 km^2'),
+    ('J m-2', 'J / m^2'),
+    ('K', 'K'),
+    ('K Pa s-1', 'K Pa / s'),
+    ('K m s-1', 'K m / s'),
+    ('K s-1', 'K / s'),
+    ('K2', 'K^2'),
+    ('N m-1', 'N / m'),
+    ('N m-2', 'N / m^2'),
+    ('Pa', 'Pa'),
+    ('Pa m s-2', 'Pa m / s^2'),
+    ('Pa s-1', 'Pa / s'),
+    ('Pa2 s-2', 'Pa^2 / s^2'),
+    ('W', 'W'),
+    ('W m-2', 'W / m^2'),
+    ('W/m2', 'W/m^2'),
+    ('day', 'day'),
+    ('degC', 'degC'),
+    ('degC kg m-2', 'degC kg / m^2'),
+    ('degC2', 'degC^2'),
+    ('degree', 'degree'),
+    ('degrees_east', 'degrees_east'),
+    ('degrees_north', 'degrees_north'),
+    ('kg', 'kg'),
+    ('kg kg-1', 'kg / kg'),
+    ('kg m-1 s-1', 'kg / m / s'),
+    ('kg m-2', 'kg / m^2'),
+    ('kg m-2 s-1', 'kg / m^2 / s'),
+    ('kg m-3', 'kg / m^3'),
+    ('kg s-1', 'kg / s'),
+    ('km-2 s-1', '1 / km^2 / s'),
+    ('m', 'm'),
+    ('m s-1', 'm / s'),
+    ('m s-1 d-1', 'm / s / d'),
+    ('m s-2', 'm / s^2'),
+    ('m-1', '1 / m'),
+    ('m-1 sr-1', '1 / m / sr'),
+    ('m-2', '1 / m^2'),
+    ('m-3', '1 / m^3'),
+    ('m2', 'm^2'),
+    ('m2 s-1', 'm^2 / s'),
+    ('m2 s-2', 'm^2 / s^2'),
+    ('m3', 'm^3'),
+    ('m3 s-1', 'm^3 / s'),
+    ('m3 s-2', 'm^3 / s^2'),
+    ('m4 s-1', 'm^4 / s'),
+    ('mmol/m2', 'mmol/m^2'),
+    ('mmol/m2/d', 'mmol/m^2/d'),
+    ('mmolC/(m2*d)', 'mmolC/(m^2*d)'),
+    ('mmolC/(m3*d)', 'mmolC/(m^3*d)'),
+    ('mmolC/d', 'mmolC/d'),
+    ('mmolC/m2/d', 'mmolC/m^2/d'),
+    ('mmolN/(m2*d)', 'mmolN/(m^2*d)'),
+    ('mmolN/d', 'mmolN/d'),
+    ('mmolN/m2/s', 'mmolN/m^2/s'),
+    ('mol m-2', 'mol / m^2'),
+    ('mol m-2 s-1', 'mol / m^2 / s'),
+    ('mol m-3', 'mol / m^3'),
+    ('mol m-3 s-1', 'mol / m^3 / s'),
+    ('mol mol-1', 'mol / mol'),
+    ('mol s-1', 'mol / s'),
+    ('mol/kg', 'mol/kg'),
+    ('s', 's'),
+    ('s m-1', 's / m'),
+    ('s-1', '1 / s'),
+    ('s-2', '1 / s^2'),
+    ('uatm', 'uatm'),
+    ('umolFe/m2/s', 'umolFe/m^2/s'),
+    ('year', 'year'),
+    ('yr', 'yr')
+    ]
 
-@pytest.mark.parametrize("test_input,expected", si_notation_to_slash)
+
+@pytest.mark.parametrize("test_input,expected", allunits)
 def test_can_convert_SI_notation_to_slash_notation(test_input, expected):
     u = to_slash_notation(test_input)
     assert u == expected
 
 mixed_notation_to_slash = [
-    ("mmolC/m2/d", "mmolC / m**2 / d")
+    ("mmolC/m2/d", "mmolC/m^2/d")
 ]
 
 @pytest.mark.parametrize("test_input,expected", mixed_notation_to_slash)
@@ -42,4 +123,4 @@ def test_without_defining_carbon_to_weight_conversion_raises_error():
 def test_define_carbon_to_weight_conversion():
     ureg = pint.UnitRegistry()
     ureg.define("molC = 12.0107 * g")
-    ureg('mmolC/m**2/d')
+    ureg('mmolC/m^2/d')
