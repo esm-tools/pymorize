@@ -1,0 +1,14 @@
+# units definition file
+# These units are not found in Pint library
+
+# convert mol Carbon to grams 
+molC = 12.0107 * g
+molN = 14.007 * g
+molFe = 55.874 * g
+
+# <canonical name> = <relation to another unit or dimension> [= <symbol>] [= <alias>] [ = <alias> ] [...]
+degree_east = deg = _ = degrees_east = degree_East = degrees_East = degree_E = degrees_E = degreeE
+degree_west = -1 * deg = _ = degrees_west = degree_West = degrees_West = degree_W = degrees_W = degreeW
+degree_north = deg = _ = degrees_north = degree_North = degrees_North = degree_N = degrees_N = degreeN
+degree_south = -1 * deg = _ = degrees_south = degree_South = degrees_South = degree_S = degrees_S = degreeS
+

@@ -1,8 +1,5 @@
 import pint
-import tokenize
-import io
 import re
-from collections import deque
 
 
 """
@@ -14,7 +11,7 @@ In case of missing units in either model files or CMIP Tables, this module can n
 """
 
 
-#TODO: decide a place to hold the missing unit definitions that pint is not aware of
+# TODO: decide a place to hold the missing unit definitions that pint is not aware of
 #from pathlib import Path 
 #_unitsfile = Path(__file__).parent / "units_en.txt" 
 #u = pint.UnitRegistry(_unitsfile)
@@ -36,23 +33,18 @@ ureg.define('molFe = 55.874 * g')
 
 
 def fix_exponent_notation(s, pattern=re.compile(r'(?P<name>\w+)-(?P<exp>\d+)')):
-    "kg m-2 -> kg / m^2"
+    "m-2 -> m^-2"
 
     def correction(match):
         try:
             float(match.group())
         except ValueError:
             d = match.groupdict()
-            s = "/ {0[name]}^{0[exp]}".format(d)
-            if d["exp"] == "1":
-                s = "/ {0[name]}".format(d)
+            s = "{0[name]}^-{0[exp]}".format(d)
             return s
         return match.group()
 
-    s = re.sub(pattern, correction, s)
-    if s.startswith('/'):
-        s = "1 " + s
-    return s
+    return re.sub(pattern, correction, s)
 
 def fix_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
     "m2 -> m^2"
@@ -70,8 +62,8 @@ def fix_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
     return re.sub(pattern, correction, s)
 
 
-def to_slash_notation(unit):
-    "Conver the units so Pint can understand them"
+def to_caret_notation(unit):
+    "Formats the unit so Pint can understand them"
     return fix_power_notation(fix_exponent_notation(unit))
 
 
@@ -83,12 +75,12 @@ def convert(a: str, b: str) -> float:
     try:
         A = ureg(a)
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
-        A = to_slash_notation(a)
+        A = to_caret_notation(a)
         A = ureg(A)
     try:
         B = ureg(b)
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
-        B = to_slash_notation(b)
+        B = to_caret_notation(b)
         B = ureg(B)
     print(A, B)
     return A.to(B).magnitude
@@ -96,7 +88,7 @@ def convert(a: str, b: str) -> float:
 
 def is_equal(a: str, b: str):
     "check if both 'a' and 'b' are equal"
-    return ureg(to_slash_notation(a)) == ureg(to_slash_notation(b))
+    return ureg(to_caret_notation(a)) == ureg(to_caret_notation(b))
 
 
 def _quicktest():
