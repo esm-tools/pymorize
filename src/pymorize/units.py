@@ -32,7 +32,7 @@ ureg.define("molC = 12.0107 * g")
 ureg.define("molFe = 55.874 * g")
 
 
-def fix_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
+def format_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
     "m-2 -> m^-2"
 
     def correction(match):
@@ -47,7 +47,7 @@ def fix_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
     return re.sub(pattern, correction, s)
 
 
-def fix_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
+def format_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
     "m2 -> m^2"
 
     def correction(match):
@@ -66,7 +66,7 @@ def fix_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
 
 def to_caret_notation(unit):
     "Formats the unit so Pint can understand them"
-    return fix_power_notation(fix_exponent_notation(unit))
+    return format_power_notation(format_exponent_notation(unit))
 
 
 def calculate_unit_conversion_factor(a: str, b: str) -> float:
