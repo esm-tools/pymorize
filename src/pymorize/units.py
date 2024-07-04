@@ -40,7 +40,7 @@ def fix_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
             float(match.group())
         except ValueError:
             d = match.groupdict()
-            s = f"{d[name]}^-{d[exp]}"
+            s = f"{d['name']}^-{d['exp']}"
             return s
         return match.group()
 
