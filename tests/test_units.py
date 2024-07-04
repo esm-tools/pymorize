@@ -1,7 +1,7 @@
 import pint
 import pytest
 
-from pymorize.units import to_caret_notation, convert
+from pymorize.units import to_caret_notation, calculate_unit_conversion_factor
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
 allunits = [
@@ -108,11 +108,11 @@ def test_can_convert_mixed_notation_to_caret_notation(test_input, expected):
 def test_can_convert_to_different_units():
     from_unit = "mmolC/m2/d"
     to_unit = "kg m-2 s-1"
-    factor = convert(from_unit, to_unit)
+    factor = calculate_unit_conversion_factor(from_unit, to_unit)
     assert factor == 1.3901273148148146e-10
 
 
-def test_non_slash_notation_raises_error():
+def test_non_caret_notation_raises_error():
     with pytest.raises(pint.errors.DimensionalityError):
         ureg = pint.UnitRegistry()
         ureg("kg m-2 s-1")

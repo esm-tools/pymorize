@@ -69,7 +69,7 @@ def to_caret_notation(unit):
     return fix_power_notation(fix_exponent_notation(unit))
 
 
-def convert(a: str, b: str) -> float:
+def calculate_unit_conversion_factor(a: str, b: str) -> float:
     """
     Returns the factor required to convert from unit "a" to unit "b"
     """
@@ -104,5 +104,5 @@ def _quicktest():
 
     print(aa.to(bb))
 
-    r = convert("mmolC/m2/d", "kg m-2 s-1")
+    r = calculate_unit_conversion_factor("mmolC/m2/d", "kg m-2 s-1")
     print(r)
