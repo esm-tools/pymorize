@@ -77,7 +77,7 @@ def test_update(pipeline_db, step, data):
 def test_delete(pipeline_db, step, data):
     pipeline_db.create(step, data)
     pipeline_db.delete(step)
-    assert pipeline_db.read(step) is None
+    assert step not in pipeline_db
 
 
 def worker(func, data):
