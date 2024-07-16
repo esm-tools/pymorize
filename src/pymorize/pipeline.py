@@ -39,7 +39,7 @@ class PipelineDB:
         Deletes an entry from the database.
     """
 
-    def __init__(self, pipeline):
+    def __init__(self, pipeline, keep_db=False):
         """
         Initializes the PipelineDB object.
 
@@ -51,6 +51,7 @@ class PipelineDB:
         pid = os.getpid()
         self._db_file = f"pymorize_{pid}_pipeline_{id(pipeline)}.json"
         self._db = {}
+        self._keep_db = keep_db
 
     def save(self):
         """
@@ -81,9 +82,9 @@ class PipelineDB:
         data: dict
             The data to be associated with the step.
         """
-        self._db[step.__name__] = data
+        self._db[f"{step.__name__}_{id(step)}"] = data
 
-    def read(self, step):
+    def read(self, step, default={}):
         """
         Reads an entry from the database.
 
@@ -97,7 +98,7 @@ class PipelineDB:
         dict
             The data associated with the step.
         """
-        return self._db.get(step.__name__)
+        return self._db.get(f"{step.__name__}_{id(step)}", default)
 
     def update(self, step, data):
         """
@@ -114,7 +115,7 @@ class PipelineDB:
         -------
         KeyError: If the step is not found in the database.
         """
-        step_dict = self._db[step.__name__]
+        step_dict = self._db[f"{step.__name__}_{id(step)}"]
         step_dict.update(data)
 
     def delete(self, step):
@@ -126,7 +127,7 @@ class PipelineDB:
         step: function
             The step function.
         """
-        del self._db[step.__name__]
+        del self._db[f"{step.__name__}_{id(step)}"]
 
     def __enter__(self):
         """
@@ -145,10 +146,15 @@ class PipelineDB:
         """
         Removes the database file when the object is deleted if all steps have status "done".
         """
-        if all(
-            step.get("status") == "done" for step in self._db.values()
-        ) and os.path.exists(self._db_file):
+        if (
+            all(step.get("status") == "done" for step in self._db.values())
+            and os.path.exists(self._db_file)
+            and not self._keep_db
+        ):
             os.remove(self._db_file)
+
+    def __contains__(self, step):
+        return f"{step.__name__}_{id(step)}" in self._db
 
 
 class Pipeline:
