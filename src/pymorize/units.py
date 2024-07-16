@@ -11,10 +11,6 @@ In case of missing units in either model files or CMIP Tables, this module can n
 """
 
 
-# TODO: decide a place to hold the missing unit definitions that pint is not aware of
-# from pathlib import Path
-# _unitsfile = Path(__file__).parent / "units_en.txt"
-# u = pint.UnitRegistry(_unitsfile)
 
 
 ureg = pint.UnitRegistry()
