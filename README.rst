@@ -2,8 +2,8 @@
 ==================================================
 
   ``pymorize`` is a Python package to simplify the standardization of output into the Climate Model Output Rewriter (CMOR) standard.
-.. image:: https://github.com/pgierz/pymorize/actions/workflows/CI-test.yaml/badge.svg
-    :target: https://github.com/pgierz/pymorize/actions/workflows/CI-test.yaml
+.. image:: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml/badge.svg
+    :target: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml
 .. image:: https://img.shields.io/pypi/v/pymorize.svg
     :target: https://pypi.python.org/pypi/pymorize
     :alt: Latest PyPI version
