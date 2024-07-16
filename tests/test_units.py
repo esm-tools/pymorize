@@ -127,4 +127,4 @@ def test_without_defining_carbon_to_weight_conversion_raises_error():
 def test_define_carbon_to_weight_conversion():
     ureg = pint.UnitRegistry()
     ureg.define("molC = 12.0107 * g")
-    ureg("mmolC/m^2/d")
+    assert "mmolC/m^2/d" in ureg
