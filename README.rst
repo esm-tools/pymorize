@@ -38,4 +38,4 @@ Licence
 Authors
 -------
 
-`pymorize` was written by `Paul Gierz <pgierz@awi.de>`_.
+``pymorize`` was written by `Paul Gierz <pgierz@awi.de>`_, `Pavan Siligam <pavankumar.siligam@awi.de>`_.
