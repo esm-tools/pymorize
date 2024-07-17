@@ -17,14 +17,14 @@ from chemicals import periodic_table
 from loguru import logger
 
 ureg = pint.UnitRegistry()
-# ureg.define('degC = degree_Celsius')
+ureg.define("degC = degree_Celsius")
 # https://ncics.org/portfolio/other-resources/udunits2/
-#ureg.define("degrees_east = deg")
-#ureg.define("degree_east = deg")
+ureg.define("degrees_east = deg")
+ureg.define("degree_east = deg")
 ureg.define("degrees_north = deg")
 ureg.define("degree_north = deg")
-#ureg.define("degrees_west = -1 * deg")
-#ureg.define("degrees_south = -1 * deg")
+ureg.define("degrees_west = -1 * deg")
+ureg.define("degrees_south = -1 * deg")
 # chemicals
 # https://github.com/CalebBell/chemicals/
 ureg.define(f"molN = {periodic_table.N.MW} * g")
