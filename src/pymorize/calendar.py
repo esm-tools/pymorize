@@ -4,16 +4,16 @@ Yet another calendar implementation...
 This module provides functions for listing files for a specific date range
 """
 
-import datetime
+import pendulum
 
 
 class CalendarRange:
 
     def __init__(
         self,
-        start: datetime.datetime,
-        end: datetime.datetime,
-        freq: datetime.timedelta = datetime.timedelta("1 month"),
+        start: pendulum.datetime,
+        end: pendulum.datetime,
+        freq: pendulum.Duration = pendulum.duration(months=1),
         periods: int = None,
     ):
         # Determine which 3 are given
@@ -27,7 +27,7 @@ class CalendarRange:
             freq = (end - start) // periods
         # If none are given, raise an error
         else:
-            raise valueerror("must specify either freq or periods")
+            raise ValueError("must specify either freq or periods")
         # Create range
         self._range = [start + i * freq for i in range(periods)]
         self._start = start
