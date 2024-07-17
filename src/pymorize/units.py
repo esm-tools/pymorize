@@ -32,7 +32,9 @@ ureg.define(f"molC = {periodic_table.C.MW} * g")
 ureg.define(f"molFe = {periodic_table.Fe.MW} * g")
 
 
-def _normalize_exponent_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
+def _normalize_exponent_notation(
+    s: str, pattern: Pattern = re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")
+):
     """Converts a string with exponents written as 'name-exp' into a more readable
     exponent notation 'name^-exp'.
     Example: 'm-2' gets converted as m^-2"
@@ -50,7 +52,9 @@ def _normalize_exponent_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>
     return re.sub(pattern, correction, s)
 
 
-def _normalize_power_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
+def _normalize_power_notation(
+    s: str, pattern: Pattern = re.compile(r"(?P<name>\w+)(?P<exp>\d+)")
+):
     """Converts a string with exponents written as 'nameexp' into a more readable
     exponent notation 'name^exp'.
     Example: 'm2' gets converted as m^2"
