@@ -65,7 +65,7 @@ def _normalize_power_notation(
             float(match.group())
         except ValueError:
             d = match.groupdict()
-            s = "{0[name]}^{0[exp]}".format(d)
+            s = f"{d[name]}^{d[exp]}"
             if d["exp"] == 1:
                 s = f"{d['name']}"
             return s
