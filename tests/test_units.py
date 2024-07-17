@@ -1,7 +1,8 @@
 import pint
 import pytest
 from chemicals import periodic_table
-from pymorize.units import to_caret_notation, calculate_unit_conversion_factor
+
+from pymorize.units import calculate_unit_conversion_factor, to_caret_notation
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
 allunits = [
