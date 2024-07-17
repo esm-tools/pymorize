@@ -13,6 +13,7 @@ import re
 from typing import Pattern
 
 import pint
+import xarray as xr
 from chemicals import periodic_table
 from loguru import logger
 
@@ -27,10 +28,24 @@ ureg.define("degrees_west = -1 * deg")
 ureg.define("degrees_south = -1 * deg")
 # chemicals
 # https://github.com/CalebBell/chemicals/
-ureg.define(f"molN = {periodic_table.N.MW} * g")
-ureg.define(f"molC = {periodic_table.C.MW} * g")
-ureg.define(f"molFe = {periodic_table.Fe.MW} * g")
+#ureg.define(f"molN = {periodic_table.N.MW} * g")
+#ureg.define(f"molC = {periodic_table.C.MW} * g")
+#ureg.define(f"molFe = {periodic_table.Fe.MW} * g")
 
+
+def handle_chemicals(s: str, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")):
+    """Registers known chemical elements definitions to global ureg (unit registry)"""
+    match = pattern.search(s)
+    if match:
+        d = match.groupdict()
+        try:
+            element = getattr(periodic_table, d['symbol'])
+        except AttributeError:
+            raise ValueError(f"Unknown chemical element {d.groupdict()['symbol']} in {d.group()}")
+        else:
+            ureg.define(f"{match.group()} = {element.MW} * g")
+        
+    
 
 def _normalize_exponent_notation(
     s: str, pattern: Pattern = re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")
@@ -86,16 +101,35 @@ def calculate_unit_conversion_factor(a: str, b: str) -> float:
     try:
         A = ureg(a)
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
+        handle_chemicals(a)
         A = to_caret_notation(a)
         A = ureg(A)
     try:
         B = ureg(b)
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
+        handle_chemicals(b)
         B = to_caret_notation(b)
         B = ureg(B)
     logger.debug(A)
     logger.debug(B)
     return A.to(B).magnitude
+
+
+def handle_unit_conversion(da: xr.DataArray, to_units: str, from_units: str=None, **kwargs) -> xr.DataArray:
+    """Does the unit conversion by applying the conversion factor.
+    Parameters:
+    ----------
+    `from_units`: source units. If not provided will be read from DataArray.
+    `to_units`: target units
+    """
+    if from_units is None:
+        from_units = getattr(da, 'units')
+    factor = calculate_unit_conversion_factor(from_units, to_units)
+    if factor != 1:
+        da = da * factor
+    # do we need to set `to_units` here on the data array
+    da.units = to_units
+    return da
 
 
 def is_equal(a: str, b: str):
