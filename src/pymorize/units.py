@@ -1,18 +1,19 @@
+"""
+This module deals with the auto-unit conversion in the cmorization process.
+In case the units in model files differ from CMIP Tables, this module attempts to
+convert them automatically.
+
+In case of missing units in either model files or CMIP Tables, this module can
+not convert from a dimentionless base to something with dimension. Dealing with
+such thing have to done with `action` section in the Rules module on a per
+variable basis.
+"""
+
 import re
 from typing import Pattern
 
 import pint
 from chemicals import periodic_table
-
-"""
-This module deals with the auto-unit conversion in the cmorization process.
-In case the units in model files differ from CMIP Tables, this module attempts to convert them automatically.
-
-In case of missing units in either model files or CMIP Tables, this module can not convert from a dimentionless base to something with dimension. Dealing with such thing have to done with `action` section in the Rules module on a per variable basis.
-
-"""
-
-
 
 
 ureg = pint.UnitRegistry()
