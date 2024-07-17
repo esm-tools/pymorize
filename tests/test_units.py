@@ -2,7 +2,8 @@ import pint
 import pytest
 from chemicals import periodic_table
 
-from pymorize.units import calculate_unit_conversion_factor, to_caret_notation
+from pymorize.units import (calculate_unit_conversion_factor,
+                            to_caret_notation, ureg)
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
 allunits = [
@@ -115,17 +116,13 @@ def test_can_convert_to_different_units():
 
 def test_non_caret_notation_raises_error():
     with pytest.raises(pint.errors.DimensionalityError):
-        ureg = pint.UnitRegistry()
         ureg("kg m-2 s-1")
 
 
 def test_without_defining_carbon_to_weight_conversion_raises_error():
     with pytest.raises(pint.errors.UndefinedUnitError):
-        ureg = pint.UnitRegistry()
         ureg("mmolC/m**2/d")
 
 
 def test_define_carbon_to_weight_conversion():
-    ureg = pint.UnitRegistry()
-    ureg.define(f"molC = {periodic_table.C.MW} * g")
     assert "mmolC/m^2/d" in ureg
