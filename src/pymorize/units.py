@@ -63,7 +63,7 @@ def _normalize_power_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>\w+
             d = match.groupdict()
             s = "{0[name]}^{0[exp]}".format(d)
             if d["exp"] == 1:
-                s = "{0[name]}".format(d)
+                s = f"{d['name']}"
             return s
         return match.group()
 
