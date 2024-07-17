@@ -93,7 +93,8 @@ def calculate_unit_conversion_factor(a: str, b: str) -> float:
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
         B = to_caret_notation(b)
         B = ureg(B)
-    logger.debug(A, B)
+    logger.debug(A)
+    logger.debug(B)
     return A.to(B).magnitude
 
 
