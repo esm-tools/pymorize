@@ -1,6 +1,7 @@
-import pint
 import re
-
+from typing import Pattern
+import pint
+from chemicals import periodic_table
 
 """
 This module deals with the auto-unit conversion in the cmorization process.
@@ -16,20 +17,24 @@ In case of missing units in either model files or CMIP Tables, this module can n
 ureg = pint.UnitRegistry()
 # ureg.define('degC = degree_Celsius')
 # https://ncics.org/portfolio/other-resources/udunits2/
-ureg.define("degrees_east = deg")
-ureg.define("degree_east = deg")
+#ureg.define("degrees_east = deg")
+#ureg.define("degree_east = deg")
 ureg.define("degrees_north = deg")
 ureg.define("degree_north = deg")
-ureg.define("degrees_west = -1 * deg")
-ureg.define("degrees_south = -1 * deg")
-# https://planetcalc.com/6777/
-ureg.define("molN = 14.007 * g")
-ureg.define("molC = 12.0107 * g")
-ureg.define("molFe = 55.874 * g")
+#ureg.define("degrees_west = -1 * deg")
+#ureg.define("degrees_south = -1 * deg")
+# chemicals
+# https://github.com/CalebBell/chemicals/
+ureg.define(f"molN = {periodic_table.N.MW} * g")
+ureg.define(f"molC = {periodic_table.C.MW} * g")
+ureg.define(f"molFe = {periodic_table.Fe.MW} * g")
 
 
-def format_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
-    "m-2 -> m^-2"
+def _normalize_exponent_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)")):
+    """Converts a string with exponents written as 'name-exp' into a more readable
+    exponent notation 'name^-exp'.
+    Example: 'm-2' gets converted as m^-2"
+    """
 
     def correction(match):
         try:
@@ -43,8 +48,11 @@ def format_exponent_notation(s, pattern=re.compile(r"(?P<name>\w+)-(?P<exp>\d+)"
     return re.sub(pattern, correction, s)
 
 
-def format_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
-    "m2 -> m^2"
+def _normalize_power_notation(s: str, pattern: Pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
+    """Converts a string with exponents written as 'nameexp' into a more readable
+    exponent notation 'name^exp'.
+    Example: 'm2' gets converted as m^2"
+    """
 
     def correction(match):
         try:
@@ -62,7 +70,7 @@ def format_power_notation(s, pattern=re.compile(r"(?P<name>\w+)(?P<exp>\d+)")):
 
 def to_caret_notation(unit):
     "Formats the unit so Pint can understand them"
-    return format_power_notation(format_exponent_notation(unit))
+    return _normalize_power_notation(_normalize_exponent_notation(unit))
 
 
 def calculate_unit_conversion_factor(a: str, b: str) -> float:
@@ -87,18 +95,3 @@ def calculate_unit_conversion_factor(a: str, b: str) -> float:
 def is_equal(a: str, b: str):
     "check if both 'a' and 'b' are equal"
     return ureg(to_caret_notation(a)) == ureg(to_caret_notation(b))
-
-
-def _quicktest():
-    a = 1 * ureg.mmolC
-    b = 1 * ureg.kg
-
-    aa = 1 * ureg.mmolC / (ureg.m * ureg.m) / ureg.d
-    bb = 1 * ureg.kg / (ureg.m * ureg.m) / ureg.s
-
-    print(a.to(b))
-
-    print(aa.to(bb))
-
-    r = calculate_unit_conversion_factor("mmolC/m2/d", "kg m-2 s-1")
-    print(r)
