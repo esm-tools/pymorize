@@ -119,9 +119,10 @@ def test_non_caret_notation_raises_error():
         ureg("kg m-2 s-1")
 
 
-def test_without_defining_carbon_to_weight_conversion_raises_error():
+def test_without_defining_uraninum_to_weight_conversion_raises_error():
+    """Checks that only elements we added are defined"""
     with pytest.raises(pint.errors.UndefinedUnitError):
-        ureg("mmolC/m**2/d")
+        ureg("mmolU/m**2/d")
 
 
 def test_define_carbon_to_weight_conversion():
