@@ -14,7 +14,7 @@ from typing import Pattern
 
 import pint
 from chemicals import periodic_table
-
+from loguru import logger
 
 ureg = pint.UnitRegistry()
 # ureg.define('degC = degree_Celsius')
@@ -79,7 +79,6 @@ def calculate_unit_conversion_factor(a: str, b: str) -> float:
     """
     Returns the factor required to convert from unit "a" to unit "b"
     """
-    # print(a, b)
     try:
         A = ureg(a)
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
@@ -90,7 +89,7 @@ def calculate_unit_conversion_factor(a: str, b: str) -> float:
     except (pint.errors.DimensionalityError, pint.errors.UndefinedUnitError):
         B = to_caret_notation(b)
         B = ureg(B)
-    print(A, B)
+    logger.debug(A, B)
     return A.to(B).magnitude
 
 
