@@ -30,6 +30,7 @@ setup(
     install_requires=[
         "cf_xarray",
         "click-loguru",
+        "dpath",
         "pint-xarray",
         "pyyaml",
         "questionary",
