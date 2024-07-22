@@ -46,7 +46,7 @@ def handle_chemicals(s: str, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)"
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-def handle_unit_conversion(da: xr.DataArray, unit: str, source_unit: str = None):
+def handle_unit_conversion(da: xr.DataArray, unit: str, source_unit: str = None) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
     If `source_unit` is provided, it is used instead of the unit from DataArray.
