@@ -1,17 +1,10 @@
-import pytest
-
-# import cf_xarray.units
-# import pint_xarray
-import xarray as xr
-import pint
 import numpy as np
+import pint
+import pytest
+import xarray as xr
 from chemicals import periodic_table
-from pymorize.units import (
-    handle_unit_conversion,
-    ureg,
-    handle_chemicals,
-)
 
+from pymorize.units import handle_chemicals, handle_unit_conversion, ureg
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
 allunits = [

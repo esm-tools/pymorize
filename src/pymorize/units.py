@@ -21,12 +21,13 @@ from loguru import logger
 ureg = pint_xarray.unit_registry
 
 
-def handle_chemicals(s: str, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")):
+def handle_chemicals(
+    s: str | None = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
+):
     """Registers known chemical elements definitions to global ureg (unit registry)"""
-    try:
-        match = pattern.search(s)
-    except TypeError:
+    if s is None:
         return
+    match = pattern.search(s)
     if match:
         d = match.groupdict()
         try:
@@ -46,7 +47,9 @@ def handle_chemicals(s: str, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)"
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-def handle_unit_conversion(da: xr.DataArray, unit: str, source_unit: str = None) -> xr.DataArray:
+def handle_unit_conversion(
+    da: xr.DataArray, unit: str, source_unit: str | None = None
+) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
     If `source_unit` is provided, it is used instead of the unit from DataArray.
@@ -58,7 +61,7 @@ def handle_unit_conversion(da: xr.DataArray, unit: str, source_unit: str = None)
     source_unit: Override the unit on xr.DataArray if needed.
     """
     from_unit = da.attrs.get("units")
-    if source_unit:
+    if source_unit is not None:
         logger.debug(
             f"using user defined unit ({source_unit}) instead of ({from_unit}) from DataArray "
         )
