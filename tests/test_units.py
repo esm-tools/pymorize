@@ -76,6 +76,7 @@ units_with_chemical_element = [
 
 @pytest.mark.parametrize("test_input", units_with_chemical_element)
 def test_handle_chemicals(test_input):
+    """Ensures the unit registry can add new units when parsed by ``handle_chemicals``."""
     handle_chemicals(test_input)
     ureg(test_input)
 
