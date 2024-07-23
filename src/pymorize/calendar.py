@@ -1,16 +1,36 @@
 """
-Yet another calendar implementation...
+Yet another calendar implementation.
 
-This module provides functions for listing files for a specific date range
+This module provides functions for creating date ranges.
+
+The main components of this module are:
+
+- ``year_bounds_major_digits``: generates a list of year ranges (bounds) where each range starts with a specific digit.
+- ``date_ranges_from_bounds``: creates a list of date indexes from bounds
+- ``date_ranges_from_year_bounds``: creates a list of date indexes from year bounds
+- ``simple_ranges_from_bounds``: creates a list of simple ranges from bounds
+
+Examples
+--------
+>>> year_bounds = year_bounds_major_digits(2000, 2010, 2, 2)
+>>> print(year_bounds)
+[[2000, 2001], [2002, 2003], [2004, 2005], [2006, 2007], [2008, 2009], [2010, 2010]]
+
+>>> date_range = date_range_from_bounds(year_bounds, freq="Y")
+>>> print(date_range)
+([Timestamp('2000-12-31 00:00:00', freq='A-DEC'), Timestamp('2001-12-31 00:00:00', freq='A-DEC')], [Timestamp('2002-12-31 00:00:00', freq='A-DEC'), Timestamp('2003-12-31 00:00:00', freq='A-DEC')], [Timestamp('2004-12-31 00:00:00', freq='A-DEC'), Timestamp('2005-12-31 00:00:00', freq='A-DEC')], [Timestamp('2006-12-31 00:00:00', freq='A-DEC'), Timestamp('2007-12-31 00:00:00', freq='A-DEC')], [Timestamp('2008-12-31 00:00:00', freq='A-DEC'), Timestamp('2009-12-31 00:00:00', freq='A-DEC')], [Timestamp('2010-12-31 00:00:00', freq='A-DEC')])
+
+>>> date_range = date_range_from_year_bounds(year_bounds, freq="Y")
+>>> print(date_range)
+([Timestamp('2000-12-31 00:00:00', freq='A-DEC'), Timestamp('2001-12-31 00:00:00', freq='A-DEC')], [Timestamp('2002-12-31 00:00:00', freq='A-DEC'), Timestamp('2003-12-31 00:00:00', freq='A-DEC')], [Timestamp('2004-12-31 00:00:00', freq='A-DEC'), Timestamp('2005-12-31 00:00:00', freq='A-DEC')], [Timestamp('2006-12-31 00:00:00', freq='A-DEC'), Timestamp('2007-12-31 00:00:00', freq='A-DEC')], [Timestamp('2008-12-31 00:00:00', freq='A-DEC'), Timestamp('2009-12-31 00:00:00', freq='A-DEC')], [Timestamp('2010-12-31 00:00:00', freq='A-DEC')])
 """
 
-import time
-
 import pendulum
+import xarray as xr
 from loguru import logger
 
 
-def year_bounds_major_digits(first, last, step, binning_digit):
+def year_bounds_major_digits(first, last, step, binning_digit, return_type=int):
     """
     Generate year ranges with a specific first digit.
 
@@ -27,6 +47,8 @@ def year_bounds_major_digits(first, last, step, binning_digit):
         The step size for the range.
     binning_digit : int
         The digit that each range should start with.
+    return_type : type, optional
+        The type of the elements in the returned list, either int or pendulum.DateTime. Defaults to int.
 
     Returns
     -------
@@ -56,6 +78,9 @@ def year_bounds_major_digits(first, last, step, binning_digit):
     Once a range is completed, it is appended to the bounds list and the process continues until the last year is reached.
     """
     # NOTE(PG): This is a bit hacky and difficult to read, but all the tests pass...
+    logger.debug(
+        f"Running year_bounds_major_digits({first=}, {last=}, {step=}, {binning_digit=})"
+    )
     if binning_digit >= 10:
         raise ValueError("Give a binning_digit less than 10")
     bounds = []
@@ -64,6 +89,7 @@ def year_bounds_major_digits(first, last, step, binning_digit):
         i % 10 for i in range(first, first + step)
     ]
     bin_end = "underfull bin" if first_bin_is_undersized else bin_start + step
+    logger.debug(f"first_bin_is_undersized: {first_bin_is_undersized}")
     first_bin_empty = True
 
     while current_location <= last:
@@ -77,12 +103,18 @@ def year_bounds_major_digits(first, last, step, binning_digit):
                     ones_digit = current_location % 10
                 else:
                     bounds.append([bin_start, current_location - 1])
+                    logger.debug(
+                        f"Appending bounds {bin_start=}, {current_location-1=}"
+                    )
                     first_bin_empty = False
                     bin_start = current_location
             else:
                 # Go until you hit the next binning digit
                 if ones_digit == binning_digit:
                     bounds.append([bin_start, current_location - 1])
+                    logger.debug(
+                        f"Appending bounds {bin_start=}, {current_location-1=}"
+                    )
                     first_bin_empty = False
                     bin_start = current_location
                 else:
@@ -92,69 +124,82 @@ def year_bounds_major_digits(first, last, step, binning_digit):
             current_location += 1
             if current_location == bin_end or current_location > last:
                 bounds.append([bin_start, min(current_location - 1, last)])
+                logger.debug(
+                    f"Appending bounds {bin_start=}, {min(current_location-1, last)=}"
+                )
                 bin_start = current_location
-    return bounds
+    if return_type is int:
+        return [[int(i) for i in bound] for bound in bounds]
+    elif return_type is pendulum.DateTime:
+        return [[pendulum.datetime(int(i), 1, 1) for i in bound] for bound in bounds]
+    else:
+        raise ValueError("return_type must be either int or pendulum.DateTime")
 
 
-class CalendarRange:
+def date_ranges_from_bounds(bounds, freq: str = "M", **kwargs):
+    """
+    Class method to create a list of instances from a list of start and end bounds.
 
-    def __init__(
-        self,
-        start: pendulum.datetime,
-        end: pendulum.datetime,
-        freq: pendulum.Duration = pendulum.duration(months=1),
-        periods: int = None,
-    ):
-        # Determine which 3 are given
-        # If freq is given, calculate periods
-        if freq:
-            if periods:
-                raise ValueError("Cannot specify both freq and periods")
-            periods = (end - start) // freq
-        # If periods is given, calculate freq
-        elif periods:
-            freq = (end - start) // periods
-        # If none are given, raise an error
-        else:
-            raise ValueError("must specify either freq or periods")
-        # Create range
-        self._range = [start + i * freq for i in range(periods)]
-        self._start = start
-        self._end = end
-        self._periods = periods
+    Parameters
+    ----------
+    bounds : list of tuple of str or datetime-like
+        A list of strings or datetime-like tuples each containing a start and end bound.
+    freq : str, optional
+        The frequency of the periods. Defaults to one month.
+    **kwargs :
+        Additional keyword arguments to pass to the date_range function.
 
-    @property
-    def start(self):
-        return self._start
+    Returns
+    -------
+    tuple
+        A tuple containing instances of the class for each provided bound.
 
-    @property
-    def end(self):
-        return self._end
+    Examples
+    --------
+    >>> bounds = [("2020-01-01", "2020-01-31"), ("2020-02-01", "2020-02-29")]
+    >>> date_ranges = date_ranges_from_bounds(bounds)
+    >>> print(date_ranges)
+    (DatetimeIndex(['2020-01-01', '2020-01-02', ..., '2020-01-31'], dtype='datetime64[ns]', freq='D'),
+     DatetimeIndex(['2020-02-01', '2020-02-02', ..., '2020-02-29'], dtype='datetime64[ns]', freq='D'))
 
-    def __contains__(self, date_to_check):
-        return date_to_check in self._range
+    >>> bounds = [("2020-01-01", "2020-12-31")]
+    >>> date_ranges = date_ranges_from_bounds(bounds, freq="M")
+    >>> print(date_ranges)
+    (DatetimeIndex(['2020-01-31', '2020-02-29', ..., '2020-12-31'], dtype='datetime64[ns]', freq='M'),)
+    """
+    objs = []
+    for start, end in bounds:
+        objs.append(xr.date_range(start=start, end=end, freq=freq, **kwargs))
+    if len(objs) == 1:
+        return objs[0]
+    return (*objs,)
 
-    def __len__(self):
-        return len(self._range)
 
-    def __iter__(self):
-        return iter(self._range)
+def date_ranges_from_year_bounds(year_bounds, freq: str = "M", **kwargs):
+    """
+    Class method to create a list of instances from a list of year bounds.
 
-    def __getitem__(self, index):
-        return self._range[index]
+    Parameters
+    ----------
+    year_bounds : list of lists or tuples
+        A list of lists, each containing a start and end year.
+    freq : str, optional
+        The frequency of the periods. Defaults to one month.
+    **kwargs :
+        Additional keyword arguments to pass to the date_range function.
+    """
+    bounds = [
+        (pendulum.datetime(start, 1, 1), pendulum.datetime(end, 12, 31))
+        for start, end in year_bounds
+    ]
+    return date_ranges_from_bounds(bounds, freq, **kwargs)
 
-    def __repr__(self):
-        return f"CalendarRange(start={self._start}, end={self._end}, periods={self._periods})"
 
-    def __str__(self):
-        return f"{self._start} to {self._end} in {self._periods} periods"
-
-    def __list__(self) -> list:
-        return self._range
-
-    @classmethod
-    def from_bounds(cls, bounds, freq=pendulum.duration(months=1), periods=None):
-        clses = []
-        for start, end in bounds:
-            clses.append(cls(start, end, freq, periods))
-        return *clses
+def simple_ranges_from_bounds(bounds):
+    """
+    Create a list of simple ranges from a list of bounds.
+    """
+    if len(bounds) == 1:
+        start, end = bounds[0]
+        return range(start, end + 1)
+    return [range(start, end + 1) for start, end in bounds]

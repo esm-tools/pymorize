@@ -1,91 +1,51 @@
-import pendulum
+import xarray as xr
 
 import pymorize.calendar
-from pymorize.calendar import CalendarRange
 
 
-def setup_calendar_range():
-    start = pendulum.datetime(2022, 1, 1)
-    end = pendulum.datetime(2022, 12, 31)
-    freq = pendulum.duration(months=1)
-    return CalendarRange(start, end, freq)
+def test_simple_ranges_from_bounds():
+    bounds = [(1, 5), (10, 15)]
+    result = list(pymorize.calendar.simple_ranges_from_bounds(bounds))
+    expected = [range(1, 6), range(10, 16)]
+    assert result == expected
 
 
-def test_init():
-    calendar_range = setup_calendar_range()
-    assert calendar_range.start == pendulum.datetime(2022, 1, 1)
-    assert calendar_range.end == pendulum.datetime(2022, 12, 31)
-    assert len(calendar_range) == 12
+def test_single_range():
+    bounds = [(1, 5)]
+    result = pymorize.calendar.simple_ranges_from_bounds(bounds)
+    expected = range(1, 6)
+    assert result == expected
 
 
-def test_contains():
-    calendar_range = setup_calendar_range()
-    assert pendulum.datetime(2022, 5, 1) in calendar_range
-    assert pendulum.datetime(2023, 1, 1) not in calendar_range
+def test_single_range_single_element():
+    bounds = [(3, 3)]
+    result = pymorize.calendar.simple_ranges_from_bounds(bounds)
+    expected = range(3, 4)
+    assert result == expected
 
 
-def test_len():
-    calendar_range = setup_calendar_range()
-    assert len(calendar_range) == 12
+def test_single_range_negative():
+    bounds = [(-5, -1)]
+    result = pymorize.calendar.simple_ranges_from_bounds(bounds)
+    expected = range(-5, 0)
+    assert result == expected
 
 
-def test_iter():
-    calendar_range = setup_calendar_range()
-    dates = [date for date in calendar_range]
-    assert len(dates) == 12
-
-
-def test_getitem():
-    calendar_range = setup_calendar_range()
-    assert calendar_range[0] == pendulum.datetime(2022, 1, 1)
-    assert calendar_range[-1] == pendulum.datetime(2022, 12, 31)
-
-
-def test_repr():
-    calendar_range = setup_calendar_range()
-    assert (
-        repr(calendar_range)
-        == "CalendarRange(start=2022-01-01T00:00:00+00:00, end=2022-12-31T00:00:00+00:00, periods=12)"
+def test_date_ranges_from_bounds():
+    bounds = [("2020-01-01", "2020-01-31"), ("2020-02-01", "2020-02-29")]
+    result = pymorize.calendar.date_ranges_from_bounds(bounds)
+    expected = (
+        xr.date_range(start="2020-01-01", end="2020-01-31", freq="M"),
+        xr.date_range(start="2020-02-01", end="2020-02-29", freq="M"),
     )
+    assert result == expected
 
 
-def test_str():
-    calendar_range = setup_calendar_range()
-    assert (
-        str(calendar_range)
-        == "2022-01-01T00:00:00+00:00 to 2022-12-31T00:00:00+00:00 in 12 periods"
-    )
-
-
-def test_from_bounds():
-    bounds = [(pendulum.datetime(2022, 1, 1), pendulum.datetime(2022, 12, 31))]
-    freq = pendulum.duration(months=1)
-    calendar_ranges = CalendarRange.from_bounds(bounds, freq)
-    assert len(calendar_ranges) == 1
-    assert calendar_ranges[0].start == pendulum.datetime(2022, 1, 1)
-    assert calendar_ranges[0].end == pendulum.datetime(2022, 12, 31)
-
-
-def test_from_bounds_multiple():
-    bounds = [
-        (pendulum.datetime(2022, 1, 1), pendulum.datetime(2022, 6, 30)),
-        (pendulum.datetime(2022, 7, 1), pendulum.datetime(2022, 12, 31)),
-    ]
-    freq = pendulum.duration(months=1)
-    calendar_ranges = CalendarRange.from_bounds(bounds, freq)
-    assert len(calendar_ranges) == 2
-    assert calendar_ranges[0].start == pendulum.datetime(2022, 1, 1)
-    assert calendar_ranges[0].end == pendulum.datetime(2022, 6, 30)
-    assert calendar_ranges[1].start == pendulum.datetime(2022, 7, 1)
-    assert calendar_ranges[1].end == pendulum.datetime(2022, 12, 31)
-
-
-def test_from_bounds_integers():
-    bounds = [(2700, 2720)]
-    calendar_ranges = CalendarRange.from_bounds(bounds)
-    assert len(calendar_ranges) == 1
-    assert calendar_ranges[0].start == pendulum.datetime(2700, 1, 1)
-    assert calendar_ranges[0].end == pendulum.datetime(2720, 12, 31)
+def test_date_ranges_from_bounds_single_range():
+    bounds = [("2020-01-01", "2020-12-31")]
+    result = pymorize.calendar.date_ranges_from_bounds(bounds)
+    expected = xr.date_range(start="2020-01-01", end="2020-12-31", freq="M")
+    assert (result == expected).all()
 
 
 def test_year_bounds_major_digits_first_can_end_with_binning_digit():
