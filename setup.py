@@ -30,6 +30,7 @@ setup(
     install_requires=[
         "cf_xarray",
         "click-loguru",
+        "dill",
         "pint-xarray",
         "pyyaml",
         "questionary",
@@ -43,6 +44,7 @@ setup(
         "isort",
         "pre-commit",
         "pytest",
+        "pytest-asyncio",
         "pytest-cov",
         "pytest-xdist",
         "sphinx",
