@@ -1,6 +1,114 @@
+import numpy as np
+import pytest
 import xarray as xr
 
 import pymorize.calendar
+from pymorize.calendar import assign_time_axis, date_ranges_from_year_bounds
+
+
+@pytest.fixture
+def fake_multidim_data():
+    np.random.seed(0)
+    data = np.random.rand(10, 5, 5)
+    da = xr.DataArray(data, dims=("time", "x", "y"))
+    return da
+
+
+def test_assign_time_axis_matching_length_multidim(fake_multidim_data):
+    year_bounds = [[2000, 2009]]
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    result = assign_time_axis(fake_multidim_data, time_axis)
+    assert "time" in result.coords
+    assert len(result.time) == 10
+    assert result.time[0].dt.year == 2000
+    assert result.time[-1].dt.year == 2009
+
+
+def test_assign_time_axis_mismatching_length_multidim(fake_multidim_data):
+    year_bounds = [[2000, 2011]]
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    with pytest.raises(ValueError):
+        assign_time_axis(fake_multidim_data, time_axis)
+
+
+@pytest.fixture
+def fake_multidim_data_diff_dims():
+    np.random.seed(0)
+    data = np.random.rand(10, 4, 6)
+    da = xr.DataArray(data, dims=("time", "x", "y"))
+    return da
+
+
+def test_assign_time_axis_matching_length_multidim_diff_dims(
+    fake_multidim_data_diff_dims,
+):
+    year_bounds = [[2000, 2009]]
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    result = assign_time_axis(fake_multidim_data_diff_dims, time_axis)
+    assert "time" in result.coords
+    assert len(result.time) == 10
+    assert result.time[0].dt.year == 2000
+    assert result.time[-1].dt.year == 2009
+
+
+def test_assign_time_axis_mismatching_length_multidim_diff_dims(
+    fake_multidim_data_diff_dims,
+):
+    year_bounds = [[2000, 2011]]
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    with pytest.raises(ValueError):
+        assign_time_axis(fake_multidim_data_diff_dims, time_axis)
+
+
+@pytest.fixture
+def fake_data_three():
+    np.random.seed(0)
+    data1 = np.random.rand(10)
+    data2 = np.random.rand(20)
+    data3 = np.random.rand(30)
+    da1 = xr.DataArray(data1, dims="time")
+    da2 = xr.DataArray(data2, dims="time")
+    da3 = xr.DataArray(data3, dims="time")
+    return da1, da2, da3
+
+
+def test_assign_time_axis_matching_length_three(fake_data_three):
+    year_bounds1 = [[2000, 2009]]
+    year_bounds2 = [[2000, 2019]]
+    year_bounds3 = [[2000, 2029]]
+    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="Y")
+    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="Y")
+    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="Y")
+    result1 = assign_time_axis(fake_data_three[0], time_axis1)
+    result2 = assign_time_axis(fake_data_three[1], time_axis2)
+    result3 = assign_time_axis(fake_data_three[2], time_axis3)
+    assert "time" in result1.coords
+    assert "time" in result2.coords
+    assert "time" in result3.coords
+    assert len(result1.time) == 10
+    assert len(result2.time) == 20
+    assert len(result3.time) == 30
+    assert result1.time[0].dt.year == 2000
+    assert result1.time[-1].dt.year == 2009
+    assert result2.time[0].dt.year == 2000
+    assert result2.time[-1].dt.year == 2019
+    assert result3.time[0].dt.year == 2000
+    assert result3.time[-1].dt.year == 2029
+
+
+def test_assign_time_axis_mismatching_length_three(fake_data_three):
+    year_bounds1 = [[2000, 2011]]
+    year_bounds2 = [[2000, 2021]]
+    year_bounds3 = [[2000, 2031]]
+    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="Y")
+    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="Y")
+    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="Y")
+    with pytest.raises(ValueError):
+        assign_time_axis(fake_data_three[0], time_axis1)
+    with pytest.raises(ValueError):
+        assign_time_axis(fake_data_three[1], time_axis2)
+    with pytest.raises(ValueError):
+        assign_time_axis(fake_data_three[2], time_axis3)
 
 
 def test_simple_ranges_from_bounds():

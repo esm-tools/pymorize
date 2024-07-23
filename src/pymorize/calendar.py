@@ -203,3 +203,7 @@ def simple_ranges_from_bounds(bounds):
         start, end = bounds[0]
         return range(start, end + 1)
     return [range(start, end + 1) for start, end in bounds]
+
+
+def assign_time_axis(da: xr.DataArray, taxis):
+    return da.assign_coords(time=taxis)
