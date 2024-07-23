@@ -10,7 +10,7 @@ variable basis.
 """
 
 import re
-from typing import Pattern
+from typing import Pattern, Union
 
 import cf_xarray.units
 import pint_xarray
@@ -22,7 +22,7 @@ ureg = pint_xarray.unit_registry
 
 
 def handle_chemicals(
-    s: str | None = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
+    s: Union[str, None] = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
 ):
     """Registers known chemical elements definitions to global ureg (unit registry)"""
     if s is None:
@@ -48,7 +48,7 @@ def handle_chemicals(
 
 
 def handle_unit_conversion(
-    da: xr.DataArray, unit: str, source_unit: str | None = None
+    da: xr.DataArray, unit: str, source_unit: Union[str, None] = None
 ) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
