@@ -148,3 +148,13 @@ class CalendarRange:
 
     def __str__(self):
         return f"{self._start} to {self._end} in {self._periods} periods"
+
+    def __list__(self) -> list:
+        return self._range
+
+    @classmethod
+    def from_bounds(cls, bounds, freq=pendulum.duration(months=1), periods=None):
+        clses = []
+        for start, end in bounds:
+            clses.append(cls(start, end, freq, periods))
+        return *clses
