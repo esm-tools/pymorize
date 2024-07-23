@@ -15,6 +15,13 @@ def test_year_bounds_major_digits_can_start_1before_major_digit1():
     assert [[2050, 2050], [2051, 2060], [2061, 2070]] == bounds
 
 
+def test_year_bounds_wrap_over():
+    bounds = pymorize.calendar.year_bounds_major_digits(
+        first=2058, last=2075, step=5, binning_digit=7
+    )
+    assert [[2058, 2062], [2063, 2066], [2067, 2072], [2073, 2075]] == bounds
+
+
 def test_year_bounds_major_digits_can_have_no_complete_range():
     bounds = pymorize.calendar.year_bounds_major_digits(
         first=2050, last=2055, step=10, binning_digit=1

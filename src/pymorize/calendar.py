@@ -58,41 +58,20 @@ def year_bounds_major_digits(first, last, step, binning_digit):
     # NOTE(PG): This is a bit hacky and difficult to read, but all the tests pass...
     if binning_digit >= 10:
         raise ValueError("Give a binning_digit less than 10")
+    can_stop_at_tens = step >= 10
     bounds = []
-    current_location = bin_start = first
-    first_bin_is_undersized = binning_digit in [
-        i % 10 for i in range(first, first + step)
-    ]
-    bin_end = "underfull bin" if first_bin_is_undersized else bin_start + step
-    first_bin_empty = True
 
-    while current_location <= last:
-        ones_digit = current_location % 10
-
-        if first_bin_empty:
-            if first_bin_is_undersized:
-                # Go until you hit the binning digit
-                if ones_digit != binning_digit:
-                    current_location += 1
-                    ones_digit = current_location % 10
-                else:
-                    bounds.append([bin_start, current_location - 1])
-                    first_bin_empty = False
-                    bin_start = current_location
-            else:
-                # Go until you hit the next binning digit
-                if ones_digit == binning_digit:
-                    bounds.append([bin_start, current_location - 1])
-                    first_bin_empty = False
-                    bin_start = current_location
-                else:
-                    current_location += 1
-        else:
-            bin_end = bin_start + step
-            current_location += 1
-            if current_location == bin_end or current_location > last:
-                bounds.append([bin_start, min(current_location - 1, last)])
-                bin_start = current_location
+    current_bin_length = 0
+    current_start = first
+    for i in range(first, last + 1):
+        ones_digit = i % 10
+        current_bin_length += 1
+        if (
+            ones_digit == binning_digit and can_stop_at_tens
+        ) or current_bin_length == step:
+            bounds.append([current_start, i - 1])
+            current_bin_length = 0
+            current_start = i
     return bounds
 
 
