@@ -197,4 +197,5 @@ class DefaultPipeline(Pipeline):
         super().__init__(
             # FIXME: Fill in with appropriate steps
             get_callable_by_name("pymorize.generic.load_data"),
+            get_callable_by_name("pymorize.units.handle_unit_conversion"),
         )

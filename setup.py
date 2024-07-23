@@ -37,6 +37,7 @@ setup(
         "rich-click",
         "versioneer",
         "xarray",
+        "chemicals"
     ],
     development_requires=[
         "black",
