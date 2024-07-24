@@ -29,15 +29,16 @@ setup(
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
         "cf_xarray",
+        "chemicals",
         "click-loguru",
         "dill",
+        "pendulum",
         "pint-xarray",
         "pyyaml",
         "questionary",
         "rich-click",
         "versioneer",
         "xarray",
-        "chemicals"
     ],
     development_requires=[
         "black",
