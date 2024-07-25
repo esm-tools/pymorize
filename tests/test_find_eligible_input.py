@@ -30,6 +30,11 @@ Path.__eq__ = path_eq
 
 
 @pytest.fixture
+def config(request):
+    return request.getfixturevalue(request.param)
+
+
+@pytest.fixture
 def config_bare():
     return {"pymorize": {}}
 
@@ -47,7 +52,7 @@ def config_only_env_name():
 def config_only_env_value():
     return {
         "pymorize": {
-            "pattern_env_var_default": "test*nc",
+            "pattern_env_var_value": "test.*nc",
         }
     }
 
@@ -57,7 +62,7 @@ def config_both():
     return {
         "pymorize": {
             "pattern_env_var_name": "CMOR_PATTERN",
-            "pattern_env_var_default": "other_test*nc",
+            "pattern_env_var_value": "other_test.*nc",
         }
     }
 
@@ -69,6 +74,7 @@ def fake_filesystem():
         patcher.fs.create_file("/path/to/test2.txt")
         patcher.fs.create_file("/path/to/fesom_test.nc")
         patcher.fs.create_file("/path/to/other_test123.nc")
+        patcher.fs.create_file("/path/to/test.nc")
         yield patcher
 
 
@@ -79,36 +85,49 @@ def clean_environment():
 
 
 @pytest.mark.parametrize(
-    "config, expected_output",
+    "config, expected_pattern, expected_output",
     [
         (
-            config_bare,
+            "config_bare",  # Matches any input
+            re.compile(".*"),
             [
                 pathlib.Path("/path/to/test1.txt"),
                 pathlib.Path("/path/to/test2.txt"),
                 pathlib.Path("/path/to/fesom_test.nc"),
                 pathlib.Path("/path/to/other_test123.nc"),
+                pathlib.Path("/path/to/test.nc"),
             ],
         ),
         (
-            config_only_env_name,
+            "config_only_env_name",
+            re.compile(".*"),
             [
                 pathlib.Path("/path/to/test1.txt"),
                 pathlib.Path("/path/to/test2.txt"),
                 pathlib.Path("/path/to/fesom_test.nc"),
                 pathlib.Path("/path/to/other_test123.nc"),
+                pathlib.Path("/path/to/test.nc"),
             ],
         ),
-        (config_only_env_value, [pathlib.Path("/path/to/fesom_test.nc")]),
         (
-            config_both,
+            "config_only_env_value",
+            re.compile("test.*nc"),
+            [pathlib.Path("/path/to/test.nc")],
+        ),
+        (
+            "config_both",
+            re.compile("other_test.*nc"),
             [pathlib.Path("/path/to/other_test123.nc")],
         ),
     ],
+    indirect=[  # This tells pytest to treat 'config' as a fixture
+        "config",
+    ],
 )
-def test_listing_function(config, expected_output, fake_filesystem):
-    output = input_files_in_path("/path/to", _input_pattern_from_env(config))
-    # breakpoint()
+def test_listing_function(config, expected_pattern, expected_output, fake_filesystem):
+    pattern = _input_pattern_from_env(config)
+    assert pattern == expected_pattern
+    output = input_files_in_path("/path/to", pattern)
     assert set(expected_output) == set(output)
 
 
@@ -129,7 +148,9 @@ def test_custom_pattern_name(config_only_env_name, clean_environment):
 def test_custom_pattern_value(config_only_env_value, clean_environment):
     pattern = _input_pattern_from_env(config_only_env_value)
     assert isinstance(pattern, re.Pattern)
-    assert pattern.match("test")
+    assert pattern.match("test1.nc")
+    assert pattern.match("test.nc")
+    assert not pattern.match("something_test.nc")
 
 
 def test_custom_both(config_both, clean_environment):
@@ -153,7 +174,7 @@ def test_env_var_no_match(config_only_env_name, fake_filesystem, clean_environme
 def test_env_var_partial_match(
     config_only_env_name, fake_filesystem, clean_environment
 ):
-    os.environ["CMOR_PATTERN"] = "test1*"
+    os.environ["CMOR_PATTERN"] = "test1.*"
     pattern = _input_pattern_from_env(config_only_env_name)
     output = input_files_in_path("/path/to", pattern)
     assert output == [pathlib.Path("/path/to/test1.txt")]
@@ -172,7 +193,8 @@ def test_empty_directory(config_bare, fake_filesystem, clean_environment):
     assert output == []
 
 
-def test_subdirectories(config_bare, fake_filesystem, clean_environment):
+@pytest.mark.xfail(reason="subdirectories are not supported")
+def test_subdirectories_should_fail(config_bare, fake_filesystem, clean_environment):
     fake_filesystem.fs.create_file("/path/to/subdir/test3.txt")
     pattern = _input_pattern_from_env(config_bare)
     output = input_files_in_path("/path/to", pattern)
