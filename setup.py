@@ -41,7 +41,7 @@ setup(
         "versioneer",
         "xarray",
     ],
-    extra_requires={
+    extras_require={
         "dev": [
             "black",
             "flake8",
