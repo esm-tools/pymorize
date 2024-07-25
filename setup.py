@@ -50,6 +50,7 @@ setup(
         "pytest-asyncio",
         "pytest-cov",
         "pytest-xdist",
+        "pyfakefs",
         "sphinx",
         "sphinx_rtd_theme",
     ],

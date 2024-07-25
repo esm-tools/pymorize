@@ -80,3 +80,26 @@ def _input_pattern_from_env(config: dict) -> re.Pattern:
         ),
     )
     return re.compile(env_var_value)
+
+
+def input_files_in_path(path: pathlib.Path or str, pattern: re.Pattern) -> list:
+    """
+    Get a list of files in a directory that match a pattern.
+
+    This function takes a directory path and a regular expression pattern. It then
+    returns a list of all files in the directory that match the pattern.
+
+    Parameters
+    ----------
+    path : pathlib.Path or str
+        The path to the directory to search for files.
+
+    pattern : re.Pattern
+
+    Returns
+    -------
+    list
+        A list of files in the directory that match the pattern.
+    """
+    path = pathlib.Path(path)
+    return [f for f in path.iterdir() if f.is_file() and pattern.match(f.name)]
