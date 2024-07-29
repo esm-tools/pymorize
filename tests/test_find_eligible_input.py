@@ -8,7 +8,7 @@ import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.fake_pathlib import FakePath
 
-from pymorize.gather_inputs import (_input_pattern_from_env,
+from pymorize.gather_inputs import (_input_pattern_from_env, files_to_string,
                                     input_files_in_path, resolve_symlinks,
                                     sort_by_year)
 
@@ -260,3 +260,28 @@ def test_sort_by_year(fake_filesystem_with_datestamps_years):
     assert sorted_files == [
         Path(f"/path/to/file_{year}.txt") for year in range(2000, 2010)
     ]
+
+
+def test_files_to_string():
+    # Arrange
+    files = [pathlib.Path("path/to/file1"), pathlib.Path("path/to/file2")]
+    expected_output = "path/to/file1,path/to/file2"
+
+    # Act
+    output = files_to_string(files)
+
+    # Assert
+    assert output == expected_output
+
+
+def test_files_to_string_with_custom_separator():
+    # Arrange
+    files = [pathlib.Path("path/to/file1"), pathlib.Path("path/to/file2")]
+    expected_output = "path/to/file1 - path/to/file2"
+    separator = " - "
+
+    # Act
+    output = files_to_string(files, separator)
+
+    # Assert
+    assert output == expected_output

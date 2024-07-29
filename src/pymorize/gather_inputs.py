@@ -142,3 +142,22 @@ def sort_by_year(files: List[pathlib.Path], fpattern: re.Pattern) -> List[pathli
     Sorts a list of files by the year in their name.
     """
     return sorted(files, key=lambda f: int(fpattern.match(f.name).group("year")))
+
+
+def files_to_string(files: List[pathlib.Path], sep=",") -> str:
+    """
+    Converts a list of pathlib.Path objects to a string.
+
+    Parameters
+    ----------
+    files : list
+        A list of pathlib.Path objects.
+    sep : str
+        The separator to use between the paths. Defaults to a comma.
+
+    Returns
+    -------
+    str
+        A string representation of the list of files.
+    """
+    return sep.join(str(f) for f in files)
