@@ -5,6 +5,7 @@ Functionality for gathering possible inputs from a user directory
 import os
 import pathlib
 import re
+from typing import List
 
 import dpath
 import yaml
@@ -103,3 +104,34 @@ def input_files_in_path(path: pathlib.Path or str, pattern: re.Pattern) -> list:
     """
     path = pathlib.Path(path)
     return [f for f in path.iterdir() if f.is_file() and pattern.match(f.name)]
+
+
+def resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
+    """
+    Filters out symbolic links from a list of pathlib.Path objects.
+
+    Parameters
+    ----------
+    files : list
+        A list of pathlib.Path objects.
+
+    Returns
+    -------
+    list
+        A list of pathlib.Path objects excluding any symbolic links.
+
+    Raises
+    ------
+    TypeError
+        If any element in the input list is not a pathlib.Path object.
+
+    Examples
+    --------
+    >>> from pathlib import Path
+    >>> files = [Path('/path/to/file1'), Path('/path/to/file2')]
+    >>> resolve_symlinks(files)
+    [Path('/path/to/file1'), Path('/path/to/file2')]
+    """
+    if not all(isinstance(f, pathlib.Path) for f in files):
+        raise TypeError("All files must be pathlib.Path objects")
+    return [f.resolve() if f.is_symlink() else f for f in files]

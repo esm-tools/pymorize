@@ -8,7 +8,8 @@ import pytest
 from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.fake_pathlib import FakePath
 
-from pymorize.gather_inputs import _input_pattern_from_env, input_files_in_path
+from pymorize.gather_inputs import (_input_pattern_from_env,
+                                    input_files_in_path, resolve_symlinks)
 
 # monkeypatch Path.__eq__ so that pyfakefs FakePaths compare equal to real pathlib.Paths
 #
@@ -75,6 +76,18 @@ def fake_filesystem():
         patcher.fs.create_file("/path/to/fesom_test.nc")
         patcher.fs.create_file("/path/to/other_test123.nc")
         patcher.fs.create_file("/path/to/test.nc")
+        yield patcher
+
+
+@pytest.fixture
+def fake_filesystem_with_symlinks():
+    with Patcher() as patcher:
+        # Create some fake files and a symlink
+        patcher.fs.create_file("/path/to/file1")
+        patcher.fs.create_file("/path/to/file2")
+        patcher.fs.create_file("/path/to/actual/file")
+        patcher.fs.create_symlink("/path/to/symlink", "/path/to/actual/file")
+
         yield patcher
 
 
@@ -205,3 +218,14 @@ def test_subdirectories_should_fail(config_bare, fake_filesystem, clean_environm
         pathlib.Path("/path/to/other_test123.nc"),
         pathlib.Path("/path/to/subdir/test3.txt"),
     ]
+
+
+def test_resolve_symlinks(fake_filesystem_with_symlinks):
+    files = [Path("/path/to/file1"), Path("/path/to/symlink")]
+    resolved_files = resolve_symlinks(files)
+    assert resolved_files == [Path("/path/to/file1"), Path("/path/to/actual/file")]
+
+
+def test_resolve_symlinks_raises_type_error():
+    with pytest.raises(TypeError):
+        resolve_symlinks(["not", "paths"])
