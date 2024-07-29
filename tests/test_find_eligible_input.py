@@ -9,7 +9,8 @@ from pyfakefs.fake_filesystem_unittest import Patcher
 from pyfakefs.fake_pathlib import FakePath
 
 from pymorize.gather_inputs import (_input_pattern_from_env,
-                                    input_files_in_path, resolve_symlinks)
+                                    input_files_in_path, resolve_symlinks,
+                                    sort_by_year)
 
 # monkeypatch Path.__eq__ so that pyfakefs FakePaths compare equal to real pathlib.Paths
 #
@@ -229,3 +230,33 @@ def test_resolve_symlinks(fake_filesystem_with_symlinks):
 def test_resolve_symlinks_raises_type_error():
     with pytest.raises(TypeError):
         resolve_symlinks(["not", "paths"])
+
+
+@pytest.fixture
+def fake_filesystem_with_datestamps_years():
+    with Patcher() as patcher:
+        fpattern = re.compile(r".*(?P<year>\d{4}).*")
+        files = [
+            pathlib.Path(f"/path/to/file_{year}.txt") for year in range(2000, 2010)
+        ]
+        for file in files:
+            patcher.fs.create_file(file)
+        yield patcher
+
+
+def test_sort_by_year(fake_filesystem_with_datestamps_years):
+    # Arrange
+    files = [Path(f"/path/to/file_{year}.txt") for year in range(2000, 2010)]
+    # Shuffle the list of files
+    import random
+
+    random.shuffle(files)
+    fpattern = re.compile(r".*(?P<year>\d{4}).*")
+
+    # Act
+    sorted_files = sort_by_year(files, fpattern)
+
+    # Assert
+    assert sorted_files == [
+        Path(f"/path/to/file_{year}.txt") for year in range(2000, 2010)
+    ]

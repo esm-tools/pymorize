@@ -135,3 +135,10 @@ def resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     if not all(isinstance(f, pathlib.Path) for f in files):
         raise TypeError("All files must be pathlib.Path objects")
     return [f.resolve() if f.is_symlink() else f for f in files]
+
+
+def sort_by_year(files: List[pathlib.Path], fpattern: re.Pattern) -> List[pathlib.Path]:
+    """
+    Sorts a list of files by the year in their name.
+    """
+    return sorted(files, key=lambda f: int(fpattern.match(f.name).group("year")))
