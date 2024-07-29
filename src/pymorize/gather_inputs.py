@@ -161,3 +161,39 @@ def files_to_string(files: List[pathlib.Path], sep=",") -> str:
         A string representation of the list of files.
     """
     return sep.join(str(f) for f in files)
+
+
+def validate_rule_has_marked_regex(
+    rule: dict, required_marks: List[str] = ["year"]
+) -> bool:
+    """
+    Validates that a rule has a marked regular expression.
+
+    This function takes a rule dictionary and a list of required marks. It then checks that
+    the rule has a regular expression pattern that has been marked with all of the required marks.
+
+    Parameters
+    ----------
+    rule : dict
+        The rule dictionary.
+    required_marks : list
+        A list of strings representing the required marks.
+
+    Returns
+    -------
+    bool
+        True if the rule has a marked regular expression, False otherwise.
+
+    Examples
+    --------
+    >>> rule = { 'pattern': 'test(?P<year>[0-9]{4})' }
+    >>> validate_rule_has_marked_regex(rule)
+    True
+    >>> rule = { 'pattern': 'test' }
+    >>> validate_rule_has_marked_regex(rule)
+    False
+    """
+    pattern = rule.get("pattern")
+    if pattern is None:
+        return False
+    return all(re.search(f"\(\?P<{mark}>", pattern) for mark in required_marks)

@@ -10,7 +10,8 @@ from pyfakefs.fake_pathlib import FakePath
 
 from pymorize.gather_inputs import (_input_pattern_from_env, files_to_string,
                                     input_files_in_path, resolve_symlinks,
-                                    sort_by_year)
+                                    sort_by_year,
+                                    validate_rule_has_marked_regex)
 
 # monkeypatch Path.__eq__ so that pyfakefs FakePaths compare equal to real pathlib.Paths
 #
@@ -285,3 +286,28 @@ def test_files_to_string_with_custom_separator():
 
     # Assert
     assert output == expected_output
+
+
+def test_validate_rule_has_marked_regex_with_required_mark():
+    rule = {"pattern": "test(?P<year>[0-9]{4})"}
+    assert validate_rule_has_marked_regex(rule) == True
+
+
+def test_validate_rule_has_marked_regex_without_required_mark():
+    rule = {"pattern": "test"}
+    assert validate_rule_has_marked_regex(rule) == False
+
+
+def test_validate_rule_has_marked_regex_with_none_pattern():
+    rule = {"pattern": None}
+    assert validate_rule_has_marked_regex(rule) == False
+
+
+def test_validate_rule_has_marked_regex_with_multiple_required_marks():
+    rule = {"pattern": "test(?P<year>[0-9]{4})(?P<month>[0-9]{2})"}
+    assert validate_rule_has_marked_regex(rule, ["year", "month"]) == True
+
+
+def test_validate_rule_has_marked_regex_without_all_required_marks():
+    rule = {"pattern": "test(?P<year>[0-9]{4})"}
+    assert validate_rule_has_marked_regex(rule, ["year", "month"]) == False
