@@ -8,7 +8,6 @@ import re
 from typing import List
 
 import dpath
-import yaml
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
 """str: The address in the YAML file which stores the environment variable to be used for the pattern"""
@@ -83,7 +82,7 @@ def _input_pattern_from_env(config: dict) -> re.Pattern:
     return re.compile(env_var_value)
 
 
-def input_files_in_path(path: pathlib.Path or str, pattern: re.Pattern) -> list:
+def _input_files_in_path(path: pathlib.Path or str, pattern: re.Pattern) -> list:
     """
     Get a list of files in a directory that match a pattern.
 
@@ -106,7 +105,7 @@ def input_files_in_path(path: pathlib.Path or str, pattern: re.Pattern) -> list:
     return [f for f in path.iterdir() if f.is_file() and pattern.match(f.name)]
 
 
-def resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
+def _resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     """
     Filters out symbolic links from a list of pathlib.Path objects.
 
@@ -129,7 +128,7 @@ def resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     --------
     >>> from pathlib import Path
     >>> files = [Path('/path/to/file1'), Path('/path/to/file2')]
-    >>> resolve_symlinks(files)
+    >>> _resolve_symlinks(files)
     [Path('/path/to/file1'), Path('/path/to/file2')]
     """
     if not all(isinstance(f, pathlib.Path) for f in files):
@@ -137,14 +136,29 @@ def resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     return [f.resolve() if f.is_symlink() else f for f in files]
 
 
-def sort_by_year(files: List[pathlib.Path], fpattern: re.Pattern) -> List[pathlib.Path]:
+def _filter_by_year(
+    files: List[pathlib.Path], fpattern: re.Pattern, year_start: int, year_end: int
+) -> List[pathlib.Path]:
+    """
+    Filters a list of files by the year in their name.
+    """
+    return [
+        f
+        for f in files
+        if year_start <= int(fpattern.match(f.name).group("year")) <= year_end
+    ]
+
+
+def _sort_by_year(
+    files: List[pathlib.Path], fpattern: re.Pattern
+) -> List[pathlib.Path]:
     """
     Sorts a list of files by the year in their name.
     """
     return sorted(files, key=lambda f: int(fpattern.match(f.name).group("year")))
 
 
-def files_to_string(files: List[pathlib.Path], sep=",") -> str:
+def _files_to_string(files: List[pathlib.Path], sep=",") -> str:
     """
     Converts a list of pathlib.Path objects to a string.
 
@@ -163,7 +177,7 @@ def files_to_string(files: List[pathlib.Path], sep=",") -> str:
     return sep.join(str(f) for f in files)
 
 
-def validate_rule_has_marked_regex(
+def _validate_rule_has_marked_regex(
     rule: dict, required_marks: List[str] = ["year"]
 ) -> bool:
     """
@@ -187,13 +201,116 @@ def validate_rule_has_marked_regex(
     Examples
     --------
     >>> rule = { 'pattern': 'test(?P<year>[0-9]{4})' }
-    >>> validate_rule_has_marked_regex(rule)
+    >>> _validate_rule_has_marked_regex(rule)
     True
     >>> rule = { 'pattern': 'test' }
-    >>> validate_rule_has_marked_regex(rule)
+    >>> _validate_rule_has_marked_regex(rule)
     False
     """
     pattern = rule.get("pattern")
     if pattern is None:
         return False
-    return all(re.search(f"\(\?P<{mark}>", pattern) for mark in required_marks)
+    return all(re.search(rf"\(\?P<{mark}>", pattern) for mark in required_marks)
+
+
+def gather_inputs(config: dict) -> dict:
+    """
+    Gather possible inputs from a user directory.
+
+    This function takes a configuration dictionary and returns a list of pathlib.Path objects
+    representing the files in the directory that match the pattern specified in the configuration.
+
+    Parameters
+    ----------
+    config : dict
+        The configuration dictionary. This dictionary should contain the keys
+        `pattern_env_var_name` and `pattern_env_value_default`, which are used to locate
+        the environment variable name and default value respectively. If not gives, these default
+        to `PYMORIZE_INPUT_PATTERN` and `.*` respectively.
+
+    Returns
+    -------
+    config:
+        The configuration dictionary with the input files added.
+
+
+    Examples
+    --------
+    Assuming a filesystem with::
+
+        /path/to/input/files/test2000.nc
+        /path/to/input/files/test2001.nc
+        /path/to/input/files/test2002.nc
+        /path/to/input/files/test2003.nc
+        /path/to/input/files/test2004.nc
+        /path/to/input/files/test2005.nc
+        /path/to/input/files/test2006.nc
+        /path/to/input/files/test2007.nc
+        /path/to/input/files/test2008.nc
+        /path/to/input/files/test2009.nc
+        /path/to/input/files/test2010.nc
+
+    >>> config = {
+    ...     "rules": [
+    ...         {
+    ...             "input_patterns": [
+    ...                 "/path/to/input/files/test*nc"
+    ...             ],
+    ...             "year_start": 2000,
+    ...             "year_end": 2010
+    ...         }
+    ...     ]
+    ... }
+    >>> gather_inputs(config)
+    {
+        "rules": [
+            {
+                "input_patterns": [
+                    "/path/to/input/files/test*nc"
+                ],
+                "year_start": 2000,
+                "year_end": 2010,
+                "input_files": {
+                    "/path/to/input/files/test*nc": [
+                        "/path/to/input/files/test2000.nc",
+                        "/path/to/input/files/test2001.nc",
+                        "/path/to/input/files/test2002.nc",
+                        "/path/to/input/files/test2003.nc",
+                        "/path/to/input/files/test2004.nc",
+                        "/path/to/input/files/test2005.nc",
+                        "/path/to/input/files/test2006.nc",
+                        "/path/to/input/files/test2007.nc",
+                        "/path/to/input/files/test2008.nc",
+                        "/path/to/input/files/test2009.nc",
+                        "/path/to/input/files/test2010.nc"
+                    ],
+                 }
+            }
+        ]
+    }
+    """
+    rules = config.get("rules", [])
+    for rule in rules:
+        input_patterns = rule.get("input_patterns", [])
+        input_files = {}
+        year_start = rule.get("year_start")
+        year_end = rule.get("year_end")
+        if year_start is not None:
+            year_start = int(year_start)
+        if year_end is not None:
+            year_end = int(year_end)
+        for input_pattern in input_patterns:
+            if _validate_rule_has_marked_regex(input_pattern):
+                pattern = re.compile(input_pattern["pattern"])
+            else:
+                # FIXME(PG): This needs to be thought through...
+                # If the pattern is not marked, use the environment variable
+                pattern = _input_pattern_from_env(config)
+            files = _input_files_in_path(input_pattern["path"], pattern)
+            files = _resolve_symlinks(files)
+            if year_start is not None and year_end is not None:
+                files = _filter_by_year(files, pattern, year_start, year_end)
+                files = _sort_by_year(files, pattern, year_start, year_end)
+            input_files[input_pattern] = files
+        rule["input_files"] = input_files
+    return files
