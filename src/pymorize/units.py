@@ -24,7 +24,27 @@ ureg = pint_xarray.unit_registry
 def handle_chemicals(
     s: Union[str, None] = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
 ):
-    """Registers known chemical elements definitions to global ureg (unit registry)"""
+    """Registers known chemical elements definitions to global ``ureg`` (unit registry)
+
+    Parameters
+    ----------
+    s: str or None
+        string to search for chemical elements based upon the symbol, e.g. ``C`` for carbon.
+    pattern: re.Pattern
+        compiled regex pattern to search for chemical elements. This should contain a
+        `named group <https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups>`_ ``symbol``
+        to extract the symbol of the chemical element from a potentially larger string.
+
+    Raises
+    ------
+    ValueError
+        If the chemical element is not found in the periodic table.
+
+    See Also
+    --------
+    ~chemicals.elements.periodic_table: Periodic table of elements
+    ~re.compile: `Python's regex syntax <https://docs.python.org/3/library/re.html#regular-expression-syntax>`_.
+    """
     if s is None:
         return
     match = pattern.search(s)
@@ -54,11 +74,13 @@ def handle_unit_conversion(
 
     If `source_unit` is provided, it is used instead of the unit from DataArray.
 
-    Parameters:
-    -----------
-    da: xr.DataArray
-    unit: unit to convert data to
-    source_unit: Override the unit on xr.DataArray if needed.
+    Parameters
+    ----------
+    da: ~xr.DataArray
+    unit: str
+        unit to convert data to
+    source_unit: str or None
+        Override the unit on ``da.attrs.unit`` if needed.
     """
     from_unit = da.attrs.get("units")
     if source_unit is not None:
