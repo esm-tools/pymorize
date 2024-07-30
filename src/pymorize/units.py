@@ -79,7 +79,7 @@ def handle_unit_conversion(
     da: ~xr.DataArray
     unit: str
         unit to convert data to
-    source_unit: str pr None
+    source_unit: str or None
         Override the unit on ``da.attrs.unit`` if needed.
     """
     from_unit = da.attrs.get("units")
