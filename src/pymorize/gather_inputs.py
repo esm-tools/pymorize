@@ -313,4 +313,4 @@ def gather_inputs(config: dict) -> dict:
                 files = _sort_by_year(files, pattern, year_start, year_end)
             input_files[input_pattern] = files
         rule["input_files"] = input_files
-    return files
+    return config
