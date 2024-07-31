@@ -8,7 +8,7 @@ from click_loguru import ClickLoguru
 from loguru import logger
 from rich.logging import RichHandler
 
-from . import _version
+from . import _version, dev_utils
 from .cmorizer import CMORizer
 
 logger.configure(handlers=[{"sink": RichHandler(), "format": "{message}"}])
@@ -73,6 +73,28 @@ def validate(verbose, quiet, logfile, profile_mem):
     return 0
 
 
+@click_loguru.logging_options
+@click.group()
+@click_loguru.stash_subcommand()
+@click.version_option(version=VERSION, prog_name=NAME)
+def develop(verbose, quiet, logfile, profile_mem):
+    return 0
+
+
+@develop.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument("directory", type=click.Path(exists=True))
+@click.argument("output_file", type=click.File("w"), required=False, default=None)
+def ls(directory, output_file, verbose, quiet, logfile, profile_mem):
+    yaml_str = dev_utils.ls_to_yaml(directory)
+    # Append to beginning of output file
+    if output_file is not None:
+        output_file.write(f"# Created with: pymorize develop ls {directory}\n")
+        output_file.write(yaml_str)
+    return 0
+
+
 @validate.command()
 @click_loguru.logging_options
 @click_loguru.init_logger()
@@ -120,7 +142,8 @@ def main():
     for entry_point_name, entry_point in find_subcommands().items():
         cli.add_command(entry_point["callable"], name=entry_point_name)
     cli.add_command(validate)
-    cli()
+    cli.add_command(develop)
+    cli(auto_envvar_prefix="PYMORIZE")
 
 
 if __name__ == "__main__":
