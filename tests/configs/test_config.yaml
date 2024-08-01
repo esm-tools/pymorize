@@ -14,12 +14,12 @@ pipelines:
     uses: "pymorize.pipeline.TestingPipeline"
   - name: "my_pipeline"
     steps:
-      - "pymorize.test_helpers.load_data"
+      - "pymorize.generic.dummy_load_data"
       - "pymorize.units.handle_unit_conversion"
-      - "pymorize.test_helpers.save_data"
+      - "pymorize.generic.dummy_save_data"
   - name: "sleeper_pipeline"
     steps:
-      - "pymorize.test_helpers.sleep"
+      - "pymorize.generic.dummy_sleep"
 rules:
   - name: "test_rule"
     pipelines: ["test_pipeline"]

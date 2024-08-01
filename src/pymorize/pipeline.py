@@ -260,9 +260,9 @@ class TestingPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        "pymorize.test_helpers.load_data",
-        "pymorize.test_helpers.logic_step",
-        "pymorize.test_helpers.save_data",
+        "pymorize.generic.dummy_load_data",
+        "pymorize.generic.dummy_logic_step",
+        "pymorize.generic.dummy_save_data",
     )
 
     def __init__(self, name="pymorize.pipeline.TestingPipeline"):
