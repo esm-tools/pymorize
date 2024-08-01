@@ -27,7 +27,8 @@ Examples
 
 import pendulum
 import xarray as xr
-from loguru import logger
+
+from .logging import logger
 
 
 def year_bounds_major_digits(first, last, step, binning_digit, return_type=int):

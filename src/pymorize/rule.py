@@ -2,11 +2,11 @@ import re
 import typing
 from collections import OrderedDict
 
-import questionary
+# import questionary
 import yaml
-from loguru import logger
 
 from . import pipeline
+from .logging import logger
 
 
 class Rule:
@@ -64,6 +64,7 @@ class Rule:
         """
         Match the pipelines in the rule with the pipelines in the configuration. The pipelines
         should be a list of pipeline instances that can be matched with the rule's required pipelines.
+
         Parameters
         ----------
         list : list of pipeline.Pipeline
@@ -82,6 +83,9 @@ class Rule:
         known_pipelines = {p.name: p for p in pipelines}
         matched_pipelines = OrderedDict()
         for pl in self.pipelines:
+            # Pipeline was already matched
+            if isinstance(pl, pipeline.Pipeline):
+                continue
             # Pipeline name:
             matched_pipelines[pl] = known_pipelines[pl]
         self.pipelines = list(matched_pipelines.values())

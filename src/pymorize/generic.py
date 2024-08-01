@@ -19,7 +19,17 @@ import datetime
 from pathlib import Path
 
 import xarray as xr
-from loguru import logger
+
+from .logging import logger
+
+
+def time_average(data, rule_spec, cmorizer, *args, **kwargs):
+    if cmorizer["use_xarray_back"]:
+        data = data.resample(time=rule_spec["frequency"]).mean()
+    else:
+        # CDO Call
+        pass
+    return data
 
 
 def load_data(data, rule_spec, cmorizer, *args, **kwargs):

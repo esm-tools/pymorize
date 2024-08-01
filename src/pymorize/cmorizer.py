@@ -1,12 +1,11 @@
-import json
-import sys
 from pathlib import Path
 
 import questionary
-import yaml
-from loguru import logger
+from rich.progress import track
 
-from .pipeline import DefaultPipeline, Pipeline
+# from . import logging_helper
+from .logging import logger
+from .pipeline import Pipeline
 from .rule import Rule
 
 
@@ -118,7 +117,7 @@ class CMORizer:
 
     def process(self):
         # Each rule can be parallelized
-        for rule in self.rules:
+        for rule in track(self.rules, description="Processing rules"):
             # Match up the pipelines:
             rule.match_pipelines(self.pipelines)
             initial_data = None

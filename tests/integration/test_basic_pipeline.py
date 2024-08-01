@@ -3,9 +3,9 @@ Integration test that mimics the CLI command for a minimal config
 """
 
 import yaml
-from loguru import logger
 
 from pymorize.cmorizer import CMORizer
+from pymorize.logging import logger
 
 
 def test_main():

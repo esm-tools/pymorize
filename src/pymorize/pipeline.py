@@ -6,8 +6,8 @@ import json
 import os
 
 import randomname
-from loguru import logger
 
+from .logging import logger
 from .utils import get_callable_by_name
 
 
@@ -188,7 +188,7 @@ class Pipeline:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
             return get_callable_by_name(data["uses"])(name=data.get("name"))
         if "steps" in data:
-            return cls.from_qualname_steps(data["steps"], name=data.get("name"))
+            return cls.from_qualname_list(data["steps"], name=data.get("name"))
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
@@ -211,14 +211,9 @@ class FrozenPipeline(Pipeline):
         A tuple containing the steps of the pipeline. This is a class-level attribute and cannot be modified.
     """
 
-    STEPS = ()
-
-    def __init__(self, *args, name=None):
-        super().__init__(*self.STEPS, name=name)
-
     @property
     def steps(self):
-        return self.STEPS
+        return self._steps
 
     @steps.setter
     def steps(self, value):
@@ -238,13 +233,14 @@ class DefaultPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        get_callable_by_name("pymorize.generic.load_data"),
-        get_callable_by_name("pymorize.generic.create_cmor_directories"),
-        get_callable_by_name("pymorize.units.handle_unit_conversion"),
+        "pymorize.generic.load_data",
+        "pymorize.generic.create_cmor_directories",
+        "pymorize.units.handle_unit_conversion",
     )
 
     def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
-        super().__init__(*self.STEPS, name=name)
+        steps = [get_callable_by_name(name) for name in self.STEPS]
+        super().__init__(*steps, name=name)
 
 
 class TestingPipeline(FrozenPipeline):
@@ -264,10 +260,11 @@ class TestingPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        get_callable_by_name("pymorize.test_helpers.load_data"),
-        get_callable_by_name("pymorize.test_helpers.logic_step"),
-        get_callable_by_name("pymorize.test_helpers.save_data"),
+        "pymorize.test_helpers.load_data",
+        "pymorize.test_helpers.logic_step",
+        "pymorize.test_helpers.save_data",
     )
 
     def __init__(self, name="pymorize.pipeline.TestingPipeline"):
-        super().__init__(*self.STEPS, name=name)
+        steps = [get_callable_by_name(name) for name in self.STEPS]
+        super().__init__(*steps, name=name)
