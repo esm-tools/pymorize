@@ -1,7 +1,9 @@
-# global_attributes.pr
+# global_attributes.py
 
 import re
 
+
+# TODO: no need to hard-code these values, can be directly read from cmip6-cmor-tables/Tables/CMIP6_CV.json
 _fields = (
     "activity_id",
     "Conventions",
@@ -48,21 +50,33 @@ _parent_fields = (
 
 
 def parse_variant_label(label: str) -> dict:
-    "Extracts indices values from variant label."
+    """Extracts indices values from variant label.
+    `label` must be of the form "r<int>i<int>p<int>f<int>".
+    Example: "r1i1p1f1"
+    """
     pattern = re.compile(
         r"r(?P<realization_index>\d+)"
         r"i(?P<initialization_index>\d+)"
         r"p(?P<physics_index>\d+)"
         r"f(?P<forcing_index>\d+)"
+        r"$"
     )
+    if label is None:
+        raise ValueError(
+            f"`label` must be of the form 'r<int>i<int>p<int>f<int>', Got: {label}"
+        )
     d = pattern.match(label)
-    d = {name: int(val) for name, val in d.items()}
+    if d is None:
+        raise ValueError(
+            f"`label` must be of the form 'r<int>i<int>p<int>f<int>', Got: {label}"
+        )
+    d = {name: int(val) for name, val in d.groupdict().items()}
     return d
 
 
 def update_variant_label(label: str, gattrs: dict) -> dict:
     "Add variant_label to global attributes"
     variant_label_indices = parse_variant_label(label)
-    gattrs.update(variant_label_indices)
+    gattrs |= variant_label_indices
     gattrs["variant_label"] = label
     return gattrs
