@@ -49,6 +49,7 @@ setup(
             "isort",
             "pooch",
             "pre-commit",
+            "pyfakefs",
             "pytest",
             "pytest-asyncio",
             "pytest-cov",
