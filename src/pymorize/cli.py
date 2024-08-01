@@ -131,11 +131,8 @@ def process(config_file, verbose, quiet, logfile, profile_mem):
     logger.info(f"Processing {config_file}")
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
-        cmorizer = CMORizer.from_dict(cfg)
-        files = pathlib.Path(cfg.get("output_dir")).iterdir()
-    for file in files:
-        cmorizer(file)
-    breakpoint()
+    cmorizer = CMORizer.from_dict(cfg)
+    cmorizer.process()
 
 
 def main():
