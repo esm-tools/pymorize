@@ -5,6 +5,7 @@ Pipeline of the data processing steps.
 import json
 import os
 
+import randomname
 from loguru import logger
 
 from .utils import get_callable_by_name
@@ -15,38 +16,18 @@ class PipelineDB:
     This class provides a JSON-based database for managing pipeline data.
     It provides CRUD (Create, Read, Update, Delete) operations for pipeline data.
     The database is stored in a JSON file, with the filename based on the process ID and the ID of the pipeline object.
-
-    Attributes:
-    -----------
-    _db_file : str
-        The name of the file where the database is stored. Internal use only!
-    _db : dict
-        The in-memory representation of the database. Internal use only!
-
-    Methods:
-    --------
-    save():
-        Saves the in-memory database to a file.
-    load():
-        Loads the database from a file into memory.
-    create(step, data):
-        Creates a new entry in the database.
-    read(step):
-        Reads an entry from the database.
-    update(step, data):
-        Updates an entry in the database.
-    delete(step):
-        Deletes an entry from the database.
     """
 
     def __init__(self, pipeline, keep_db=False):
         """
         Initializes the PipelineDB object.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         pipeline: object
             The pipeline object that this database is associated with.
+        keep_db: bool, optional
+            If True, the database file will not be deleted when the object is deleted. Default is False.
         """
         pid = os.getpid()
         self._db_file = f"pymorize_{pid}_pipeline_{id(pipeline)}.json"
@@ -75,8 +56,8 @@ class PipelineDB:
         """
         Creates a new entry in the database.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         step: function
             The step function.
         data: dict
@@ -88,13 +69,13 @@ class PipelineDB:
         """
         Reads an entry from the database.
 
-        Parameters:
-        -----------
+        Parameters
+        ----------
         step: function
             The step function.
 
-        Returns:
-        --------
+        Returns
+        -------
         dict
             The data associated with the step.
         """
@@ -104,16 +85,17 @@ class PipelineDB:
         """
         Updates an entry in the database.
 
-        Parameters:
-        -----------
-        step: function
+        Parameters
+        ----------
+        step : callable
             The step function.
-        data: dict
+        data : dict
             The data to be updated.
 
-        Raises:
-        -------
-        KeyError: If the step is not found in the database.
+        Raises
+        ------
+        KeyError
+            If the step is not found in the database.
         """
         step_dict = self._db[f"{step.__name__}_{id(step)}"]
         step_dict.update(data)
@@ -122,9 +104,9 @@ class PipelineDB:
         """
         Deletes an entry from the database.
 
-        Parameters:
-        -----------
-        step: function
+        Parameters
+        ----------
+        step: callable
             The step function.
         """
         del self._db[f"{step.__name__}_{id(step)}"]
@@ -158,18 +140,19 @@ class PipelineDB:
 
 
 class Pipeline:
-    def __init__(self, *args):
+    def __init__(self, *args, name=None):
         self.steps = args
+        self.name = name or randomname.get_name()
         self._db = PipelineDB(self)
 
-    def run(self, data):
+    def run(self, data, rule_spec, cmorizer):
         for step in self.steps:
             with self._db as db:
                 if db.read(step).get("status") == "done":
                     continue
                 else:
                     self._start_step(step)
-                    data = step(data)
+                    data = step(data, rule_spec, cmorizer)
                     self._end_step(step)
         return data
 
@@ -191,11 +174,91 @@ class Pipeline:
     def from_qualname_list(cls, qualnames: list):
         return cls.from_list(get_callable_by_name(name) for name in qualnames)
 
+    @classmethod
+    def from_dict(cls, data):
+        if "uses" in data and "steps" in data:
+            raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
+        if "uses" in data:
+            # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
+            return get_callable_by_name(data["uses"])()
+        if "steps" in data:
+            return cls.from_qualname_steps(data["steps"])
+        raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
-class DefaultPipeline(Pipeline):
-    def __init__(self):
-        super().__init__(
-            # FIXME: Fill in with appropriate steps
-            get_callable_by_name("pymorize.generic.load_data"),
-            get_callable_by_name("pymorize.units.handle_unit_conversion"),
-        )
+
+class FrozenPipeline(Pipeline):
+    """
+    The FrozenPipeline class is a subclass of the Pipeline class. It is designed to have a fixed set of steps
+    that cannot be modified, hence the term "frozen". The specific steps are defined as a class-level constant
+    and cannot be customized, only the name of the pipeline can be customized.
+
+    Parameters
+    ----------
+    *args
+        Variable length argument list. Not used in this class, but included for compatibility with parent.
+    name : str, optional
+        The name of the pipeline. If not provided, it defaults to None.
+
+    Attributes
+    ----------
+    STEPS : tuple
+        A tuple containing the steps of the pipeline. This is a class-level attribute and cannot be modified.
+    """
+
+    STEPS = ()
+
+    def __init__(self, *args, name=None):
+        super().__init__(*self.STEPS, name=name)
+
+    def __setattr__(self, name, value):
+        if name == "steps":
+            raise AttributeError("Cannot set steps on a FrozenPipeline")
+        else:
+            super().__setattr__(name, value)
+
+
+class DefaultPipeline(FrozenPipeline):
+    """
+    The DefaultPipeline class is a subclass of the Pipeline class. It is designed to be a general-purpose pipeline
+    for data processing. It includes steps for loading data and handling unit conversion. The specific steps are fixed
+    and cannot be customized, only the name of the pipeline can be customized.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name of the pipeline. If not provided, it defaults to "pymorize.pipeline.DefaultPipeline".
+    """
+
+    STEPS = (
+        get_callable_by_name("pymorize.generic.load_data"),
+        get_callable_by_name("pymorize.units.handle_unit_conversion"),
+    )
+
+    def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
+        super().__init__(*self.STEPS, name=name)
+
+
+class TestingPipeline(FrozenPipeline):
+    """
+    The TestingPipeline class is a subclass of the Pipeline class. It is designed for testing purposes. It includes
+    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and cannot be
+    customized, only the name of the pipeline can be customized.
+
+    Parameters
+    ----------
+    name : str, optional
+        The name of the pipeline. If not provided, it defaults to "pymorize.pipeline.TestingPipeline".
+
+    Warning
+    -------
+    An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
+    """
+
+    STEPS = (
+        get_callable_by_name("pymorize.test_helpers.load_data"),
+        get_callable_by_name("pymorize.test_helpers.logic_step"),
+        get_callable_by_name("pymorize.test_helpers.save_data"),
+    )
+
+    def __init__(self, name="pymorize.pipeline.TestingPipeline"):
+        super().__init__(*self.STEPS, name=name)
