@@ -82,3 +82,63 @@ def invert_z_axis(filepath: Path, execute: bool = False, flip_sign: bool = False
         if flip_sign:
             logger.info("Would flip sign of z-axis")
         logger.info("Use `execute=True` to apply changes")
+
+
+def create_cmor_directories(config: dict) -> dict:
+    """
+    Creates the directory structure for the CMORized files.
+
+    Directory structure =
+     <mip_era>/
+      <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+       <institution_id>/
+         <source_id>/
+         <experiment_id>/
+          <member_id>/
+           <table_id>/
+            <variable_id>/
+             <grid_label>/
+              <version>
+
+    Parameters
+    ----------
+    config : dict
+        The pymorize configuration dictionary
+
+
+    See Also
+    --------
+    https://docs.google.com/document/d/1h0r8RZr_f3-8egBMMh7aqLwy3snpD6_MrDz1q8n5XUk/edit
+    """
+    mip_era = config["mip_era"]
+    activity_id = config["activity_id"]
+    institution_id = config.get(
+        "institution_id", "Alfred Wegener Institure for Polar and Marine Research"
+    )
+    source_id = config.get("source_id", "AWI-ESM-1-1-LR")
+    experiment_id = config["experiment_id"]
+    member_id = config["member_id"]
+    table_id = config["table_id"]
+    variable_id = config["variable_id"]
+    grid_label = config["grid_label"]
+    version = config["version"]
+
+    output_root = config["output_root"]
+    output_dir = (
+        Path(output_root)
+        / mip_era
+        / activity_id
+        / institution_id
+        / source_id
+        / experiment_id
+        / member_id
+        / table_id
+        / variable_id
+        / grid_label
+        / version
+    )
+
+    output_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Created directory structure for CMORized files in {output_dir}")
+    config["output_dir"] = output_dir
+    return config

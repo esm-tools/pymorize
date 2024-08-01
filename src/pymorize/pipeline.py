@@ -231,6 +231,7 @@ class DefaultPipeline(FrozenPipeline):
 
     STEPS = (
         get_callable_by_name("pymorize.generic.load_data"),
+        get_callable_by_name("pymorize.generic.create_cmor_directories"),
         get_callable_by_name("pymorize.units.handle_unit_conversion"),
     )
 
