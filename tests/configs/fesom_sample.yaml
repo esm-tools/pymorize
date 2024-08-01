@@ -1,5 +1,13 @@
-cmor_table_dir: ./cmip6-cmor-tables/Tables/
-output_dir: /path/to/output/dir
+pymorize:
+  # Settings for configurizing Pymorize itself
+  version: 0.1.0
+  interactive: true # If true, prompt user for input
+global:
+  cmor_table_dir: ./cmip6-cmor-tables/Tables/
+  output_dir: /path/to/output/dir
+  global_nc_attrs:
+    CMIP_Era: CMIP6
+    CMIP_Version: v20191001
 pipelines:
   - id: generic_pipe
     actions:
@@ -73,3 +81,4 @@ rules:
           kwargs:
             source_units: degC
             target_units: K
+    CMIP_Era: CMIP5 # Override global setting
