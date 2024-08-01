@@ -141,9 +141,13 @@ class PipelineDB:
 
 class Pipeline:
     def __init__(self, *args, name=None):
-        self.steps = args
+        self._steps = args
         self.name = name or randomname.get_name()
         self._db = PipelineDB(self)
+
+    @property
+    def steps(self):
+        return self._steps
 
     def run(self, data, rule_spec, cmorizer):
         for step in self.steps:
@@ -210,11 +214,13 @@ class FrozenPipeline(Pipeline):
     def __init__(self, *args, name=None):
         super().__init__(*self.STEPS, name=name)
 
-    def __setattr__(self, name, value):
-        if name == "steps":
-            raise AttributeError("Cannot set steps on a FrozenPipeline")
-        else:
-            super().__setattr__(name, value)
+    @property
+    def steps(self):
+        return self.STEPS
+
+    @steps.setter
+    def steps(self, value):
+        raise AttributeError("Cannot set steps on a FrozenPipeline")
 
 
 class DefaultPipeline(FrozenPipeline):

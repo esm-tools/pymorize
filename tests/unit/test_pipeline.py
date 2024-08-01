@@ -16,7 +16,7 @@ def test_basic_creation():
 
 def test_qualname_creation():
     Pipeline.from_qualname_list(
-        ["pymorize.generic.convert_units", "pymorize.generic.set_cmor_metadata"]
+        ["pymorize.generic.load_data", "pymorize.units.handle_unit_conversion"]
     )
 
 
