@@ -1,0 +1,21 @@
+pymorize:
+  version: "unreleased"
+general:
+  name: "test"
+  description: "This is a test configuration"
+  maintainer: "pgierz"
+  email: "pgierz@awi.de"
+  cmor_version: "CMIP6"
+  mip: "CMIP"
+  frequency: "mon"
+pipelines:
+  - name: "test_pipeline"
+    uses: "pymorize.pipeline.TestingPipeline"
+rules:
+  - name: "test_rule"
+    pipelines: ["test_pipeline"]
+    enabled: true
+    description: "This is a test rule"
+    cmor_variable: "tas"
+    input_patterns:
+      - "test_input"

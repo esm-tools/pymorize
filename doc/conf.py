@@ -75,12 +75,15 @@ intersphinx_mapping = {
     "python": ("http://docs.python.org/", None),
     "numpy": ("http://docs.scipy.org/doc/numpy/", None),
     "scipy": ("http://docs.scipy.org/doc/scipy/reference/", None),
-    "matplotlib": ("http://matplotlib.sourceforge.net/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable/", None),
     "xarray": ("http://xarray.pydata.org/en/stable/", None),
     "chemicals": ("https://chemicals.readthedocs.io/", None),
 }
 
+
+# -- Custom directives --------------------------------------------------------
+napoleon_custom_sections = [("Mutates", "params_style")]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
