@@ -60,41 +60,30 @@ class Rule:
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
 
-    def match_pipelines(self, config, force=False):
+    def match_pipelines(self, pipelines, force=False):
         """
-        Match the pipelines in the rule with the pipelines in the configuration. The configuration
-        must have a key "pipelines" with a list of Pipeline objects.
-
+        Match the pipelines in the rule with the pipelines in the configuration. The pipelines
+        should be a list of pipeline instances that can be matched with the rule's required pipelines.
         Parameters
         ----------
-        config : dict
-            The configuration dictionary.
+        list : list of pipeline.Pipeline
+            Available pipelines to use
         force : bool, optional
             If True, the pipelines will be remapped even if they were already mapped.
 
         Mutates
         -------
-        self.pipelines : list of str or pipeline.Pipeline --> list of~pipeline.Pipeline objects
+        self.pipelines : list of str --> list of pipeline.Pipeline objects
             ``self.pipelines`` will be replaced from a list of strings to a list of
             Pipeline objects. The order of the pipelines will be preserved.
         """
         if self._pipelines_are_mapped and not force:
             return self.pipelines
-        known_pipelines = {p.name: p for p in config["pipelines"]}
+        known_pipelines = {p.name: p for p in pipelines}
         matched_pipelines = OrderedDict()
         for pl in self.pipelines:
-            if isinstance(pl, pipeline.Pipeline):
-                # Already a Pipeline object:
-                matched_pipelines[pipeline.name] = pl
-            elif isinstance(pl, str):
-                # Pipeline name:
-                matched_pipelines[pl] = known_pipelines[pl]
-            else:
-                raise ValueError(f"Unknown pipeline type: {pl}")
-        # Sanity checks:
-        assert len(matched_pipelines) == len(self.pipelines)
-        assert all([p.name in known_pipelines for p in matched_pipelines])
-        assert self.pipelines == list(matched_pipelines.keys())
+            # Pipeline name:
+            matched_pipelines[pl] = known_pipelines[pl]
         self.pipelines = list(matched_pipelines.values())
 
     @classmethod

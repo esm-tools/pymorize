@@ -13,5 +13,4 @@ def test_main():
     with open("tests/configs/test_config.yaml", "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
-    breakpoint()
     cmorizer.process()

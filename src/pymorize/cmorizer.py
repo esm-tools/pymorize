@@ -25,10 +25,19 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
+        self._post_init_create_pipelines()
+        self._post_init_create_rules()
+
     def _post_init_create_pipelines(self):
-        self.pipelines = [
-            Pipeline.from_dict(p) for p in self.pipelines if not isinstance(p, Pipeline)
-        ]
+        pipelines = []
+        for p in self.pipelines:
+            if isinstance(p, Pipeline):
+                pipelines.append(p)
+            elif isinstance(p, dict):
+                pipelines.append(Pipeline.from_dict(p))
+            else:
+                raise ValueError(f"Invalid pipeline configuration for {p}")
+        self.pipelines = pipelines
 
     def _post_init_create_rules(self):
         self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
@@ -110,6 +119,8 @@ class CMORizer:
     def process(self):
         # Each rule can be parallelized
         for rule in self.rules:
+            # Match up the pipelines:
+            rule.match_pipelines(self.pipelines)
             initial_data = None
             for pipeline in rule.pipelines:
                 # All steps get data, the rule instance, and the cmorizer instance passed it!

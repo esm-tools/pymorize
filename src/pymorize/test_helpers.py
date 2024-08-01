@@ -1,3 +1,5 @@
+import tempfile
+
 import xarray as xr
 from loguru import logger
 
@@ -26,7 +28,7 @@ def save_data(data, rule_spec, cmorizer):
     """
     A dummy function for testing. Saves the data to a netcdf file.
     """
-    ofile = rule_spec.get("test_output_file", "test_output.nc")
+    ofile = tempfile.mktemp(suffix=".nc")
     data.to_netcdf(ofile)
     logger.success(f"Data saved to {ofile}")
     return data

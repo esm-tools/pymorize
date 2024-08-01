@@ -57,4 +57,5 @@ def test_from_yaml():
 
 def test_match_pipelines(simple_rule):
     rule = simple_rule
-    config = {"pipelines": [TestingPipeline(name="pymorize.pipeline.TestingPipeline")]}
+    pipelines = [TestingPipeline(name="pymorize.pipeline.TestingPipeline")]
+    rule.match_pipelines(pipelines)

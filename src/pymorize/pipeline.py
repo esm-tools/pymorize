@@ -171,12 +171,14 @@ class Pipeline:
             db.update(step, {"status": "done"})
 
     @classmethod
-    def from_list(cls, steps):
-        return cls(*steps)
+    def from_list(cls, steps, name=None):
+        return cls(*steps, name=name)
 
     @classmethod
-    def from_qualname_list(cls, qualnames: list):
-        return cls.from_list(get_callable_by_name(name) for name in qualnames)
+    def from_qualname_list(cls, qualnames: list, name=None):
+        return cls.from_list(
+            [get_callable_by_name(name) for name in qualnames], name=name
+        )
 
     @classmethod
     def from_dict(cls, data):
@@ -184,9 +186,9 @@ class Pipeline:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
-            return get_callable_by_name(data["uses"])()
+            return get_callable_by_name(data["uses"])(name=data.get("name"))
         if "steps" in data:
-            return cls.from_qualname_steps(data["steps"])
+            return cls.from_qualname_steps(data["steps"], name=data.get("name"))
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
