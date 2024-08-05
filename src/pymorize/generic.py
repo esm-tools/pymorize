@@ -99,18 +99,6 @@ def create_cmor_directories(config: dict) -> dict:
     """
     Creates the directory structure for the CMORized files.
 
-    Directory structure =
-     <mip_era>/
-      <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
-       <institution_id>/
-         <source_id>/
-         <experiment_id>/
-          <member_id>/
-           <table_id>/
-            <variable_id>/
-             <grid_label>/
-              <version>
-
     Parameters
     ----------
     config : dict
@@ -121,6 +109,17 @@ def create_cmor_directories(config: dict) -> dict:
     --------
     https://docs.google.com/document/d/1h0r8RZr_f3-8egBMMh7aqLwy3snpD6_MrDz1q8n5XUk/edit
     """
+    # Directory structure =
+    # <mip_era>/
+    #  <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+    #   <institution_id>/
+    #     <source_id>/
+    #     <experiment_id>/
+    #      <member_id>/
+    #       <table_id>/
+    #        <variable_id>/
+    #         <grid_label>/
+    #          <version>
     mip_era = config["mip_era"]
     activity_id = config["activity_id"]
     institution_id = config.get(
