@@ -120,8 +120,11 @@ class CMORizer:
         for rule in track(self.rules, description="Processing rules"):
             # Match up the pipelines:
             rule.match_pipelines(self.pipelines)
-            initial_data = None
-            for pipeline in rule.pipelines:
-                # All steps get data, the rule instance, and the cmorizer instance passed it!
-                # FIXME: need to map the pipeline string to the actual instance
-                pipeline.run(initial_data, rule, self)
+            for pipeline_counter, pipeline in enumerate(rule.pipelines):
+                if pipeline_counter == 0:
+                    initial_data = None
+                    data = pipeline.run(initial_data, rule, self)
+                else:
+                    data = pipeline.run(data, rule, self)
+        logger.success("Processing completed.")
+        return data
