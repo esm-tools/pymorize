@@ -1,7 +1,7 @@
 from pathlib import Path
 
 import questionary
-from dask.distributed import Client, as_completed
+from dask.distributed import Client
 from rich.progress import track
 
 # from . import logging_helper
@@ -118,7 +118,7 @@ class CMORizer:
 
     def process(self, parallel=None):
         if parallel is None:
-            parallel = self._general_cfg.get("parallel", False)
+            parallel = self._pymorize_cfg.get("parallel", False)
         if parallel:
             return self.parallel_process()
         else:
