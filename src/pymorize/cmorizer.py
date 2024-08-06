@@ -147,10 +147,7 @@ class CMORizer:
     def _process_rule(self, rule):
         # Match up the pipelines:
         rule.match_pipelines(self.pipelines)
-        for pipeline_counter, pipeline in enumerate(rule.pipelines):
-            if pipeline_counter == 0:
-                initial_data = None
-                data = pipeline.run(initial_data, rule, self)
-            else:
-                data = pipeline.run(data, rule, self)
+        data = None
+        for pipeline in rule.pipelines:
+            data = pipeline.run(data, rule, self)
         return data
