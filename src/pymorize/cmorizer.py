@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import questionary
+from dask.distributed import Client, as_completed
 from rich.progress import track
 
 # from . import logging_helper
@@ -115,16 +116,40 @@ class CMORizer:
                 for filepath in all_files_in_output_dir:
                     logger.warning(filepath)
 
-    def process(self):
-        # Each rule can be parallelized
-        for rule in track(self.rules, description="Processing rules"):
-            # Match up the pipelines:
-            rule.match_pipelines(self.pipelines)
-            for pipeline_counter, pipeline in enumerate(rule.pipelines):
-                if pipeline_counter == 0:
-                    initial_data = None
-                    data = pipeline.run(initial_data, rule, self)
-                else:
-                    data = pipeline.run(data, rule, self)
+    def process(self, parallel=None):
+        if parallel is None:
+            parallel = self._general_cfg.get("parallel", False)
+        if parallel:
+            return self.parallel_process()
+        else:
+            return self.serial_process
+
+    def parallel_process(self, external_client=None):
+        if external_client:
+            client = external_client
+        else:
+            client = Client()  # start a local Dask client
+
+        futures = [client.submit(self._process_rule, rule) for rule in self.rules]
+
+        results = client.gather(futures)
+
         logger.success("Processing completed.")
+        return results
+
+    def serial_process(self):
+        for rule in track(self.rules, description="Processing rules"):
+            self._process_rule(rule)
+        logger.success("Processing completed.")
+        return data
+
+    def _process_rule(self, rule):
+        # Match up the pipelines:
+        rule.match_pipelines(self.pipelines)
+        for pipeline_counter, pipeline in enumerate(rule.pipelines):
+            if pipeline_counter == 0:
+                initial_data = None
+                data = pipeline.run(initial_data, rule, self)
+            else:
+                data = pipeline.run(data, rule, self)
         return data

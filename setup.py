@@ -34,6 +34,8 @@ setup(
         "cf_xarray",
         "chemicals",
         "click-loguru",
+        "dask",
+        "distributed",
         "dill",
         "dpath",
         "pendulum",
