@@ -21,7 +21,7 @@ class CMORizer:
         **kwargs,
     ):
         self._general_cfg = general_cfg or {}
-        self._pycmorize_cfg = pymorize_cfg or {}
+        self._pymorize_cfg = pymorize_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
