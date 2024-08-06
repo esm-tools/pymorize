@@ -122,7 +122,7 @@ class CMORizer:
         if parallel:
             return self.parallel_process()
         else:
-            return self.serial_process
+            return self.serial_process()
 
     def parallel_process(self, external_client=None):
         if external_client:
@@ -138,8 +138,9 @@ class CMORizer:
         return results
 
     def serial_process(self):
+        data = {}
         for rule in track(self.rules, description="Processing rules"):
-            self._process_rule(rule)
+            data[rule] = self._process_rule(rule)
         logger.success("Processing completed.")
         return data
 
