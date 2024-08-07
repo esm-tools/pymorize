@@ -14,6 +14,9 @@ def read(filename):
         return re.sub(text_type(r":[a-z]+:`~?(.*?)`"), text_type(r"``\1``"), fd.read())
 
 
+docs_require = read("doc/requirements.txt").splitlines()
+
+
 setup(
     name="pymorize",
     python_requires=">=3.9, <4",
@@ -31,12 +34,15 @@ setup(
         "cf_xarray",
         "chemicals",
         "click-loguru",
+        "dask",
+        "distributed",
         "dill",
         "dpath",
         "pendulum",
         "pint-xarray",
         "pyyaml",
         "questionary",
+        "randomname",
         "rich-click",
         "versioneer",
         "xarray",
@@ -46,15 +52,17 @@ setup(
             "black",
             "flake8",
             "isort",
+            "pooch",
             "pre-commit",
+            "pyfakefs",
             "pytest",
             "pytest-asyncio",
             "pytest-cov",
             "pytest-xdist",
-            "pyfakefs",
             "sphinx",
             "sphinx_rtd_theme",
         ],
+        "doc": docs_require,
     },
     entry_points={
         "console_scripts": [

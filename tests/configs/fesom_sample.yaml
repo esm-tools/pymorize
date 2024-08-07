@@ -31,9 +31,6 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_salt.nc
     output_file: salt.nc
-    actions:
-      - pymorize.generic.linear_transform:
-          slope: 20.0
   - model_variable: ssh
     model_units: m
     cmor_variable: zos
@@ -41,11 +38,6 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_ssh.nc
     output_file: ssh.nc
-    actions:
-      - pymorize.generic.invert_z_axis:
-          args:
-            - False
-          kwargs: {}
   - model_variable: u
     model_units: m/s
     cmor_variable: uo
@@ -53,13 +45,6 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_u.nc
     output_file: u.nc
-    actions:
-      - pymorize.generic.invert_z_axis:
-      - pymorize.generic.linear_transform:
-          args: []
-          kwargs:
-            slope: 1.0
-            intercept: 0.0
   - model_variable: temp
     model_units: degC
     cmor_variable: thetao
@@ -67,9 +52,3 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_temp.nc
     output_file: temp.nc
-    actions:
-      - pymorize.generic.set_cmor_metadata:
-      - pymorize.generic.convert_units:
-          kwargs:
-            source_units: degC
-            target_units: K

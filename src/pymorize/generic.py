@@ -16,53 +16,31 @@ The Full CMOR (yes, bad pun):
 """
 
 import datetime
+import tempfile
 from pathlib import Path
 
 import xarray as xr
-from loguru import logger
+
+from .logging import logger
 
 
-def convert_units(filepath: Path, source_units: str, target_units: str):
-    """
-    Converts the units of a NetCDF file, using the Pint library.
-
-    Parameters
-    ----------
-    filepath : Path
-        Path to the input file.
-    source_units : str
-    target_units : str
-    """
-    ds = xr.open_dataset(filepath)
-    ds = ds.pint.quantify()
-    ds = ds.pint.to(target_units)
-    ds = ds.pint.dequantify()
-    logger.info(f"Converted units of {filepath} from {source_units} to {target_units}")
-    ds.to_netcdf(filepath)
+def time_average(data, rule_spec, cmorizer, *args, **kwargs):
+    if cmorizer["use_xarray_back"]:
+        data = data.resample(time=rule_spec["frequency"]).mean()
+    else:
+        # CDO Call
+        pass
+    return data
 
 
-def set_cmor_metadata(filepath: Path, cmor_metadata: dict, attrs_to_skip=[]):
-    """
-    Adds CMOR metadata to a NetCDF file.
-
-    Parameters
-    ----------
-    filepath : Path
-        Path to the input file.
-    cmor_metadata : dict
-        Dictionary with the CMOR metadata to be added to the file.
-    attrs_to_skip : list of str, optional
-        List of attributes to skip when adding CMOR metadata.
-    """
-    attrs_to_skip = attrs_to_skip or ["units", "cell_methods", "cell_measures"]
-    ds = xr.open_dataset(filepath)
-    for key, value in cmor_metadata.items():
-        if key in attrs_to_skip:
-            continue
-        ds.attrs[key] = value
-    hist_str = ds.attrs.get("history", "")
-    hist_str += f"\n{datetime.now()}: CMOR metadata added by ``pymorize``\n"
-    ds.to_netcdf(filepath)
+def load_data(data, rule_spec, cmorizer, *args, **kwargs):
+    """Loads data described by the rule_spec."""
+    ds_list = []
+    for pattern in rule_spec["input_patterns"]:
+        ds = xr.open_mfdataset(pattern, combine="by_coords")
+        ds_list.append(ds)
+    data = xr.concat(ds_list, dim="time")
+    return data
 
 
 def linear_transform(
@@ -121,18 +99,6 @@ def create_cmor_directories(config: dict) -> dict:
     """
     Creates the directory structure for the CMORized files.
 
-    Directory structure =
-     <mip_era>/
-      <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
-       <institution_id>/
-         <source_id>/
-         <experiment_id>/
-          <member_id>/
-           <table_id>/
-            <variable_id>/
-             <grid_label>/
-              <version>
-
     Parameters
     ----------
     config : dict
@@ -143,6 +109,17 @@ def create_cmor_directories(config: dict) -> dict:
     --------
     https://docs.google.com/document/d/1h0r8RZr_f3-8egBMMh7aqLwy3snpD6_MrDz1q8n5XUk/edit
     """
+    # Directory structure =
+    # <mip_era>/
+    #  <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+    #   <institution_id>/
+    #     <source_id>/
+    #     <experiment_id>/
+    #      <member_id>/
+    #       <table_id>/
+    #        <variable_id>/
+    #         <grid_label>/
+    #          <version>
     mip_era = config["mip_era"]
     activity_id = config["activity_id"]
     institution_id = config.get(
@@ -175,3 +152,43 @@ def create_cmor_directories(config: dict) -> dict:
     logger.info(f"Created directory structure for CMORized files in {output_dir}")
     config["output_dir"] = output_dir
     return config
+
+
+def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Loads the xarray tutorial data
+    """
+    logger.info("Loading data")
+    data = xr.tutorial.open_dataset("air_temperature")
+    return data
+
+
+def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Prints data to screen and adds a dummy attribute to the data.
+    """
+    logger.info(data)
+    logger.info("Adding dummy attribute to data")
+    data.attrs["dummy_attribute"] = "dummy_value"
+    logger.info(f"Data attributes: {data.attrs}")
+    return data
+
+
+def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Saves the data to a netcdf file.
+    """
+    ofile = tempfile.mktemp(suffix=".nc")
+    data.to_netcdf(ofile)
+    logger.success(f"Data saved to {ofile}")
+    return data
+
+
+def dummy_sleep(data, rule_spec, cmorizer, *arg, **kwargs):
+    """
+    A dummy function for testing. Sleeps for 5 seconds.
+    """
+    import time
+
+    time.sleep(5)
+    return data

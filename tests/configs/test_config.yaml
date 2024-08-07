@@ -1,0 +1,46 @@
+pymorize:
+  version: "unreleased"
+  use_xarray_backend: true
+general:
+  name: "test"
+  description: "This is a test configuration"
+  maintainer: "pgierz"
+  email: "pgierz@awi.de"
+  cmor_version: "CMIP6"
+  mip: "CMIP"
+  frequency: "mon"
+pipelines:
+  - name: "test_pipeline"
+    uses: "pymorize.pipeline.TestingPipeline"
+  - name: "my_pipeline"
+    steps:
+      - "pymorize.generic.dummy_load_data"
+      - "pymorize.units.handle_unit_conversion"
+      - "pymorize.generic.dummy_save_data"
+  - name: "sleeper_pipeline"
+    steps:
+      - "pymorize.generic.dummy_sleep"
+rules:
+  - name: "test_rule"
+    pipelines: ["test_pipeline"]
+    enabled: true
+    description: "This is a test rule"
+    cmor_variable: "tas"
+    input_patterns:
+      - "test_input"
+  - name: "test_rule2"
+    pipelines: ["my_pipeline"]
+    enabled: true
+    description: "This is a test rule"
+    cmor_variable: "tas"
+    cmor_units: "degC"
+    input_patterns:
+      - "test_input"
+  - name: test_rule3
+    enabled: false
+    input_patterns: ["/a/b/c"]
+    cmor_variable: null
+  - name: test_rule4
+    cmor_variable: null
+    pipelines: ["sleeper_pipeline"]
+    input_patterns: ["/a/b/c"]

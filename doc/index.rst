@@ -13,6 +13,7 @@ Contents
    :maxdepth: 2
   
    installation
+   pymorize_building_blocks
    pymorize_config_file
    including_subcommand_plugins
    developer_guide
