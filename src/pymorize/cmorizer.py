@@ -8,6 +8,7 @@ from rich.progress import track
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
+from .validate import PIPELINES_SCHEMA, PipelineValidator
 
 
 class CMORizer:
@@ -56,6 +57,10 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+        if "pipelines" in data:
+            v = PipelineValidator(PIPELINES_SCHEMA)
+            if not v.validate({"pipelines": data["pipelines"]}):
+                raise ValueError(v.errors)
         for pipeline in data.get("pipelines", []):
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
