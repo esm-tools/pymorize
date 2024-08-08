@@ -16,6 +16,7 @@ class Rule:
         input_patterns: typing.Union[str, typing.List[str]],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
+        tables = [],
         **kwargs,
     ):
         """
@@ -46,6 +47,7 @@ class Rule:
 
         self.cmor_variable = cmor_variable
         self.pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self.tables = tables
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
         # Attach all keyword arguments to the object
         for key, value in kwargs.items():
@@ -111,6 +113,9 @@ class Rule:
                 "pipelines": [p.to_dict() for p in self.pipelines],
             }
         )
+
+    def add_table(self, tbl):
+        self.tables.append(tbl)
 
     # FIXME: Not used and broken+
     # @classmethod
