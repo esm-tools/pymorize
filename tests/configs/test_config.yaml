@@ -39,8 +39,8 @@ rules:
   - name: test_rule3
     enabled: false
     input_patterns: ["/a/b/c"]
-    cmor_variable: null
+    cmor_variable: "so"
   - name: test_rule4
-    cmor_variable: null
+    cmor_variable: "thetao"
     pipelines: ["sleeper_pipeline"]
     input_patterns: ["/a/b/c"]

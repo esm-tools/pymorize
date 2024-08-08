@@ -72,6 +72,16 @@ RULES_SCHEMA = {
                     "schema": {"type": "string"},
                     "required": True,
                 },
+                "enabled": {"type": "boolean", "required": False},
+                "description": {"type": "string", "required": False},
+                "pipelines": {
+                    "type": "list",
+                    # FIXME(PG): Should cross-check with pipelines.
+                    "schema": {"type": "string"},
+                },
+                "cmor_units": {"type": "string", "required": False},
+                # FIXME(PS): How is it currently defined?
+                "model_units": {"type": "string", "required": False},
             },
         },
     },
