@@ -55,3 +55,26 @@ PIPELINES_SCHEMA = {
     },
 }
 """dict : Schema for validating pipelines configuration."""
+
+PIPELINES_VALIDATOR = PipelineValidator(PIPELINES_SCHEMA)
+"""Validator : Validator for pipelines configuration."""
+
+RULES_SCHEMA = {
+    "rules": {
+        "type": "list",
+        "schema": {
+            "type": "dict",
+            "schema": {
+                "name": {"type": "string", "required": False},
+                "cmor_variable": {"type": "string", "required": True},
+                "input_patterns": {
+                    "type": "list",
+                    "schema": {"type": "string"},
+                    "required": True,
+                },
+            },
+        },
+    },
+}
+"""dict : Schema for validating rules configuration."""
+RULES_VALIDATOR = Validator(RULES_SCHEMA)
