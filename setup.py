@@ -31,12 +31,12 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
+        "cerberus",
         "cf_xarray",
         "chemicals",
         "click-loguru",
         "dask",
         "distributed",
-        "dill",
         "dpath",
         "pendulum",
         "pint-xarray",
@@ -50,6 +50,7 @@ setup(
     extras_require={
         "dev": [
             "black",
+            "dill",
             "flake8",
             "isort",
             "pooch",
