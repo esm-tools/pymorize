@@ -1,3 +1,5 @@
+import os
+
 import pytest
 
 from pymorize.data_request import DataRequest, DataRequestTable
@@ -6,10 +8,11 @@ from pymorize.data_request import DataRequest, DataRequestTable
 class TestDataRequest:
     @pytest.fixture(autouse=True)
     def setup(self):
+        current_location = os.path.dirname(os.path.abspath(__file__)) + "/../"
         self.datarequest_paths = []
-        self.datarequest_paths.append("tests/fixtures/CMIP6_3hr.json")
-        self.datarequest_paths.append("tests/fixtures/CMIP6_SIday.json")
-        self.datarequest_paths.append("tests/fixtures/CMIP6_Oday.json")
+        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_3hr.json")
+        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_SIday.json")
+        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_Oday.json")
 
     def test_approx_interval_for_table_Omon_is_30(self):
         assert DataRequest.approx_interval_for_table("Omon") == 30.0
