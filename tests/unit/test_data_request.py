@@ -18,7 +18,8 @@ class TestDataRequest:
         assert DataRequest.approx_interval_for_table("Omon") == 30.0
 
     def test_difmxybo_and_difmxybo2d_exist(self):
-        dr = DataRequest(["tests/fixtures/difmxybo2d/CMIP6_Oclim.json"])
+        current_location = os.path.dirname(os.path.abspath(__file__)) + "/../"
+        dr = DataRequest([f"{current_location}/fixtures/difmxybo2d/CMIP6_Oclim.json"])
         assert dr.variable_ids == ["difmxybo", "difmxybo2d"]
 
     def test_returns_version(self):
@@ -91,16 +92,18 @@ class TestDataRequestTable:
         self.t = DataRequestTable(self.datarequest_path)
 
     def test_can_create_variable_objects(self):
-        assert self.t.variable_entries[0].variable_id == "chlos"
+        assert "chlos" in self.t.variable_entries
 
     def test_can_read_frequencies(self):
-        assert self.t.frequencies == ["day"]
+        assert self.t.frequencies == set(["day"])
 
     def test_can_read_multiple_frequencies(self):
-        assert DataRequestTable("tests/fixtures/CMIP6_3hr.json").frequencies == [
-            "3hr",
-            "3hrPt",
-        ]
+        assert DataRequestTable("tests/fixtures/CMIP6_3hr.json").frequencies == set(
+            [
+                "3hrPt",
+                "3hr",
+            ],
+        )
 
     def test_can_read_variable_ids(self):
         assert self.t.variable_ids == [

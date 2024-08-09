@@ -1,12 +1,19 @@
 import glob
 import json
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Union
+
+from .frequency import CMIP_FREQUENCIES, Frequency, TimeMethods
 
 
 class DataRequest:
     """Represents a data request with associated metadata."""
+
+    @staticmethod
+    def approx_interval_for_table(table_id):
+        return CMIP_FREQUENCIES[table_id]
 
     def __init__(self, paths: list[Union[str, Path]]):
         """
@@ -23,7 +30,10 @@ class DataRequest:
                 )
         self.tables = sorted(self.tables, key=lambda x: x.table_id)
         # Merge variables with identical variable_id and frequency which may appear in multiple tables
-        vars = [var for t in self.tables for var in t.variable_entries]
+        vars = []
+        for t in self.tables:
+            for var in t.variable_entries.values():
+                vars.append(var)
         merged_vars = []
         vars = sorted(
             vars,
@@ -39,7 +49,7 @@ class DataRequest:
             ):
                 merged_vars[-1].merge_table_var_entry(v)
             else:
-                merged_vars.append(DataRequestVariable.new_from_table_var_entry(v))
+                merged_vars.append(DataRequestVariable.from_table_var_entry(v))
 
         self.variables = merged_vars
 
@@ -91,7 +101,7 @@ class DataRequest:
 
     @property
     def table_ids(self):
-        return [table_id for t in self.tables for table_id in t.table_id]
+        return [t.table_id for t in self.tables]
 
     def __str__(self):
         s = f"=== {self.version} ===\n"
@@ -195,7 +205,8 @@ class TableVarEntry:
         self.variable_id = variable_entry_key
         self._data = variable_dict
         self.table = table
-        self.frequency = self._data["frequency"]
+        self.frequency_name = self._data["frequency"]
+        self.time_method = Frequency.for_name(self.frequency_name).time_method
         self.unit = self._data["units"]
         self.description = self._data["comment"]
         self.realms = self._data["modeling_realm"].split(" ")
@@ -248,7 +259,7 @@ class DataRequestTable:
     def frequencies(self):
         """Frequencies described by this data request table."""
         frequencies = []
-        for variable_dict in self._data["variable_entry"]:
+        for variable_dict in self._data["variable_entry"].values():
             if "frequency" in variable_dict:
                 frequencies.append(variable_dict["frequency"])
         return set(frequencies)
@@ -269,4 +280,4 @@ class DataRequestTable:
     @property
     def approx_interval(self):
         """Approximate interval of the data request in days."""
-        return self._data["approx_interval"]
+        return self._data["Header"]["approx_interval"]
