@@ -1,11 +1,10 @@
 import glob
 import json
 import re
-from enum import Enum
 from pathlib import Path
 from typing import Union
 
-from .frequency import CMIP_FREQUENCIES, Frequency, TimeMethods
+from .frequency import CMIP_FREQUENCIES, Frequency
 
 
 class DataRequest:
@@ -34,12 +33,12 @@ class DataRequest:
         for t in self.tables:
             for var in t.variable_entries.values():
                 vars.append(var)
-        merged_vars = []
         vars = sorted(
             vars,
             key=lambda v: f"{v.variable_id} {v.unit} {v.time_method} {v.table.approx_interval} {v.table.table_id}",
         )
 
+        merged_vars = []
         for v in vars:
             if (
                 merged_vars
@@ -53,6 +52,8 @@ class DataRequest:
 
         self.variables = merged_vars
 
+    # FIXME(PS): Pavan, can you have a look here? You had a more elegant way instead of hardcoding the
+    # paths to the tables.
     @classmethod
     def new_from_tables_dir(cls, path):
         eligible_files = glob.glob(f"{path}/CMIP6_*.json")
@@ -93,14 +94,32 @@ class DataRequest:
 
     @property
     def variable_ids(self):
+        """
+        Returns
+        -------
+        list
+            A list of variable IDs from the variables property.
+        """
         return [v.variable_id for v in self.variables]
 
     @property
     def version(self):
+        """
+        Returns
+        -------
+        str
+            The version of the first table in the tables property.
+        """
         return self.tables[0].version
 
     @property
     def table_ids(self):
+        """
+        Returns
+        -------
+        list
+            A list of table IDs from the tables property.
+        """
         return [t.table_id for t in self.tables]
 
     def __str__(self):
@@ -153,6 +172,7 @@ class DataRequestVariable:
         )
 
     def merge_table_var_entry(self, var_entry):
+        breakpoint()
         self.tables.append(var_entry.table)
         self.frequencies.append(var_entry.frequency_name)
         self.cell_methods_list.append(
@@ -161,7 +181,11 @@ class DataRequestVariable:
         self.cell_measures_list.append(
             var_entry.cell_measures
         )  # some variables have different entries for cell_measures for different tables
-        # we do not merge time methods, as we treat identical variable_ids with different time methods as different variables
+
+        # FIXME(PS): Pavan, can you have a look here? This is part of the reason the last test is failing
+        #
+        # In the original code: we do not merge time methods, as we treat identical variable_ids with different
+        # time methods as different variables
 
     @property
     def table_ids(self):
