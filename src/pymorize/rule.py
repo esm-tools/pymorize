@@ -5,7 +5,7 @@ from collections import OrderedDict
 # import questionary
 import yaml
 
-from . import pipeline
+from . import data_request, pipeline
 from .logging import logger
 
 
@@ -16,7 +16,7 @@ class Rule:
         input_patterns: typing.Union[str, typing.List[str]],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
-        tables = [],
+        tables: typing.List[data_request.DataRequestTable] = [],
         **kwargs,
     ):
         """
