@@ -1,4 +1,5 @@
 from pathlib import Path
+import json
 
 import questionary
 from dask.distributed import Client
@@ -27,6 +28,46 @@ class CMORizer:
 
         self._post_init_create_pipelines()
         self._post_init_create_rules()
+        self._post_init_read_bare_tables()
+        self._post_init_populate_rules_with_tables()
+
+    def _post_init_read_bare_tables(self):
+        """
+        Loads all the tables from table directory as a mapping object.
+        A shortned version of the filename (i.e., CMIP6_Omon.json -> Omon) is used as the mapping key.
+        The same key format is used in CMIP6_table_id.json
+        """
+        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+        table_files = {
+            path.stem.lstrip("CMIP6_"): path for path in Path(table_dir).glob("*.json")
+        }
+        # Some addition tables found in table_dir which are not part of listed tables in CMIP6_table_id.json
+        # To drop them we need to read CMIP6_table_id.json
+        # Tables to skip: 'CV', 'coordinate', 'formula_terms', 'grids', 'input_example'
+        # For now, ignoring this step
+        tables = {
+            tbl_name: json.loads(tbl_file.read_text())
+            for tbl_name, tbl_file in table_files.items()
+        }
+        self._general_cfg["tables"] = tables
+
+    def _post_init_populate_rules_with_tables(self):
+        tables = self._general_cfg["tables"]
+
+        def find_variable_entry(name):
+            "returns table header and variable attributes for the given variable"
+            res = {}
+            for tbl_name, tbl in tables.items():
+                if var_entry := tbl.get("variable_entry"):
+                    if var_data := var_entry.get(name):
+                        res |= {tbl_name: {"Header": tbl.get("Header"), name: var_data}}
+            return res
+
+        # TODO fix the rules object
+        for rule in rules:
+            var_name = rule.cmor_variable
+            subset_of_matching_tables = find_variable_entry(var_name)
+            rule.add_table(subset_of_matching_tables)
 
     def _post_init_create_pipelines(self):
         pipelines = []

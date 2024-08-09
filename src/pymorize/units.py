@@ -7,19 +7,36 @@ In case of missing units in either model files or CMIP Tables, this module can
 not convert from a dimentionless base to something with dimension. Dealing with
 such thing have to done with `action` section in the Rules module on a per
 variable basis.
+
+Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
+names and corresponding number of days are available as a dictionary in the
+``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
+can be done with the ``assign_frequency_to_unit_registry`` function.
 """
 
 import re
+import warnings
 from typing import Pattern, Union
 
-import cf_xarray.units
+warnings.filterwarnings(
+    "ignore", message=".*unavailable to set up matplotlib support.*"
+)
+
+import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
 
+from .frequency import CMIP_FREQUENCIES
 from .logging import logger
 
 ureg = pint_xarray.unit_registry
+
+
+def assign_frequency_to_unit_registry():
+    """Assign the CMIP6 frequencies to the unit registry."""
+    for freq_name, days in CMIP_FREQUENCIES.items():
+        ureg.define(f"{freq_name} = {days} * d")
 
 
 def handle_chemicals(
