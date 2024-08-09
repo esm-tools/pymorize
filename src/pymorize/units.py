@@ -7,6 +7,11 @@ In case of missing units in either model files or CMIP Tables, this module can
 not convert from a dimentionless base to something with dimension. Dealing with
 such thing have to done with `action` section in the Rules module on a per
 variable basis.
+
+Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
+names and corresponding number of days are available as a dictionary in the 
+``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
+can be done with the ``assign_frequency_to_unit_registry`` function.
 """
 
 import re
@@ -20,6 +25,54 @@ from chemicals import periodic_table
 from .logging import logger
 
 ureg = pint_xarray.unit_registry
+
+CMIP_FREQUENCIES = {
+    "3hr": 3.0 / 24,
+    "6hrLev": 6.0 / 24,
+    "6hrPlev": 6.0 / 24,
+    "6hrPlevPt": 6.0 / 24,
+    "AERday": 1.0,
+    ############################################################################################
+    # NOTE: for AERhr, data request 01.00.27 says "1.0" here, but this seems to be wrong
+    # NOTE: Taken from Jan Hegewald's seamore tool.
+    "AERhr": 1.0 / 24,
+    ############################################################################################
+    "AERmon": 30.0,
+    "AERmonZ": 30.0,
+    "Amon": 30.0,
+    "CF3hr": 3.0 / 24,
+    "CFday": 1.0,
+    "CFmon": 30.0,
+    "day": 1.0,
+    "E3hr": 3.0 / 24,
+    "E3hrPt": 3.0 / 24,
+    "E6hrZ": 6.0 / 24,
+    "Eday": 1.0,
+    "EdayZ": 1.0,
+    "Emon": 30.0,
+    "EmonZ": 30.0,
+    "Eyr": 365.0,
+    "ImonAnt": 30.0,
+    "ImonGre": 30.0,
+    "IyrAnt": 365.0,
+    "IyrGre": 365.0,
+    "LImon": 30.0,
+    "Lmon": 30.0,
+    "Oclim": 30.0,
+    "Oday": 1.0,
+    "Odec": 3650.0,
+    "Omon": 30.0,
+    "Oyr": 365.0,
+    "SIday": 1.0,
+    "SImon": 30.0,
+}
+"""dict : A dictionary mapping CMIP6 frequency names to the number of days in that frequency."""
+
+
+def assign_frequency_to_unit_registry():
+    """Assign the CMIP6 frequencies to the unit registry."""
+    for freq_name, days in CMIP_FREQUENCIES.items():
+        ureg.define(f"{freq_name} = {days} * d")
 
 
 def handle_chemicals(
