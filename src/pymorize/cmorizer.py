@@ -63,8 +63,7 @@ class CMORizer:
                         res |= {tbl_name: {"Header": tbl.get("Header"), name: var_data}}
             return res
 
-        # TODO fix the rules object
-        for rule in rules:
+        for rule in self.rules:
             var_name = rule.cmor_variable
             subset_of_matching_tables = find_variable_entry(var_name)
             rule.add_table(subset_of_matching_tables)
