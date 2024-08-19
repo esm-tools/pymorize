@@ -9,6 +9,7 @@ general:
   cmor_version: "CMIP6"
   mip: "CMIP"
   frequency: "mon"
+  CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
 pipelines:
   - name: "test_pipeline"
     uses: "pymorize.pipeline.TestingPipeline"

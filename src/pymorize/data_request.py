@@ -29,17 +29,17 @@ class DataRequest:
                 )
         self.tables = sorted(self.tables, key=lambda x: x.table_id)
         # Merge variables with identical variable_id and frequency which may appear in multiple tables
-        vars = []
+        _vars = []
         for t in self.tables:
             for var in t.variable_entries.values():
-                vars.append(var)
-        vars = sorted(
-            vars,
+                _vars.append(var)
+        _vars = sorted(
+            _vars,
             key=lambda v: f"{v.variable_id} {v.unit} {v.time_method} {v.table.approx_interval} {v.table.table_id}",
         )
 
         merged_vars = []
-        for v in vars:
+        for v in _vars:
             if (
                 merged_vars
                 and merged_vars[-1].variable_id == v.variable_id

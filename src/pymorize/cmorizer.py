@@ -90,8 +90,8 @@ class CMORizer:
     @classmethod
     def from_dict(cls, data):
         instance = cls(
-            pymorize_cfg=data.get("pymorize_cfg", {}),
-            general_cfg=data.get("general_cfg", {}),
+            pymorize_cfg=data.get("pymorize", {}),
+            general_cfg=data.get("general", {}),
         )
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
