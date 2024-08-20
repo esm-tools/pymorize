@@ -117,6 +117,9 @@ class Rule:
     def add_table(self, tbl):
         self.tables.append(tbl)
 
+    def assign_data_request_variable(self, data_request_variable):
+        self.data_request_variable = data_request_variable
+
     # FIXME: Not used and broken+
     # @classmethod
     # def from_interface(cls, cmor_table=None):

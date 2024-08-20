@@ -9,6 +9,7 @@ from rich.progress import track
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
+from .data_request import DataRequestTable
 
 
 class CMORizer:
@@ -39,34 +40,33 @@ class CMORizer:
         """
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
         table_files = {
-            path.stem.lstrip("CMIP6_"): path for path in Path(table_dir).glob("*.json")
+            path.stem.replace("CMIP6_", ""): path
+            for path in Path(table_dir).glob("*.json")
         }
-        # Some addition tables found in table_dir which are not part of listed tables in CMIP6_table_id.json
-        # To drop them we need to read CMIP6_table_id.json
-        # Tables to skip: 'CV', 'coordinate', 'formula_terms', 'grids', 'input_example'
-        # For now, ignoring this step
-        tables = {
-            tbl_name: json.loads(tbl_file.read_text())
-            for tbl_name, tbl_file in table_files.items()
-        }
-        self._general_cfg["tables"] = tables
+        ignore = {"CV", "coordinate", "formula_terms", "grids", "input_example"}
+        tables = {}
+        for tbl_name, tbl_file in table_files.items():
+            logger.debug(f"{tbl_name}, {tbl_file}")
+            if tbl_name not in ignore:
+                logger.debug(f"Adding Table {tbl_name}")
+                tables[tbl_name] = DataRequestTable(tbl_file)
+        self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_populate_rules_with_tables(self):
         tables = self._general_cfg["tables"]
-
-        def find_variable_entry(name):
-            "returns table header and variable attributes for the given variable"
-            res = {}
-            for tbl_name, tbl in tables.items():
-                if var_entry := tbl.get("variable_entry"):
-                    if var_data := var_entry.get(name):
-                        res |= {tbl_name: {"Header": tbl.get("Header"), name: var_data}}
-            return res
-
+        # logger.debug(f"Inside {__name__}. Rules: {self.rules}")
         for rule in self.rules:
+            logger.debug(f"Rule {rule}")
             var_name = rule.cmor_variable
-            subset_of_matching_tables = find_variable_entry(var_name)
-            rule.add_table(subset_of_matching_tables)
+            for tbl in tables.values():
+                logger.debug(f"looking into table {tbl.table_id}")
+                if var_name in tbl.variable_ids:
+                    logger.debug(f"{var_name} is defined in Table {tbl.table_id}")
+                    rule.add_table(tbl)
+
+    def _post_init_data_request_variables(self):
+        for rule in self.rules:
+            rule.cmor_variable
 
     def _post_init_create_pipelines(self):
         pipelines = []
@@ -96,6 +96,7 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+        instance._post_init_populate_rules_with_tables()
         for pipeline in data.get("pipelines", []):
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
