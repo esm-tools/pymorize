@@ -6,7 +6,8 @@ import inspect
 from functools import partial
 
 import pkg_resources
-from loguru import logger
+
+from .logging import logger
 
 
 def get_callable_by_name(name):

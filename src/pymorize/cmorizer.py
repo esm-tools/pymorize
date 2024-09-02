@@ -1,12 +1,12 @@
-import json
-import sys
 from pathlib import Path
 
 import questionary
-import yaml
-from loguru import logger
+from dask.distributed import Client
+from rich.progress import track
 
-from .pipeline import DefaultPipeline, Pipeline
+# from . import logging_helper
+from .logging import logger
+from .pipeline import Pipeline
 from .rule import Rule
 
 
@@ -21,7 +21,7 @@ class CMORizer:
         **kwargs,
     ):
         self._general_cfg = general_cfg or {}
-        self._pycmorize_cfg = pymorize_cfg or {}
+        self._pymorize_cfg = pymorize_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
@@ -116,13 +116,38 @@ class CMORizer:
                 for filepath in all_files_in_output_dir:
                     logger.warning(filepath)
 
-    def process(self):
-        # Each rule can be parallelized
-        for rule in self.rules:
-            # Match up the pipelines:
-            rule.match_pipelines(self.pipelines)
-            initial_data = None
-            for pipeline in rule.pipelines:
-                # All steps get data, the rule instance, and the cmorizer instance passed it!
-                # FIXME: need to map the pipeline string to the actual instance
-                pipeline.run(initial_data, rule, self)
+    def process(self, parallel=None):
+        if parallel is None:
+            parallel = self._pymorize_cfg.get("parallel", False)
+        if parallel:
+            return self.parallel_process()
+        else:
+            return self.serial_process()
+
+    def parallel_process(self, external_client=None):
+        if external_client:
+            client = external_client
+        else:
+            client = Client()  # start a local Dask client
+
+        futures = [client.submit(self._process_rule, rule) for rule in self.rules]
+
+        results = client.gather(futures)
+
+        logger.success("Processing completed.")
+        return results
+
+    def serial_process(self):
+        data = {}
+        for rule in track(self.rules, description="Processing rules"):
+            data[rule] = self._process_rule(rule)
+        logger.success("Processing completed.")
+        return data
+
+    def _process_rule(self, rule):
+        # Match up the pipelines:
+        rule.match_pipelines(self.pipelines)
+        data = None
+        for pipeline in rule.pipelines:
+            data = pipeline.run(data, rule, self)
+        return data

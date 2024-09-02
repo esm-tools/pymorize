@@ -16,10 +16,21 @@ The Full CMOR (yes, bad pun):
 """
 
 import datetime
+import tempfile
 from pathlib import Path
 
 import xarray as xr
-from loguru import logger
+
+from .logging import logger
+
+
+def time_average(data, rule_spec, cmorizer, *args, **kwargs):
+    if cmorizer["use_xarray_back"]:
+        data = data.resample(time=rule_spec["frequency"]).mean()
+    else:
+        # CDO Call
+        pass
+    return data
 
 
 def load_data(data, rule_spec, cmorizer, *args, **kwargs):
@@ -88,18 +99,6 @@ def create_cmor_directories(config: dict) -> dict:
     """
     Creates the directory structure for the CMORized files.
 
-    Directory structure =
-     <mip_era>/
-      <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
-       <institution_id>/
-         <source_id>/
-         <experiment_id>/
-          <member_id>/
-           <table_id>/
-            <variable_id>/
-             <grid_label>/
-              <version>
-
     Parameters
     ----------
     config : dict
@@ -110,6 +109,17 @@ def create_cmor_directories(config: dict) -> dict:
     --------
     https://docs.google.com/document/d/1h0r8RZr_f3-8egBMMh7aqLwy3snpD6_MrDz1q8n5XUk/edit
     """
+    # Directory structure =
+    # <mip_era>/
+    #  <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+    #   <institution_id>/
+    #     <source_id>/
+    #     <experiment_id>/
+    #      <member_id>/
+    #       <table_id>/
+    #        <variable_id>/
+    #         <grid_label>/
+    #          <version>
     mip_era = config["mip_era"]
     activity_id = config["activity_id"]
     institution_id = config.get(
@@ -142,3 +152,43 @@ def create_cmor_directories(config: dict) -> dict:
     logger.info(f"Created directory structure for CMORized files in {output_dir}")
     config["output_dir"] = output_dir
     return config
+
+
+def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Loads the xarray tutorial data
+    """
+    logger.info("Loading data")
+    data = xr.tutorial.open_dataset("air_temperature")
+    return data
+
+
+def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Prints data to screen and adds a dummy attribute to the data.
+    """
+    logger.info(data)
+    logger.info("Adding dummy attribute to data")
+    data.attrs["dummy_attribute"] = "dummy_value"
+    logger.info(f"Data attributes: {data.attrs}")
+    return data
+
+
+def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
+    """
+    A dummy function for testing. Saves the data to a netcdf file.
+    """
+    ofile = tempfile.mktemp(suffix=".nc")
+    data.to_netcdf(ofile)
+    logger.success(f"Data saved to {ofile}")
+    return data
+
+
+def dummy_sleep(data, rule_spec, cmorizer, *arg, **kwargs):
+    """
+    A dummy function for testing. Sleeps for 5 seconds.
+    """
+    import time
+
+    time.sleep(5)
+    return data

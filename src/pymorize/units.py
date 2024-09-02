@@ -16,7 +16,8 @@ import cf_xarray.units
 import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
-from loguru import logger
+
+from .logging import logger
 
 ureg = pint_xarray.unit_registry
 
@@ -67,8 +68,12 @@ def handle_chemicals(
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
+# FIXME: This needs to have a different signature!
 def handle_unit_conversion(
-    da: xr.DataArray, unit: str, source_unit: Union[str, None] = None
+    da: xr.DataArray,
+    rule_spec,
+    cmorizer,
+    source_unit: Union[str, None] = None,
 ) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
@@ -81,7 +86,13 @@ def handle_unit_conversion(
         unit to convert data to
     source_unit: str or None
         Override the unit on ``da.attrs.unit`` if needed.
+
+    Returns
+    -------
+    ~xr.DataArray
+        DataArray with units converted to `unit`.
     """
+    unit = getattr(rule_spec, "cmor_units", None)
     from_unit = da.attrs.get("units")
     if source_unit is not None:
         logger.debug(
