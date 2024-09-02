@@ -1,132 +1,23 @@
 import glob
 import json
 import re
+from enum import Enum
 from pathlib import Path
 from typing import Union
 
 from .frequency import CMIP_FREQUENCIES, Frequency
+from .logging import logger
 
 
-class DataRequest:
-    """Represents a data request with associated metadata."""
+class IgnoreTableFiles(Enum):
+    """Table files to ignore when reading from a directory."""
 
-    @staticmethod
-    def approx_interval_for_table(table_id):
-        return CMIP_FREQUENCIES[table_id]
-
-    def __init__(self, paths: list[Union[str, Path]]):
-        """
-        Parameters
-        ----------
-        paths : list of str or Path
-            Paths to the data request table files.
-        """
-        self.tables = [DataRequestTable(path) for path in paths]
-        for x in self.tables:
-            if self.tables[0].version != x.version:
-                raise ValueError(
-                    f"tables have different data request versions ({self.tables[0].version}@{self.tables[0].path} vs {x.version}@{x.path})"
-                )
-        self.tables = sorted(self.tables, key=lambda x: x.table_id)
-        # Merge variables with identical variable_id and frequency which may appear in multiple tables
-        _vars = []
-        for t in self.tables:
-            for var in t.variable_entries.values():
-                _vars.append(var)
-        _vars = sorted(
-            _vars,
-            key=lambda v: f"{v.variable_id} {v.unit} {v.time_method} {v.table.approx_interval} {v.table.table_id}",
-        )
-
-        merged_vars = []
-        for v in _vars:
-            if (
-                merged_vars
-                and merged_vars[-1].variable_id == v.variable_id
-                and merged_vars[-1].unit == v.unit
-                and merged_vars[-1].time_method == v.time_method
-            ):
-                merged_vars[-1].merge_table_var_entry(v)
-            else:
-                merged_vars.append(DataRequestVariable.from_table_var_entry(v))
-
-        self.variables = merged_vars
-
-    # FIXME(PS): Pavan, can you have a look here? You had a more elegant way instead of hardcoding the
-    # paths to the tables.
-    @classmethod
-    def new_from_tables_dir(cls, path):
-        eligible_files = glob.glob(f"{path}/CMIP6_*.json")
-        exclude_files = [
-            f"{path}/CMIP6_CV_test.json",
-            f"{path}/CMIP6_coordinate.json",
-            f"{path}/CMIP6_CV.json",
-            f"{path}/CMIP6_formula_terms.json",
-            f"{path}/CMIP6_grids.json",
-            f"{path}/CMIP6_input_example.json",
-        ]
-        eligible_files = [file for file in eligible_files if file not in exclude_files]
-
-        if not eligible_files:
-            raise ValueError(f"no eligible json tables found at path <{path}>")
-
-        return cls(eligible_files)
-
-    def find(self, variable_id, frequency_name):
-        return next(
-            (
-                v
-                for v in self.variables
-                if variable_id == v.variable_id and frequency_name in v.frequencies
-            ),
-            None,
-        )
-
-    def find_variable_id_in_table_id(self, variable_id, table_id):
-        return next(
-            (
-                v
-                for v in self.variables
-                if variable_id == v.variable_id and table_id in v.table_ids
-            ),
-            None,
-        )
-
-    @property
-    def variable_ids(self):
-        """
-        Returns
-        -------
-        list
-            A list of variable IDs from the variables property.
-        """
-        return [v.variable_id for v in self.variables]
-
-    @property
-    def version(self):
-        """
-        Returns
-        -------
-        str
-            The version of the first table in the tables property.
-        """
-        return self.tables[0].version
-
-    @property
-    def table_ids(self):
-        """
-        Returns
-        -------
-        list
-            A list of table IDs from the tables property.
-        """
-        return [t.table_id for t in self.tables]
-
-    def __str__(self):
-        s = f"=== {self.version} ===\n"
-        for v in self.variables:
-            s += f"{v}\n"
-        return s
+    CV_TEST = "CMIP6_CV_test.json"
+    COORDINATE = "CMIP6_coordinate.json"
+    CV = "CMIP6_CV.json"
+    FORMULA_TERMS = "CMIP6_formula_terms.json"
+    GRIDS = "CMIP6_grids.json"
+    INPUT_EXAMPLE = "CMIP6_input_example.json"
 
 
 class DataRequestVariable:
@@ -172,7 +63,11 @@ class DataRequestVariable:
         )
 
     def merge_table_var_entry(self, var_entry):
-        breakpoint()
+        # FIXME(PS): Pavan, can you have a look here? This is part of the reason the last test is failing
+        #
+        # In the original code: we do not merge time methods, as we treat identical variable_ids with different
+        # time methods as different variables
+        # breakpoint()
         self.tables.append(var_entry.table)
         self.frequencies.append(var_entry.frequency_name)
         self.cell_methods_list.append(
@@ -182,13 +77,8 @@ class DataRequestVariable:
             var_entry.cell_measures
         )  # some variables have different entries for cell_measures for different tables
 
-        # FIXME(PS): Pavan, can you have a look here? This is part of the reason the last test is failing
-        #
-        # In the original code: we do not merge time methods, as we treat identical variable_ids with different
-        # time methods as different variables
-
     @property
-    def table_ids(self):
+    def table_ids(self) -> list[str]:
         return [t.table_id for t in self.tables]
 
     def frequency_in_table(self, table_id):
@@ -220,6 +110,172 @@ class DataRequestVariable:
 
     def __str__(self):
         return f"{self.variable_id} '{self.unit}' [{' '.join(self.frequencies)}] [{' '.join([t.table_id for t in self.tables])}]"
+
+    def __repr__(self):
+        return f"""{self.__class__.__name__}(
+                {self.variable_id},
+                {self.unit},
+                {self.description},
+                {self.tables},
+                {self.frequencies},
+                {self.realms},
+                {self.standard_name},
+                {self.cell_methods_list},
+                {self.cell_measures_list})"""
+
+
+class DataRequest:
+    """Represents a data request with associated metadata."""
+
+    # NOTE(PG): Inherited from Ruby Seamore, not needed for now.
+    @staticmethod
+    def approx_interval_for_table(table_id):
+        return CMIP_FREQUENCIES[table_id]
+
+    def __init__(self, paths: list[Union[str, Path]]):
+        """
+        Parameters
+        ----------
+        paths : list of str or Path
+            Paths to the data request table files.
+        """
+        self.tables = [DataRequestTable(path) for path in paths]
+        for x in self.tables:
+            if self.tables[0].version != x.version:
+                raise ValueError(
+                    f"tables have different data request versions ({self.tables[0].version}@{self.tables[0].path} vs {x.version}@{x.path})"
+                )
+        self.tables = sorted(self.tables, key=lambda x: x.table_id)
+        # Merge variables with identical variable_id and frequency which may appear in multiple tables
+        _vars = []
+        for t in self.tables:
+            for var in t.variable_entries.values():
+                _vars.append(var)
+        _vars = sorted(
+            _vars,
+            key=lambda v: f"{v.variable_id} {v.unit} {v.time_method} {v.table.approx_interval} {v.table.table_id}",
+        )
+
+        merged_vars = []
+        for v in _vars:
+            matches = self._find_matching_var_for_merge(v, merged_vars)
+            if matches:
+                for mv in matches:
+                    mv.merge_table_var_entry(v)
+            else:
+                merged_vars.append(DataRequestVariable.from_table_var_entry(v))
+
+        self.variables = merged_vars
+
+    @staticmethod
+    def _find_matching_var_for_merge(
+        v: DataRequestVariable, merged_vars: list[DataRequestVariable]
+    ) -> list[DataRequestVariable]:
+        condition_attrs = ["variable_id", "unit", "time_method"]
+        matches = []
+        for mv in merged_vars:
+            if v.variable_id == mv.variable_id:
+                if v.variable_id == "tos":
+                    logger.debug("variable_id match")
+                    breakpoint()
+            if all(getattr(v, attr) == getattr(mv, attr) for attr in condition_attrs):
+                matches.append(mv)
+        return matches
+
+    @classmethod
+    def from_tables_dir(cls, path):
+        ignore_files = [f"{path}/{file.value}" for file in IgnoreTableFiles]
+        eligible_files = glob.glob(f"{path}/CMIP6_*.json")
+        eligible_files = [f for f in eligible_files if f not in ignore_files]
+
+        if not eligible_files:
+            raise ValueError(f"no eligible json tables found at path <{path}>")
+
+        return cls(eligible_files)
+
+    def find(self, variable_id, frequency_name):
+        """
+        This method finds a variable in the list of variables based on the variable_id and frequency_name.
+
+        Parameters
+        ----------
+        variable_id : str
+            The ID of the variable to find.
+        frequency_name : str
+            The name of the frequency to find.
+
+        Returns
+        -------
+        The found variable, or None if no variable was found.
+        """
+        return next(
+            (
+                v
+                for v in self.variables
+                if variable_id == v.variable_id and frequency_name in v.frequencies
+            ),
+            None,
+        )
+
+    def find_variable_id_in_table_id(self, variable_id, table_id):
+        """
+        This method finds a variable in the list of variables based on the variable_id and table_id.
+
+        Parameters
+        ----------
+        variable_id : str
+            The ID of the variable to find.
+        table_id : str
+            The ID of the table to find.
+
+        Returns
+        -------
+        The found variable, or None if no variable was found.
+        """
+        return next(
+            (
+                v
+                for v in self.variables
+                if variable_id == v.variable_id and table_id in v.table_ids
+            ),
+            None,
+        )
+
+    @property
+    def variable_ids(self):
+        """
+        Returns
+        -------
+        list
+            A list of variable IDs from the variables property.
+        """
+        return [v.variable_id for v in self.variables]
+
+    @property
+    def version(self):
+        """
+        Returns
+        -------
+        str
+            The version of the first table in the tables property.
+        """
+        return self.tables[0].version
+
+    @property
+    def table_ids(self):
+        """
+        Returns
+        -------
+        list
+            A list of table IDs from the tables property.
+        """
+        return [t.table_id for t in self.tables]
+
+    def __str__(self):
+        s = f"=== {self.version} ===\n"
+        for v in self.variables:
+            s += f"{v}\n"
+        return s
 
 
 class TableVarEntry:

@@ -1,15 +1,15 @@
-from pathlib import Path
 import json
+from pathlib import Path
 
 import questionary
 from dask.distributed import Client
 from rich.progress import track
 
+from .data_request import DataRequest, DataRequestTable
 # from . import logging_helper
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
-from .data_request import DataRequestTable
 
 
 class CMORizer:
@@ -30,12 +30,13 @@ class CMORizer:
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
+        self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
 
     def _post_init_read_bare_tables(self):
         """
         Loads all the tables from table directory as a mapping object.
-        A shortned version of the filename (i.e., CMIP6_Omon.json -> Omon) is used as the mapping key.
+        A shortened version of the filename (i.e., ``CMIP6_Omon.json`` -> ``Omon``) is used as the mapping key.
         The same key format is used in CMIP6_table_id.json
         """
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
@@ -52,16 +53,21 @@ class CMORizer:
                 tables[tbl_name] = DataRequestTable(tbl_file)
         self._general_cfg["tables"] = self.tables = tables
 
+    def _post_init_create_data_request(self):
+        """
+        Creates a DataRequest object from the tables directory.
+        """
+        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+        self.data_request = DataRequest.from_tables_dir(table_dir)
+
     def _post_init_populate_rules_with_tables(self):
+        """
+        Populates the rules with the tables in which the variable described by that rule is found.
+        """
         tables = self._general_cfg["tables"]
-        # logger.debug(f"Inside {__name__}. Rules: {self.rules}")
         for rule in self.rules:
-            logger.debug(f"Rule {rule}")
-            var_name = rule.cmor_variable
             for tbl in tables.values():
-                logger.debug(f"looking into table {tbl.table_id}")
-                if var_name in tbl.variable_ids:
-                    logger.debug(f"{var_name} is defined in Table {tbl.table_id}")
+                if rule.cmor_variable in tbl.variable_ids:
                     rule.add_table(tbl)
 
     def _post_init_data_request_variables(self):
@@ -97,6 +103,7 @@ class CMORizer:
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
         instance._post_init_populate_rules_with_tables()
+        instance._post_init_create_data_request()
         for pipeline in data.get("pipelines", []):
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)

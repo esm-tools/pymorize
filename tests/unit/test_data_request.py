@@ -69,7 +69,7 @@ class TestDataRequest:
             "uas",
             "vas",
         ]
-        assert set(DataRequest(self.datarequest_paths).variable_ids) == set(expected_variable_ids)
+        assert DataRequest(self.datarequest_paths).variable_ids == expected_variable_ids
 
     def test_can_be_created_with_multiple_table_paths(self):
         DataRequest(self.datarequest_paths)
