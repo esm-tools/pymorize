@@ -64,6 +64,7 @@ class TestDataRequest:
             "sossq",
             "tas",
             "tos",
+            "tos",
             "tossq",
             "tslsi",
             "uas",

@@ -63,10 +63,6 @@ class DataRequestVariable:
         )
 
     def merge_table_var_entry(self, var_entry):
-        # FIXME(PS): Pavan, can you have a look here? This is part of the reason the last test is failing
-        #
-        # In the original code: we do not merge time methods, as we treat identical variable_ids with different
-        # time methods as different variables
         # breakpoint()
         self.tables.append(var_entry.table)
         self.frequencies.append(var_entry.frequency_name)
