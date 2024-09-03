@@ -1,12 +1,10 @@
-import json
 from pathlib import Path
 
 import questionary
 from dask.distributed import Client
 from rich.progress import track
 
-from .data_request import DataRequest, DataRequestTable
-# from . import logging_helper
+from .data_request import DataRequest, DataRequestTable, IgnoreTableFiles
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
@@ -39,16 +37,15 @@ class CMORizer:
         A shortened version of the filename (i.e., ``CMIP6_Omon.json`` -> ``Omon``) is used as the mapping key.
         The same key format is used in CMIP6_table_id.json
         """
-        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+        table_dir = Path(self._general_cfg["CMIP_Tables_Dir"])
         table_files = {
-            path.stem.replace("CMIP6_", ""): path
-            for path in Path(table_dir).glob("*.json")
+            path.stem.replace("CMIP6_", ""): path for path in table_dir.glob("*.json")
         }
-        ignore = {"CV", "coordinate", "formula_terms", "grids", "input_example"}
         tables = {}
+        ignore_files = set(ignore_file.value for ignore_file in IgnoreTableFiles)
         for tbl_name, tbl_file in table_files.items():
             logger.debug(f"{tbl_name}, {tbl_file}")
-            if tbl_name not in ignore:
+            if tbl_file.name not in ignore_files:
                 logger.debug(f"Adding Table {tbl_name}")
                 tables[tbl_name] = DataRequestTable(tbl_file)
         self._general_cfg["tables"] = self.tables = tables
