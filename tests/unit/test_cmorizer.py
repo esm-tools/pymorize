@@ -1,5 +1,5 @@
 from unittest.mock import Mock, patch
-
+import pytest
 from pymorize.cmorizer import CMORizer
 from pymorize.pipeline import TestingPipeline
 
