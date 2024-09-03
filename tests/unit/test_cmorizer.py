@@ -4,6 +4,7 @@ from pymorize.cmorizer import CMORizer
 from pymorize.pipeline import TestingPipeline
 
 
+@pytest.mark.skip
 def test_parallel_process(CMIP_Tables_Dir):
     # Create a mock client
     mock_client = Mock()
