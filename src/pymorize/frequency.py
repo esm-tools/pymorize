@@ -1,3 +1,36 @@
+#!/usr/bin/env python
+"""
+This module defines the Frequency class and the TimeMethods Enum. 
+
+The Frequency class represents a frequency with a name, an approximate interval, and a time method. 
+The TimeMethods Enum represents various time methods declared in CMIP.
+
+Examples
+--------
+Creating a Frequency instance:
+
+>>> freq = Frequency("day", 1.0)
+>>> print(freq.name)
+'day'
+>>> print(freq.approx_interval)
+1.0
+>>> print(freq.time_method)
+TimeMethods.MEAN
+
+Comparing two Frequency instances:
+
+>>> freq1 = Frequency("day", 1.0)
+>>> freq2 = Frequency("hr", 1.0/24)
+>>> print(freq1 > freq2)
+True
+
+Getting a Frequency instance for a given name:
+
+>>> freq = Frequency.for_name("day")
+>>> print(freq.name)
+'day'
+"""
+
 from enum import Enum
 
 
@@ -54,6 +87,19 @@ CMIP_FREQUENCIES = {
 
 
 class Frequency:
+    """
+    Representation of a frequency.
+
+    Attributes
+    ----------
+    name : str
+        The name of the frequency.
+    approx_interval : float
+        The approximate interval of the frequency.
+    time_method : TimeMethods
+        The time method of the frequency.
+    """
+
     def __init__(self, name, approx_interval, time_method=TimeMethods.MEAN):
         self.name = name
         self.approx_interval = approx_interval
@@ -67,8 +113,35 @@ class Frequency:
     def __lt__(self, other):
         return self.approx_interval < other.approx_interval
 
+    def __gt__(self, other):
+        return self.approx_interval > other.approx_interval
+
+    def __le__(self, other):
+        return self.approx_interval <= other.approx_interval
+
+    def __ge__(self, other):
+        return self.approx_interval >= other.approx_interval
+
     @classmethod
     def for_name(cls, n):
+        """
+        Get a Frequency instance for a given name.
+
+        Parameters
+        ----------
+        n : str
+            The name of the frequency.
+
+        Returns
+        -------
+        Frequency
+            The Frequency instance for the given name.
+
+        Raises
+        ------
+        ValueError
+            If no Frequency instance can be determined for the given name.
+        """
         freq = next((f for f in ALL if f.name == n), None)
         if not freq:
             raise ValueError(f"Cannot determine Frequency object for {n}")
