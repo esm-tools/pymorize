@@ -7,19 +7,14 @@ from pymorize.data_request import DataRequest, DataRequestTable
 
 class TestDataRequest:
     @pytest.fixture(autouse=True)
-    def setup(self):
-        current_location = os.path.dirname(os.path.abspath(__file__)) + "/../"
-        self.datarequest_paths = []
-        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_3hr.json")
-        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_SIday.json")
-        self.datarequest_paths.append(f"{current_location}/fixtures/CMIP6_Oday.json")
+    def setup(self, CMIP_Tables_Dir):
+        self.datarequest_paths = CMIP_Tables_Dir.glob("CMIP6_*.json")
 
     def test_approx_interval_for_table_Omon_is_30(self):
         assert DataRequest.approx_interval_for_table("Omon") == 30.0
 
-    def test_difmxybo_and_difmxybo2d_exist(self):
-        current_location = os.path.dirname(os.path.abspath(__file__)) + "/../"
-        dr = DataRequest([f"{current_location}/fixtures/difmxybo2d/CMIP6_Oclim.json"])
+    def test_difmxybo_and_difmxybo2d_exist(self, CMIP6_Oclim):
+        dr = DataRequest([CMIP6_Oclim])
         assert dr.variable_ids == ["difmxybo", "difmxybo2d"]
 
     def test_returns_version(self):
@@ -88,8 +83,8 @@ class TestDataRequest:
 
 class TestDataRequestTable:
     @pytest.fixture(autouse=True)
-    def setup(self):
-        self.datarequest_path = "tests/fixtures/CMIP6_Oday.json"
+    def setup(self, CMIP_Tables_Dir):
+        self.datarequest_path = CMIP_Tables_Dir / "CMIP6_Oday.json"
         self.t = DataRequestTable(self.datarequest_path)
 
     def test_can_create_variable_objects(self):
@@ -98,8 +93,8 @@ class TestDataRequestTable:
     def test_can_read_frequencies(self):
         assert self.t.frequencies == set(["day"])
 
-    def test_can_read_multiple_frequencies(self):
-        assert DataRequestTable("tests/fixtures/CMIP6_3hr.json").frequencies == set(
+    def test_can_read_multiple_frequencies(self, CMIP_Tables_Dir):
+        assert DataRequestTable(CMIP_Tables_Dir / "CMIP6_3hr.json").frequencies == set(
             [
                 "3hrPt",
                 "3hr",
