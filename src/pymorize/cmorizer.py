@@ -4,7 +4,8 @@ import questionary
 from dask.distributed import Client
 from rich.progress import track
 
-from .data_request import DataRequest, DataRequestTable, IgnoreTableFiles
+from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
+                           IgnoreTableFiles)
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
@@ -30,6 +31,7 @@ class CMORizer:
         self._post_init_read_bare_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
+        self._post_init_data_request_variables()
 
     def _post_init_read_bare_tables(self):
         """
@@ -68,8 +70,65 @@ class CMORizer:
                     rule.add_table(tbl)
 
     def _post_init_data_request_variables(self):
+        for drv in self.data_request.variables:
+            rule_for_var = self.find_matching_rule(drv)
+            if rule_for_var is None:
+                continue
+            if rule_for_var.data_request_variables == []:
+                rule_for_var.data_request_variables = [drv]
+            else:
+                rule_for_var.data_request_variables.append(drv)
+        # FIXME: This needs a better name...
+        self._rules_expand_drvs()
+        self._rules_depluralize_drvs()
+
+    def find_matching_rule(
+        self, data_request_variable: DataRequestVariable
+    ) -> Rule or None:
+        matches = []
+        attr_criteria = [("cmor_variable", "variable_id")]
         for rule in self.rules:
-            rule.cmor_variable
+            if all(
+                getattr(rule, r_attr) == getattr(data_request_variable, drv_attr)
+                for (r_attr, drv_attr) in attr_criteria
+            ):
+                matches.append(rule)
+        if len(matches) == 0:
+            msg = f"No rule found for {data_request_variable}"
+            if self._pymorize_cfg.get("raise_on_no_rule", False):
+                raise ValueError(msg)
+            else:
+                logger.warning(msg)
+            return None
+        if len(matches) > 1:
+            msg = f"Need only one rule to match to {data_request_variable}. Found {len(matches)}."
+            if self._pymorize_cfg.get("raise_on_multiple_rules", True):
+                raise ValueError(msg)
+            else:
+                logger.critical(msg)
+                logger.critical(
+                    "This should lead to a program crash! Exception due to >> pymorize_cfg['raise_on_multiple_rules'] = False <<"
+                )
+                logger.warning("Returning the first match.")
+        return matches[0]
+
+    # FIXME: This needs a better name...
+    def _rules_expand_drvs(self):
+        new_rules = []
+        for rule in self.rules:
+            if len(rule.data_request_variables) == 1:
+                new_rules.append(rule)
+            else:
+                cloned_rules = rule.expand_drvs()
+                for rule in cloned_rules:
+                    new_rules.append(rule)
+        self.rules = new_rules
+
+    def _rules_depluralize_drvs(self):
+        for rule in self.rules:
+            assert len(rule.data_request_variables) == 1
+            drv = rule.data_request_variable = rule.data_request_variables[0]
+            drv.depluralize()
 
     def _post_init_create_pipelines(self):
         pipelines = []
@@ -101,6 +160,7 @@ class CMORizer:
             instance.add_rule(rule_obj)
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
+        instance._post_init_data_request_variables()
         for pipeline in data.get("pipelines", []):
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)

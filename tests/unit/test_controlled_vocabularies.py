@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from pymorize.controlled_vocabularies import ControlledVocabularies

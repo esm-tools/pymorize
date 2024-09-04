@@ -1,5 +1,7 @@
 from unittest.mock import Mock, patch
+
 import pytest
+
 from pymorize.cmorizer import CMORizer
 from pymorize.pipeline import TestingPipeline
 
@@ -19,11 +21,11 @@ def test_parallel_process(CMIP_Tables_Dir):
 
     # Use patch to replace Client with our mock_client in the context of this test
     with patch("pymorize.cmorizer.Client", return_value=mock_client):
-        pymorize_cfg = ({"parallel": True},)
+        pymorize_cfg = {"parallel": True}
         general_cfg = {"CMIP_Tables_Dir": CMIP_Tables_Dir}
         pipelines_cfg = [TestingPipeline()]
         rules_cfg = [
-            {"name": f"rule_{i}", "cmor_variable": "tas", "input_patterns": [".*"]}
+            {"name": f"rule_{i}", "cmor_variable": ["tas"], "input_patterns": [".*"]}
             for i in range(5)
         ]
         cmorizer = CMORizer(pymorize_cfg, general_cfg, pipelines_cfg, rules_cfg)

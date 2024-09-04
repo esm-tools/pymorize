@@ -1,3 +1,4 @@
+import copy
 import glob
 import json
 import re
@@ -44,8 +45,8 @@ class DataRequestVariable:
         self.frequencies = [frequency]
         self.realms = realms
         self.standard_name = standard_name
-        self.cell_methods_list = [cell_methods]
-        self.cell_measures_list = [cell_measures]
+        self.cell_methods = [cell_methods]
+        self.cell_measures = [cell_measures]
 
     @classmethod
     def from_table_var_entry(cls, var_entry):
@@ -62,14 +63,17 @@ class DataRequestVariable:
             var_entry.cell_measures,
         )
 
+    def clone(self):
+        return copy.deepcopy(self)
+
     def merge_table_var_entry(self, var_entry):
         # breakpoint()
         self.tables.append(var_entry.table)
         self.frequencies.append(var_entry.frequency_name)
-        self.cell_methods_list.append(
+        self.cell_methods.append(
             var_entry.cell_methods
         )  # some variables have different entries for cell_methods for different tables
-        self.cell_measures_list.append(
+        self.cell_measures.append(
             var_entry.cell_measures
         )  # some variables have different entries for cell_measures for different tables
 
@@ -93,7 +97,7 @@ class DataRequestVariable:
             raise ValueError(
                 f"variable_id '{self.variable_id}' is not associated with table_id '{table_id}', available table_id(s): {', '.join(self.table_ids)}"
             )
-        return self.cell_methods_list[i]
+        return self.cell_methods[i]
 
     def cell_measures_in_table(self, table_id):
         try:
@@ -102,7 +106,16 @@ class DataRequestVariable:
             raise ValueError(
                 f"variable_id '{self.variable_id}' is not associated with table_id '{table_id}', available table_id(s): {', '.join(self.table_ids)}"
             )
-        return self.cell_measures_list[i]
+        return self.cell_measures[i]
+
+    def depluralize(self):
+        self.table = self.tables[0]
+        self.frequency = self.frequencies[0]
+        self.cell_method = self.cell_methods[0]
+        self.cell_measure = self.cell_measures[0]
+
+    # def __iter__(self):
+    #     yield DataRequestVariableStub.from_drv(self)
 
     def __str__(self):
         return f"{self.variable_id} '{self.unit}' [{' '.join(self.frequencies)}] [{' '.join([t.table_id for t in self.tables])}]"
@@ -116,8 +129,27 @@ class DataRequestVariable:
                 {self.frequencies},
                 {self.realms},
                 {self.standard_name},
-                {self.cell_methods_list},
-                {self.cell_measures_list})"""
+                {self.cell_methods},
+                {self.cell_measures})"""
+
+
+# class DataRequestVariableStub(DataRequestVariable):
+#     @classmethod
+#     def from_drv(cls, drv):
+#         obj = cls(
+#             drv.variable_id,
+#             drv.unit,
+#             drv.description,
+#             drv.time_method,
+#             drv.table,
+#             drv.frequency,
+#             drv.realms,
+#             drv.standard_name,
+#             drv.cell_method,
+#             drv.cell_measure,
+#         )
+#         obj.depluralize()
+#         return obj
 
 
 class DataRequest:
@@ -306,6 +338,7 @@ class DataRequestTable:
         ValueError
             If the data request file does not contain a Header section with mip_era or table_id.
         """
+        self._path = path
         with open(path) as f:
             self._data = json.load(f)
         self._header_sanity_checks()
@@ -315,6 +348,12 @@ class DataRequestTable:
         if not match:
             raise ValueError(f"Cannot determine table_id: <{path}>")
         self.table_id = match.group("table_id")
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self._path})"
+
+    def __str__(self):
+        return f"{self.table_id} ({self.version}, loaded from {self._path})"
 
     def _header_sanity_checks(self):
         if "Header" not in self._data:
