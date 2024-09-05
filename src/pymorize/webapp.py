@@ -2,19 +2,22 @@ import json
 from collections import defaultdict
 from pathlib import Path
 import streamlit as st
+import pandas as pd
+
 
 tables_dir = Path(__file__).parent.parent.parent  / "cmip6-cmor-tables/Tables"
 tbls = defaultdict(list)
 ignored_tables = []
 var_to_tbl = defaultdict(list)
 frequencies = set()
-
+tids={}
 
 def process_table(tbl):
     add_to_ignore = False
     with open(tbl) as fid:
         t = json.load(fid)
     tid = t.get("Header", {}).get("table_id", "").replace("Table ", "")
+    tids[tid] = tbl
     if var_entry := t.get("variable_entry"):
         for name, attrs in var_entry.items():
             if freq := attrs.get("frequency"):
@@ -24,8 +27,7 @@ def process_table(tbl):
             else:
                 add_to_ignore = True
     else:
-        tid = tbl.stem.replace("CMIP6_", "")
-        ignored_tables.append(tid)
+        add_to_ignore = True
     if add_to_ignore:
         tid = tbl.stem.replace("CMIP6_", "")
         ignored_tables.append(tid)
@@ -63,9 +65,29 @@ def show_selected_variable(varname):
             kind = 'Climotology'
         else:
             kind = 'Mean'
-        r.append(dict(table=t, frequency=f, timemethod=kind))
+        r.append(dict(table=t, frequency=f, timemethod=kind))#, select=False))
     r = sorted(r, key=lambda x: x['table'])
-    st.table(r)
+    df = pd.DataFrame(r)
+    event = st.dataframe(
+        df,
+        on_select="rerun",
+        selection_mode=["multi-row"],
+        use_container_width=True)
+    if event.selection:
+        indices = event.selection['rows']
+        _tids = list(df.loc[indices].table)
+        attrs = []
+        for t in _tids:
+            tbl = tids[t]
+            info = {}
+            with open(tbl) as fid:
+                d = json.load(fid)
+            info.update(d['Header'])
+            info.update(d['variable_entry'][varname])
+            attrs.append(info)
+        if attrs:
+            df_info = pd.DataFrame(attrs, index=indices)
+            st.dataframe(df_info.T, use_container_width=True)
 
 variables = sorted(var_to_tbl)
 
