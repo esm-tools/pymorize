@@ -46,6 +46,7 @@ setup(
         "rich-click",
         "versioneer",
         "xarray",
+        "streamlit",
     ],
     extras_require={
         "dev": [
