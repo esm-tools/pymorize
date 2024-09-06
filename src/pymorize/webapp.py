@@ -86,8 +86,16 @@ def show_selected_variable(varname):
             info.update(d['variable_entry'][varname])
             attrs.append(info)
         if attrs:
-            df_info = pd.DataFrame(attrs, index=indices)
-            st.dataframe(df_info.T, use_container_width=True)
+            df_info = pd.DataFrame(attrs, index=indices).T
+            def styler(row):
+                ncols = len(row)
+                if len(row.unique()) > 1:
+                    return ['background-color: #e8ebcf' for i in range(ncols)]
+                return ['background-color: white' for i in range(ncols)]
+            if len(df_info.columns) > 1:
+                st.dataframe(df_info.style.apply(styler, axis=1), use_container_width=True)
+            else:
+                st.dataframe(df_info, use_container_width=True)
 
 variables = sorted(var_to_tbl)
 
