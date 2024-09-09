@@ -27,5 +27,7 @@ rules:
     enabled: true
     description: "This is a test rule"
     cmor_variable: "tas"
+    input_type: "xr.DataArray"
+    input_source: "xr_tutorial"
     input_patterns:
       - "test_input"

@@ -63,6 +63,9 @@ class Rule:
         # Internal flags:
         self._pipelines_are_mapped = False
 
+    def get(self, key, default=None):
+        return getattr(self, key, default)
+
     def __repr__(self):
         return f"Rule(input_patterns={self.input_patterns}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines})"
 
