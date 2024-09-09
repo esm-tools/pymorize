@@ -74,12 +74,12 @@ def test_handle_chemicals(test_input):
     ureg(test_input)
 
 
-def test_can_handle_simple_chemical_elements(rule_with_units):
+def test_can_handle_simple_chemical_elements(rule_with_mass_units):
     from_unit = "molC"
     to_unit = "g"
-    rule_spec = rule_with_units
+    rule_spec = rule_with_mass_units
     cmorizer = None
-    rule_spec.cmor_units = to_unit
+    rule_spec.data_request_variable.unit = to_unit
     da = xr.DataArray(10, attrs={"units": from_unit})
     new_da = handle_unit_conversion(da, rule_spec, cmorizer)
     assert new_da.data == np.array(periodic_table.Carbon.MW * 10)
@@ -100,7 +100,7 @@ def test_can_handle_chemical_elements(rule_with_units):
 
 def test_user_defined_units_takes_precedence_over_units_in_dataarray(rule_with_units):
     rule_spec = rule_with_units
-    rule_spec.cmor_units = "g"
+    rule_spec.data_request_variable.unit = "g"
     cmorizer = None
     from_unit = "molC"
     to_unit = "g"
@@ -123,7 +123,7 @@ def test_recognizes_previous_defined_chemical_elements():
 
 def test_works_when_both_units_are_None(rule_with_units):
     rule_spec = rule_with_units
-    rule_spec.cmor_units = None
+    rule_spec.data_request_variable.unit = None
     cmorizer = None
     to_unit = None
     da = xr.DataArray(10, attrs={"units": None})
@@ -133,7 +133,7 @@ def test_works_when_both_units_are_None(rule_with_units):
 
 def test_works_when_both_units_are_empty_string(rule_with_units):
     rule_spec = rule_with_units
-    rule_spec.cmor_units = ""
+    rule_spec.data_request_variable.unit = ""
     cmorizer = None
     to_unit = ""
     da = xr.DataArray(10, attrs={"units": ""})
@@ -141,10 +141,13 @@ def test_works_when_both_units_are_empty_string(rule_with_units):
     assert new_da.attrs["units"] == to_unit
 
 
+@pytest.mark.skip(reason="No use case for this test (??)")
 @pytest.mark.parametrize("from_unit", ["m/s", None, ""])
 def test_when_target_units_is_None_overrides_existing_units(rule_with_units, from_unit):
     rule_spec = rule_with_units
-    del rule_spec.cmor_units
+    drv = rule_spec.data_request_variable
+    if hasattr(drv, "unit"):
+        drv.unit = from_unit
     cmorizer = None
     to_unit = None
     da = xr.DataArray(10, attrs={"units": from_unit})

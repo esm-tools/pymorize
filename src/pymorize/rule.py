@@ -1,3 +1,4 @@
+import copy
 import re
 import typing
 from collections import OrderedDict
@@ -5,7 +6,7 @@ from collections import OrderedDict
 # import questionary
 import yaml
 
-from . import pipeline
+from . import data_request, pipeline
 from .logging import logger
 
 
@@ -16,6 +17,8 @@ class Rule:
         input_patterns: typing.Union[str, typing.List[str]],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
+        tables: typing.List[data_request.DataRequestTable] = [],
+        data_request_variables: typing.List[data_request.DataRequestVariable] = [],
         **kwargs,
     ):
         """
@@ -31,6 +34,10 @@ class Rule:
             The CMOR variable name. This is the name of the variable as it should appear in the CMIP archive.
         pipelines : list of Pipeline objects
             A list of Pipeline objects that define the transformations to be applied to the data.
+        tables : list of DataRequestTable objects
+            A list of data request tables associated with this rule
+        data_request_variables : DataRequestVariable or None :
+            The DataRequestVariables this rule should create
 
         Raises
         ------
@@ -46,6 +53,8 @@ class Rule:
 
         self.cmor_variable = cmor_variable
         self.pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self.tables = tables
+        self.data_request_variables = data_request_variables
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
         # Attach all keyword arguments to the object
         for key, value in kwargs.items():
@@ -53,6 +62,9 @@ class Rule:
 
         # Internal flags:
         self._pipelines_are_mapped = False
+
+    def get(self, key, default=None):
+        return getattr(self, key, default)
 
     def __repr__(self):
         return f"Rule(input_patterns={self.input_patterns}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines})"
@@ -89,6 +101,7 @@ class Rule:
             # Pipeline name:
             matched_pipelines[pl] = known_pipelines[pl]
         self.pipelines = list(matched_pipelines.values())
+        self._pipelines_are_mapped = True
 
     @classmethod
     def from_dict(cls, data):
@@ -111,6 +124,36 @@ class Rule:
                 "pipelines": [p.to_dict() for p in self.pipelines],
             }
         )
+
+    def add_table(self, tbl):
+        self.tables.append(tbl)
+        self.tables = [t for t in self.tables if t is not None]
+
+    def add_data_request_variable(self, drv):
+        self.data_request_variables.append(drv)
+        # Filter out Nones
+        self.data_request_variables = [
+            v for v in self.data_request_variable if v is not None
+        ]
+
+    def clone(self):
+        return copy.deepcopy(self)
+
+    def expand_drvs(self):
+        clones = []
+        for drv in self.data_request_variables:
+            rule_clone = self.clone()
+            drv_clone = drv.clone()
+            for drv_table, drv_freq, cell_methods, cell_measures in zip(
+                drv.tables, drv.frequencies, drv.cell_methods, drv.cell_measures
+            ):
+                drv_clone.tables = [drv_table]
+                drv_clone.frequencies = [drv_freq]
+                drv_clone.cell_methods = [cell_methods]
+                drv_clone.cell_measures = [cell_measures]
+                rule_clone.data_request_variables = [drv_clone]
+                clones.append(rule_clone)
+        return clones
 
     # FIXME: Not used and broken+
     # @classmethod

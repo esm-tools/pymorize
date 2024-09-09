@@ -25,7 +25,7 @@ from .logging import logger
 
 
 def time_average(data, rule_spec, cmorizer, *args, **kwargs):
-    if cmorizer["use_xarray_back"]:
+    if cmorizer["use_xarray_backend"]:
         data = data.resample(time=rule_spec["frequency"]).mean()
     else:
         # CDO Call
@@ -122,9 +122,7 @@ def create_cmor_directories(config: dict) -> dict:
     #          <version>
     mip_era = config["mip_era"]
     activity_id = config["activity_id"]
-    institution_id = config.get(
-        "institution_id", "Alfred Wegener Institure for Polar and Marine Research"
-    )
+    institution_id = config.get("institution_id", "AWI")
     source_id = config.get("source_id", "AWI-ESM-1-1-LR")
     experiment_id = config["experiment_id"]
     member_id = config["member_id"]
@@ -158,8 +156,15 @@ def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
     """
     A dummy function for testing. Loads the xarray tutorial data
     """
+    allowed_input_sources = ["xr_tutorial"]
     logger.info("Loading data")
-    data = xr.tutorial.open_dataset("air_temperature")
+    input_source = rule_spec.get("input_source", "xr_tutorial")
+    if input_source == "xr_tutorial":
+        data = xr.tutorial.open_dataset("air_temperature")
+    else:
+        raise NotImplementedError(f"Only {allowed_input_sources} are supported for now")
+    if rule_spec.get("input_type") == "xr.DataArray":
+        data = getattr(data, rule_spec.get("da_name", "air"))
     return data
 
 

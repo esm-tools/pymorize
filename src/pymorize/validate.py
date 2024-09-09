@@ -67,6 +67,21 @@ RULES_SCHEMA = {
             "schema": {
                 "name": {"type": "string", "required": False},
                 "cmor_variable": {"type": "string", "required": True},
+                "input_type": {
+                    "type": "string",
+                    "required": False,
+                    "allowed": [
+                        "xr.DataArray",
+                        "xr.Dataset",
+                    ],
+                },
+                "input_source": {
+                    "type": "string",
+                    "required": False,
+                    "allowed": [
+                        "xr_tutorial",
+                    ],
+                },
                 "input_patterns": {
                     "type": "list",
                     "schema": {"type": "string"},
