@@ -8,7 +8,13 @@ from cerberus import Validator
 
 
 class PipelineValidator(Validator):
-    """Validator for pipeline configuration."""
+    """
+    Validator for pipeline configuration.
+
+    See Also
+    --------
+    * https://cerberus-sanhe.readthedocs.io/customize.html#class-based-custom-validators
+    """
 
     def _validate_is_qualname(self, is_qualname, field, value):
         """Test if a string is a Python qualname.
