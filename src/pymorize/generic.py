@@ -156,13 +156,10 @@ def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
     """
     A dummy function for testing. Loads the xarray tutorial data
     """
-    allowed_input_sources = ["xr_tutorial"]
     logger.info("Loading data")
     input_source = rule_spec.get("input_source", "xr_tutorial")
     if input_source == "xr_tutorial":
         data = xr.tutorial.open_dataset("air_temperature")
-    else:
-        raise NotImplementedError(f"Only {allowed_input_sources} are supported for now")
     if rule_spec.get("input_type") == "xr.DataArray":
         data = getattr(data, rule_spec.get("da_name", "air"))
     return data
