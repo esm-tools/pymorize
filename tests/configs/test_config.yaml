@@ -9,6 +9,7 @@ general:
   cmor_version: "CMIP6"
   mip: "CMIP"
   frequency: "mon"
+  CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
 pipelines:
   - name: "test_pipeline"
     uses: "pymorize.pipeline.TestingPipeline"
@@ -21,26 +22,12 @@ pipelines:
     steps:
       - "pymorize.generic.dummy_sleep"
 rules:
-  - name: "test_rule"
-    pipelines: ["test_pipeline"]
-    enabled: true
-    description: "This is a test rule"
-    cmor_variable: "tas"
-    input_patterns:
-      - "test_input"
-  - name: "test_rule2"
+  - name: "tas_rule"
     pipelines: ["my_pipeline"]
     enabled: true
     description: "This is a test rule"
     cmor_variable: "tas"
-    cmor_units: "degC"
+    input_type: "xr.DataArray"
+    input_source: "xr_tutorial"
     input_patterns:
       - "test_input"
-  - name: test_rule3
-    enabled: false
-    input_patterns: ["/a/b/c"]
-    cmor_variable: null
-  - name: test_rule4
-    cmor_variable: null
-    pipelines: ["sleeper_pipeline"]
-    input_patterns: ["/a/b/c"]

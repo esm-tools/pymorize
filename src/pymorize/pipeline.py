@@ -259,6 +259,8 @@ class TestingPipeline(FrozenPipeline):
     An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
     """
 
+    __test__ = False  # Prevent pytest from thinking this is a unit or integration test
+
     STEPS = (
         "pymorize.generic.dummy_load_data",
         "pymorize.generic.dummy_logic_step",
