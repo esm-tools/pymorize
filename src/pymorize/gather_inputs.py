@@ -300,13 +300,13 @@ def gather_inputs(config: dict) -> dict:
         if year_end is not None:
             year_end = int(year_end)
         for input_pattern in input_patterns:
-            if _validate_rule_has_marked_regex(input_pattern):
-                pattern = re.compile(input_pattern["pattern"])
+            if _validate_rule_has_marked_regex(rule):
+                pattern = re.compile(rule["pattern"])
             else:
                 # FIXME(PG): This needs to be thought through...
                 # If the pattern is not marked, use the environment variable
                 pattern = _input_pattern_from_env(config)
-            files = _input_files_in_path(input_pattern["path"], pattern)
+            files = _input_files_in_path(input_pattern, pattern)
             files = _resolve_symlinks(files)
             if year_start is not None and year_end is not None:
                 files = _filter_by_year(files, pattern, year_start, year_end)
