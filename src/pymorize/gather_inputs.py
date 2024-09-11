@@ -16,7 +16,7 @@ _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
 _PATTERN_ENV_VAR_NAME_DEFAULT = "PYMORIZE_INPUT_PATTERN"
 """str: The default value for the environment variable to be used for the pattern"""
 _PATTERN_ENV_VAR_VALUE_ADDR = "/pymorize/pattern_env_var_value"
-"""str: The address in the YAML file which stores the environment variable's value to be used if the variable is not set"""
+"""str: The address in the YAML file which stores the environment variable's value"""
 _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 """str: The default value for the environment variable's value to be used if the variable is not set"""
 
