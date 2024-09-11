@@ -7,6 +7,9 @@ import os
 
 import randomname
 
+from prefect import flow
+from prefect.tasks import Task
+
 from .logging import logger
 from .utils import get_callable_by_name
 
@@ -140,25 +143,52 @@ class PipelineDB:
 
 
 class Pipeline:
-    def __init__(self, *args, name=None):
+    def __init__(self, *args, name=None, prefectize=True):
         self._steps = args
         self.name = name or randomname.get_name()
         self._db = PipelineDB(self)
+        self._workflow_backend = "native"
+        if prefectize:
+            self._workflow_backend = "prefect"
+            self.prefectize_steps()
+
+    def prefectize_steps(self):
+        # Turn all steps into Prefect tasks:
+        prefect_tasks = []
+        for i, step in enumerate(self._steps):
+            logger.debug(
+                f"[{i}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
+            )
+            prefect_tasks.append(Task(step))
+
+        self._steps = prefect_tasks
 
     @property
     def steps(self):
         return self._steps
 
-    def run(self, data, rule_spec, cmorizer):
+    def run(self, data, rule_spec):
+        if self._workflow_backend == "native":
+            return self._run_native(data, rule_spec)
+        elif self._workflow_backend == "prefect":
+            return self._run_prefect(data, rule_spec)
+        else:
+            raise ValueError("Invalid workflow backend!")
+
+    def _run_native(self, data, rule_spec):
         for step in self.steps:
             with self._db as db:
                 if db.read(step).get("status") == "done":
                     continue
                 else:
                     self._start_step(step)
-                    data = step(data, rule_spec, cmorizer)
+                    data = step(data, rule_spec)
                     self._end_step(step)
         return data
+
+    @flow
+    def _run_prefect(self, data, rule_spec):
+        return self._run_native(data, rule_spec)
 
     def _start_step(self, step):
         logger.debug(f"Starting step: {step.__name__}")
@@ -259,7 +289,7 @@ class TestingPipeline(FrozenPipeline):
     An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
     """
 
-    __test__ = False  # Prevent pytest from thinking this is a unit or integration test
+    __test__ = False  # Prevent pytest from thinking this is a unit or integration test, since the class name starts with test.
 
     STEPS = (
         "pymorize.generic.dummy_load_data",

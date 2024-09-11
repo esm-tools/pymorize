@@ -24,7 +24,7 @@ import xarray as xr
 from .logging import logger
 
 
-def time_average(data, rule_spec, cmorizer, *args, **kwargs):
+def time_average(data, rule_spec, *args, **kwargs):
     if cmorizer["use_xarray_backend"]:
         data = data.resample(time=rule_spec["frequency"]).mean()
     else:
@@ -152,7 +152,7 @@ def create_cmor_directories(config: dict) -> dict:
     return config
 
 
-def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_load_data(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Loads the xarray tutorial data
     """
@@ -168,7 +168,7 @@ def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
     return data
 
 
-def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_logic_step(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Prints data to screen and adds a dummy attribute to the data.
     """
@@ -179,7 +179,7 @@ def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
     return data
 
 
-def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_save_data(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Saves the data to a netcdf file.
     """
@@ -189,7 +189,7 @@ def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
     return data
 
 
-def dummy_sleep(data, rule_spec, cmorizer, *arg, **kwargs):
+def dummy_sleep(data, rule_spec, *arg, **kwargs):
     """
     A dummy function for testing. Sleeps for 5 seconds.
     """

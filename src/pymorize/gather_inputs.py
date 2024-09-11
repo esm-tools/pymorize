@@ -141,6 +141,17 @@ def _filter_by_year(
 ) -> List[pathlib.Path]:
     """
     Filters a list of files by the year in their name.
+
+    Parameters
+    ----------
+    files : list of pathlib.Path
+        A list of files to filter.
+    fpattern : re.Pattern
+        The regular expression pattern to match the files.
+    year_start : int
+        The start year to filter by.
+    year_end : int
+        The end year to filter by.
     """
     return [
         f

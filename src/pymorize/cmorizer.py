@@ -197,6 +197,12 @@ class CMORizer:
         missing_variables = []
         for cmor_variable in self._cmor_tables[table_name]["variable_entry"]:
             if self._rule_for_cmor_variable(cmor_variable) == []:
+                if self._pymorize_cfg.get("raise_on_no_rule", False):
+                    raise ValueError(f"No rule found for {cmor_variable}")
+                elif self._pymorize_cfg.get("warn_on_no_rule", True):
+                    # FIXME(PG): This should be handled by the logger automatically
+                    if not self._pymorize_cfg.get("quiet", True):
+                        logger.warning(f"No rule found for {cmor_variable}")
                 logger.warning(f"No rule found for {cmor_variable}")
                 missing_variables.append(cmor_variable)
         if missing_variables:
@@ -254,5 +260,5 @@ class CMORizer:
         rule.match_pipelines(self.pipelines)
         data = None
         for pipeline in rule.pipelines:
-            data = pipeline.run(data, rule, self)
+            data = pipeline.run(data, rule)
         return data

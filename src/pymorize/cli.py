@@ -12,7 +12,7 @@ from . import _version, dev_utils
 from .cmorizer import CMORizer
 from .logging import logger
 
-MAX_FRAMES = os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3)
+MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
 str: The maximum number of frames to show in the traceback if there is an error. Default to 3
 """
