@@ -34,3 +34,15 @@ rules:
         pattern: "test_input"
       - path: "./some/other/path"
         pattern: "test_input2"
+  - name: test_rule3
+    enabled: false
+    inputs:
+      - path: "/a/b/c"
+      - pattern ".*"
+    cmor_variable: "so"
+  - name: test_rule4
+    cmor_variable: "thetao"
+    pipelines: ["sleeper_pipeline"]
+    input_patterns:
+      - path: "/a/b/c"
+        pattern: ".*"
