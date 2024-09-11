@@ -41,6 +41,7 @@ setup(
         "dpath",
         "pendulum",
         "pint-xarray",
+        "prefect",
         "pyyaml",
         "questionary",
         "randomname",

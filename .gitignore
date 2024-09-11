@@ -43,3 +43,4 @@ doc/_build/
 doc/api/
 doc/API.rst
 .direnv
+sandbox/

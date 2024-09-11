@@ -152,4 +152,4 @@ def test_pipeline_can_interrupt_and_restart(timed_step, fake_pipeline_data):
 
 def test_dummy_pipeline():
     pl = TestingPipeline()
-    data = pl.run({}, {}, {})
+    data = pl.run({}, {})
