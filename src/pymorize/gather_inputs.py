@@ -7,6 +7,7 @@ import pathlib
 import re
 from typing import List
 
+import deprecation
 import dpath
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
@@ -213,6 +214,7 @@ def _validate_rule_has_marked_regex(
     return all(re.search(rf"\(\?P<{mark}>", pattern) for mark in required_marks)
 
 
+@deprecation.deprecated(details="Use load_mfdataset in your pipeline instead!")
 def gather_inputs(config: dict) -> dict:
     """
     Gather possible inputs from a user directory.

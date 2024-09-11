@@ -35,6 +35,7 @@ setup(
         "chemicals",
         "click-loguru",
         "dask",
+        "deprecation",
         "distributed",
         "dill",
         "dpath",
