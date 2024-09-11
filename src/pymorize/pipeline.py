@@ -233,7 +233,7 @@ class DefaultPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        "pymorize.generic.load_data",
+        "pymorize.gather_inputs.load_mfdataset",
         "pymorize.generic.create_cmor_directories",
         "pymorize.units.handle_unit_conversion",
     )
