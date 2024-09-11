@@ -9,6 +9,7 @@ from typing import List
 
 import deprecation
 import dpath
+import xarray as xr
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
 """str: The address in the YAML file which stores the environment variable to be used for the pattern"""
@@ -18,6 +19,23 @@ _PATTERN_ENV_VAR_VALUE_ADDR = "/pymorize/pattern_env_var_value"
 """str: The address in the YAML file which stores the environment variable's value to be used if the variable is not set"""
 _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 """str: The default value for the environment variable's value to be used if the variable is not set"""
+
+
+class InputFileCollection:
+    def __init__(self, path, pattern):
+        self.path = pathlib.Path(path)
+        self.pattern = re.compile(pattern)  # Compile the regex pattern
+
+    def __iter__(self):
+        for file in self.path.iterdir():
+            if self.pattern.match(
+                file.name
+            ):  # Check if the filename matches the pattern
+                yield file
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d["path"], d["pattern"])
 
 
 def _input_pattern_from_env(config: dict) -> re.Pattern:
@@ -212,6 +230,25 @@ def _validate_rule_has_marked_regex(
     if pattern is None:
         return False
     return all(re.search(rf"\(\?P<{mark}>", pattern) for mark in required_marks)
+
+
+def load_mfdataset(data, rule_spec):
+    """
+    Load a dataset from a list of files using xarray.
+
+    Parameters
+    ----------
+    data : Any
+        Data in the pipeline flow thus far.
+    rule_spec : Rule
+        Rule being handled
+    """
+    all_files = []
+    for file_collection in rule_spec.files:
+        all_files.append(f for f in file_collection)
+    all_files = _resolve_symlinks(all_files)
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
+    return mf_ds
 
 
 @deprecation.deprecated(details="Use load_mfdataset in your pipeline instead!")

@@ -1,20 +1,23 @@
 import copy
 import re
 import typing
+import warnings
 from collections import OrderedDict
 
 # import questionary
 import yaml
 
 from . import data_request, pipeline
-from .logging import logger
+from .gather_inputs import InputFileCollection
+
+# from .logging import logger
 
 
 class Rule:
     def __init__(
         self,
         *,
-        input_patterns: typing.Union[str, typing.List[str]],
+        inputs: typing.List[dict] = [],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
         tables: typing.List[data_request.DataRequestTable] = [],
@@ -28,8 +31,8 @@ class Rule:
 
         Parameters
         ----------
-        input_pattern : str or list of str
-            A regular expression pattern or a list of patterns to match the input file path.
+        inputs : list of dicts for InputFileCollection
+            Dictionaries should contain the keys "path" and "pattern".
         cmor_variable : str
             The CMOR variable name. This is the name of the variable as it should appear in the CMIP archive.
         pipelines : list of Pipeline objects
@@ -38,19 +41,8 @@ class Rule:
             A list of data request tables associated with this rule
         data_request_variables : DataRequestVariable or None :
             The DataRequestVariables this rule should create
-
-        Raises
-        ------
-        TypeError
-            If input_pattern is not a string or a list of strings.
         """
-        if isinstance(input_patterns, str):
-            self.input_patterns = list(re.compile(input_patterns))
-        elif isinstance(input_patterns, list):
-            self.input_patterns = [re.compile(str(p)) for p in input_patterns]
-        else:
-            raise TypeError("input_pattern must be a string or a list of strings")
-
+        self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in inputs]
         self.cmor_variable = cmor_variable
         self.pipelines = pipelines or [pipeline.DefaultPipeline()]
         self.tables = tables
@@ -67,7 +59,7 @@ class Rule:
         return getattr(self, key, default)
 
     def __repr__(self):
-        return f"Rule(input_patterns={self.input_patterns}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines})"
+        return f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines}, tables={self.tables}, data_request_variables={self.data_request_variables})"
 
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
@@ -106,7 +98,7 @@ class Rule:
     @classmethod
     def from_dict(cls, data):
         return cls(
-            input_patterns=data.pop("input_patterns"),
+            inputs=data.pop("inputs"),
             cmor_variable=data.pop("cmor_variable"),
             pipelines=data.pop("pipelines", []),
             **data,
@@ -119,7 +111,7 @@ class Rule:
     def to_yaml(self):
         return yaml.dump(
             {
-                "input_patterns": [p.pattern for p in self.input_patterns],
+                "inputs": [p.to_dict for p in self.input_patterns],
                 "cmor_variable": self.cmor_variable,
                 "pipelines": [p.to_dict() for p in self.pipelines],
             }
@@ -135,6 +127,12 @@ class Rule:
         self.data_request_variables = [
             v for v in self.data_request_variable if v is not None
         ]
+
+    @property
+    def input_patterns(self):
+        deprecated = "input_patterns is deprecated. Use inputs instead."
+        warnings.warn(deprecated, DeprecationWarning)
+        return [re.compile(f"{inp.path}/{inp.pattern}") for inp in self.inputs]
 
     def clone(self):
         return copy.deepcopy(self)
