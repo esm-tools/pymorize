@@ -276,8 +276,8 @@ class DefaultPipeline(FrozenPipeline):
 class TestingPipeline(FrozenPipeline):
     """
     The TestingPipeline class is a subclass of the Pipeline class. It is designed for testing purposes. It includes
-    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and cannot be
-    customized, only the name of the pipeline can be customized.
+    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and
+    cannot be customized, only the name of the pipeline can be customized.
 
     Parameters
     ----------
@@ -289,7 +289,7 @@ class TestingPipeline(FrozenPipeline):
     An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
     """
 
-    __test__ = False  # Prevent pytest from thinking this is a unit or integration test, since the class name starts with test.
+    __test__ = False  # Prevent pytest from thinking this is a test, as the class name starts with test.
 
     STEPS = (
         "pymorize.generic.dummy_load_data",
