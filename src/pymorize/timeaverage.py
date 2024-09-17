@@ -2,6 +2,7 @@
 
 import xarray as xr
 import pandas as pd
+import itertools
 
 
 """
@@ -24,30 +25,171 @@ def monthly_mean(da: xr.DataArray):
     return t
 
 
-# what should be the signature of the `monthly_mean` function?
-# consider the following part in the config file
-# model_variable: salt
-#    model_units: PSU
-#    cmor_variable: so
-#    cmor_table: CMIP6_Omon.json
-#    input_patterns:
+def split_by_chunks(dataset: xr.DataArray):
+    """splitting large data into sub-datasets for each chunk
+    https://github.com/pydata/xarray/issues/1093#issuecomment-259213382
+    """
+    chunk_slices = {}
+    for dim, chunks in dataset.chunks.items():
+        slices = []
+        start = 0
+        for chunk in chunks:
+            stop = start + chunk
+            slices.append(slice(start, stop))
+            start = stop
+        chunk_slices[dim] = slices
+    for slices in itertools.product(*chunk_slices.values()):
+        selection = dict(zip(chunk_slices.keys(), slices))
+        yield (selection, dataset[selection])
 
-# in this case, the function signature could be as follows
-# def monthy_mean(model_variable: str, config: dict) -> xr.DataArray:
-#     ...
-# For a given model_variable, the required parameters are retried from config file:
-# - from cmor_table, approx_interval is read
-# - from input_patterns, xr.Dataset object is created from multiple files.
 
-# concerns:
-# - constructing xr.Dataset from xr.open_mfdataset("test*.nc") should be handled
-#   by some other function and not in timeaverage.py. The reason being, the
-#   unknown data volume (memory footprint) of the "test*.nc". Does this fit in a
-#   single node?
+def get_time_method(table_id: str) -> str:
+    if table_id.endswith("Pt"):
+        return "INSTANTANEOUS"
+    if table_id.endswith("C") or table_id.endswith("CM"):
+        return "CLIMATOLOGY"
+    return "MEAN"
 
-# Question regarding config file: If a variable is found in more than one table,
-# and the user wishes to process them all, Can that be expressed in a single
-# config file? If so, the above function signature may not be appropriate.
-# changing the signature to...
-# def monthy_mean(model_variable: str, cmor_table: json, config: dict) -> xr.DataArray:
-#    ...
+
+def timeavg(da: xr.DataArray, rule):
+    """Time averages data with respect to time-method (mean/climotolgy/instant.)"""
+    # TODO: refactor file_timespan to a seperate function
+    # before time-averaging figure out the timespan in a file
+    for selection, subset in split_by_chunks(da):
+        break
+    file_timespan = subset.time.data[-1] - subset.time.data[0]
+
+    # time-averaging part
+    rule.file_timespan = file_timespan.days
+    drv = rule.data_request_variable
+    approx_interval = f"{float(drv.table.approx_interval)}D"
+    timemethod = get_time_method(drv.table.table_id)
+    if timemethod == "INSTANTANEOUS":
+        ds = da.resample(time=approx_interval).first()
+    elif timemethod == "MEAN":
+        ds = da.resample(time=approx_interval).mean()
+    else:
+        # CLIMATOLOGY
+        if drv.table.frequency == "monC":
+            ds = da.groupby("time.month").mean("time")
+        elif drv.table.frequency == "1hrCM":
+            ds = da.groupby("time.hour").mean("time")
+        else:
+            raise ValueError(
+                f"Unknown Climatology {drv.table.frequency} in Table {drv.table.table_id}"
+            )
+    return ds
+
+
+def create_filepath(ds, rule):
+    """Generate a filepath when given an xarray dataset
+    Parameters
+    ----------
+    ds: xarray dataset
+    prefix : prefix of the output file name
+    root_path : path to the output file. Defaults to current directory
+    """
+    name = rule.cmor_varialbe
+    table_id = rule.table.table_id  # Omon
+    label = rule.variant_label  # r1i1p1f1
+    source_id = rule.source_id  # AWI-CM-1-1-MR
+    out_dir = rule.out_dir  # where to save output files
+    institution = "AWI"
+    grid = "gn"  # grid_type
+    if "time" in ds.dims:
+        start = ds.time.data[0].strftime("%Y%m")
+        end = ds.time.data[-1].strftime("%Y%m")
+        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_historical_{label}_{grid}_{start}-{end}.nc"
+    else:
+        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_historical_{label}_{grid}.nc"
+    return filepath
+
+
+def save_dataset(da: xr.DataArray, rule):
+    """
+    save datasets to multiple files
+    """
+    file_timespan = rule.file_timespan
+    if "time" not in da.dims:
+        # climatology
+        filepath = create_filepath(da, rule)
+        da.to_netcdf(filepath, mode="w", format="NETCDF4")
+        return
+    groups = da.resample(time=f"{file_timespan}D")
+    paths = []
+    datasets = []
+    for group_name, group_ds in groups:
+        paths.append(create_filepath(group_ds, rule))
+        datasets.append(group_ds)
+    xr.save_mfdataset(datasets, path)
+    return
+
+
+"""
+Cell Methods?? These are ignored at the momemt in the time-averaging step
+area: depth: time: mean
+area: mean
+area: mean (comment: over land and sea ice) time: point
+area: mean time: maximum
+area: mean time: maximum within days time: mean over days
+area: mean time: mean within days time: mean over days
+area: mean time: mean within hours time: maximum over hours
+area: mean time: mean within years time: mean over years
+area: mean time: minimum
+area: mean time: minimum within days time: mean over days
+area: mean time: point
+area: mean time: sum
+area: mean where crops time: maximum
+area: mean where crops time: maximum within days time: mean over days
+area: mean where crops time: minimum
+area: mean where crops time: minimum within days time: mean over days
+area: mean where grounded_ice_sheet
+area: mean where ice_free_sea over sea time: mean
+area: mean where ice_sheet
+area: mean where land
+area: mean where land over all_area_types time: mean
+area: mean where land over all_area_types time: point
+area: mean where land over all_area_types time: sum
+area: mean where land time: mean
+area: mean where land time: mean (with samples weighted by snow mass)
+area: mean where land time: point
+area: mean where sea
+area: mean where sea depth: sum where sea (top 100m only) time: mean
+area: mean where sea depth: sum where sea time: mean
+area: mean where sea time: mean
+area: mean where sea time: point
+area: mean where sea_ice (comment: mask=siconc) time: point
+area: mean where sector time: point
+area: mean where snow over sea_ice area: time: mean where sea_ice
+area: point
+area: point time: point
+area: sum
+area: sum where ice_sheet time: mean
+area: sum where sea time: mean
+area: time: mean
+area: time: mean (comment: over land and sea ice)
+area: time: mean where cloud
+area: time: mean where crops (comment: mask=cropFrac)
+area: time: mean where floating_ice_shelf (comment: mask=sftflf)
+area: time: mean where grounded_ice_sheet (comment: mask=sfgrlf)
+area: time: mean where ice_sheet
+area: time: mean where natural_grasses (comment: mask=grassFrac)
+area: time: mean where pastures (comment: mask=pastureFrac)
+area: time: mean where sea_ice (comment: mask=siconc)
+area: time: mean where sea_ice (comment: mask=siconca)
+area: time: mean where sea_ice (comment: mask=siitdconc)
+area: time: mean where sea_ice_melt_pond (comment: mask=simpconc)
+area: time: mean where sea_ice_ridges (comment: mask=sirdgconc)
+area: time: mean where sector
+area: time: mean where shrubs (comment: mask=shrubFrac)
+area: time: mean where snow (comment: mask=snc)
+area: time: mean where trees (comment: mask=treeFrac)
+area: time: mean where unfrozen_soil
+area: time: mean where vegetation (comment: mask=vegFrac)
+longitude: mean time: mean
+longitude: mean time: point
+longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: mean
+time: mean
+time: mean grid_longitude: mean
+time: point
+"""
