@@ -70,9 +70,11 @@ RULES_SCHEMA = {
         "type": "list",
         "schema": {
             "type": "dict",
+            "allow_unknown": True,
             "schema": {
                 "name": {"type": "string", "required": False},
                 "cmor_variable": {"type": "string", "required": True},
+                "model_variable": {"type": "string", "required": False},
                 "input_type": {
                     "type": "string",
                     "required": False,
@@ -88,9 +90,16 @@ RULES_SCHEMA = {
                         "xr_tutorial",
                     ],
                 },
-                "input_patterns": {
+                "inputs": {
                     "type": "list",
-                    "schema": {"type": "string"},
+                    "schema": {
+                        "type": "dict",  # Each item in the list must be a dictionary
+                        "schema": {  # Define the required keys in the dictionary
+                            "path": {"type": "string", "required": True},
+                            "pattern": {"type": "string", "required": True},
+                            # Add more keys and their types as needed
+                        },
+                    },
                     "required": True,
                 },
                 "enabled": {"type": "boolean", "required": False},

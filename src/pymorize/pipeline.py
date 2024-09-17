@@ -6,9 +6,9 @@ import json
 import os
 
 import randomname
-
 from prefect import flow
 from prefect.tasks import Task
+from prefect_dask import DaskTaskRunner
 
 from .logging import logger
 from .utils import get_callable_by_name
@@ -143,21 +143,26 @@ class PipelineDB:
 
 
 class Pipeline:
-    def __init__(self, *args, name=None, prefectize=True):
+    def __init__(self, *args, name=None, workflow_backend="prefect", dask_cluster=None):
         self._steps = args
         self.name = name or randomname.get_name()
         self._db = PipelineDB(self)
-        self._workflow_backend = "native"
-        if prefectize:
-            self._workflow_backend = "prefect"
-            self.prefectize_steps()
+        self._workflow_backend = workflow_backend
+        self._cluster = dask_cluster
 
-    def prefectize_steps(self):
+        if self._workflow_backend == "prefect":
+            self._prefectize_steps()
+
+    def assign_cluster(self, cluster):
+        logger.debug("Assinging cluster to this pipeline")
+        self._cluster = cluster
+
+    def _prefectize_steps(self):
         # Turn all steps into Prefect tasks:
         prefect_tasks = []
         for i, step in enumerate(self._steps):
             logger.debug(
-                f"[{i}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
+                f"[{i+1}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
             )
             prefect_tasks.append(Task(step))
 
@@ -186,9 +191,20 @@ class Pipeline:
                     self._end_step(step)
         return data
 
-    @flow
     def _run_prefect(self, data, rule_spec):
-        return self._run_native(data, rule_spec)
+        logger.debug(
+            f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
+        )
+
+        @flow(
+            task_runner=DaskTaskRunner(
+                address=self._cluster.scheduler_address
+            )
+        )
+        def dynamic_flow(data, rule_spec):
+            return self._run_native(data, rule_spec)
+
+        return dynamic_flow(data, rule_spec)
 
     def _start_step(self, step):
         logger.debug(f"Starting step: {step.__name__}")

@@ -6,6 +6,7 @@ import pkg_resources
 import rich_click as click
 import yaml
 from click_loguru import ClickLoguru
+from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 
 from . import _version, dev_utils
@@ -87,6 +88,7 @@ def process(config_file):
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
+    client = Client(cmorizer._cluster)
     cmorizer.process()
 
 

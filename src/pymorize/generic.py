@@ -19,6 +19,7 @@ import datetime
 import tempfile
 from pathlib import Path
 
+import pandas as pd
 import xarray as xr
 
 from .logging import logger
@@ -194,3 +195,63 @@ def dummy_sleep(data, rule_spec, *arg, **kwargs):
 
     time.sleep(5)
     return data
+
+
+def show_data(data, rule_spec, *args, **kwargs):
+    """
+    Prints data to screen. Useful for debugging
+    """
+    logger.info("Printing data...")
+    logger.info(data)
+    return data
+
+
+def get_variable(data, rule_spec, *args, **kwargs):
+    """
+    Gets a particular variable out of a xr.Dataset
+
+    Parameters
+    ----------
+    data : xr.Dataset
+        Assumes data is a dataset already. No checks are done
+        for this!!
+    rule_spec : Rule
+        Rule describing the DataRequestVariable for this pipeline run
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    return data[rule_spec.model_variable]
+
+
+def resample_monthly(data, rule_spec, *args, **kwargs):
+    """monthly means per year"""
+    mm = data.resample(time="ME", **kwargs).mean(dim="time")
+    # cdo adjusts timestamp to mean-time-value.
+    # with xarray timestamp defaults to end_time. Re-adjusting timestamp to mean-time-value like cdo
+    # adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+    # if adjust_timestamp:
+    #     t = pd.to_datetime(mm.time.dt.strftime("%Y-%m-15").to_pandas())
+    #     mm["time"] = t
+    return mm
+    
+def resample_yearly(data, rule_spec, *args, **kwargs):
+    """monthly means per year"""
+    ym = data.resample(time="YE", **kwargs).mean(dim="time")
+    # cdo adjusts timestamp to mean-time-value.
+    # with xarray timestamp defaults to end_time. Re-adjusting timestamp to mean-time-value like cdo
+    # adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+    # if adjust_timestamp:
+    #     t = pd.to_datetime(mm.time.dt.strftime("%Y-%m-15").to_pandas())
+    #     mm["time"] = t
+    return ym
+
+
+def multiyear_monthly_mean(data, rule_spec, *args, **kwargs):
+    multiyear_monthly_mean = data.groupby("time.month").mean(dim="time")
+    return multiyear_monthly_mean
+
+def trigger_compute(data, rule_spec, *args, **kwargs):
+    return data.compute()
+                                                            
