@@ -14,7 +14,7 @@ def simple_rule():
             },
             {
                 "path": "/some/other/files/containing/",
-                "pattern": "var1_(?P<year>\d{4}).nc",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
             },
         ],
         cmor_variable="var1",
@@ -32,7 +32,7 @@ def rule_with_mass_units():
             },
             {
                 "path": "/some/other/files/containing/",
-                "pattern": "var1_(?P<year>\d{4}).nc",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
             },
         ],
         cmor_variable="var1",
@@ -66,7 +66,7 @@ def rule_with_units():
             },
             {
                 "path": "/some/other/files/containing/",
-                "pattern": "var1_(?P<year>\d{4}).nc",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
             },
         ],
         cmor_variable="var1",
