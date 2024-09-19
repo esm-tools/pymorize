@@ -23,6 +23,16 @@ import xarray as xr
 from .logging import logger
 
 
+def load_data(data, rule_spec, *args, **kwargs):
+    """Loads data described by the rule_spec."""
+    ds_list = []
+    for pattern in rule_spec["input_patterns"]:
+        ds = xr.open_mfdataset(pattern, combine="by_coords")
+        ds_list.append(ds)
+    data = xr.concat(ds_list, dim="time")
+    return data
+
+
 def linear_transform(
     filepath: Path, execute: bool = False, slope: float = 1, offset: float = 0
 ):
