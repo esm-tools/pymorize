@@ -16,7 +16,7 @@ def fake_multidim_data():
 
 def test_assign_time_axis_matching_length_multidim(fake_multidim_data):
     year_bounds = [[2000, 2009]]
-    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="YE")
     result = assign_time_axis(fake_multidim_data, time_axis)
     assert "time" in result.coords
     assert len(result.time) == 10
@@ -26,7 +26,7 @@ def test_assign_time_axis_matching_length_multidim(fake_multidim_data):
 
 def test_assign_time_axis_mismatching_length_multidim(fake_multidim_data):
     year_bounds = [[2000, 2011]]
-    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="YE")
     with pytest.raises(ValueError):
         assign_time_axis(fake_multidim_data, time_axis)
 
@@ -43,7 +43,7 @@ def test_assign_time_axis_matching_length_multidim_diff_dims(
     fake_multidim_data_diff_dims,
 ):
     year_bounds = [[2000, 2009]]
-    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="YE")
     result = assign_time_axis(fake_multidim_data_diff_dims, time_axis)
     assert "time" in result.coords
     assert len(result.time) == 10
@@ -55,7 +55,7 @@ def test_assign_time_axis_mismatching_length_multidim_diff_dims(
     fake_multidim_data_diff_dims,
 ):
     year_bounds = [[2000, 2011]]
-    time_axis = date_ranges_from_year_bounds(year_bounds, freq="Y")
+    time_axis = date_ranges_from_year_bounds(year_bounds, freq="YE")
     with pytest.raises(ValueError):
         assign_time_axis(fake_multidim_data_diff_dims, time_axis)
 
@@ -76,9 +76,9 @@ def test_assign_time_axis_matching_length_three(fake_data_three):
     year_bounds1 = [[2000, 2009]]
     year_bounds2 = [[2000, 2019]]
     year_bounds3 = [[2000, 2029]]
-    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="Y")
-    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="Y")
-    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="Y")
+    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="YE")
+    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="YE")
+    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="YE")
     result1 = assign_time_axis(fake_data_three[0], time_axis1)
     result2 = assign_time_axis(fake_data_three[1], time_axis2)
     result3 = assign_time_axis(fake_data_three[2], time_axis3)
@@ -100,9 +100,9 @@ def test_assign_time_axis_mismatching_length_three(fake_data_three):
     year_bounds1 = [[2000, 2011]]
     year_bounds2 = [[2000, 2021]]
     year_bounds3 = [[2000, 2031]]
-    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="Y")
-    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="Y")
-    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="Y")
+    time_axis1 = date_ranges_from_year_bounds(year_bounds1, freq="YE")
+    time_axis2 = date_ranges_from_year_bounds(year_bounds2, freq="YE")
+    time_axis3 = date_ranges_from_year_bounds(year_bounds3, freq="YE")
     with pytest.raises(ValueError):
         assign_time_axis(fake_data_three[0], time_axis1)
     with pytest.raises(ValueError):
@@ -143,8 +143,8 @@ def test_date_ranges_from_bounds():
     bounds = [("2020-01-01", "2020-01-31"), ("2020-02-01", "2020-02-29")]
     result = pymorize.calendar.date_ranges_from_bounds(bounds)
     expected = (
-        xr.date_range(start="2020-01-01", end="2020-01-31", freq="M"),
-        xr.date_range(start="2020-02-01", end="2020-02-29", freq="M"),
+        xr.date_range(start="2020-01-01", end="2020-01-31", freq="ME"),
+        xr.date_range(start="2020-02-01", end="2020-02-29", freq="ME"),
     )
     assert result == expected
 
@@ -152,7 +152,7 @@ def test_date_ranges_from_bounds():
 def test_date_ranges_from_bounds_single_range():
     bounds = [("2020-01-01", "2020-12-31")]
     result = pymorize.calendar.date_ranges_from_bounds(bounds)
-    expected = xr.date_range(start="2020-01-01", end="2020-12-31", freq="M")
+    expected = xr.date_range(start="2020-01-01", end="2020-12-31", freq="ME")
     assert (result == expected).all()
 
 

@@ -31,15 +31,19 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
+        "cerberus",
+        "cftime",
         "cf_xarray",
         "chemicals",
         "click-loguru",
         "dask",
+        "dask_jobqueue",
+        "deprecation",
         "distributed",
-        "dill",
         "dpath",
         "pendulum",
         "pint-xarray",
+        "prefect[dask]",
         "pyyaml",
         "questionary",
         "randomname",
@@ -52,6 +56,7 @@ setup(
     extras_require={
         "dev": [
             "black",
+            "dill",
             "flake8",
             "isort",
             "pooch",

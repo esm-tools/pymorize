@@ -1,7 +1,14 @@
 from pathlib import Path
 
+import dask
 import questionary
+import yaml
 from dask.distributed import Client
+from dask_jobqueue import SLURMCluster
+from prefect import flow, task
+from prefect.futures import wait
+from prefect.logging import get_run_logger
+from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
@@ -9,29 +16,59 @@ from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
+from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 
 class CMORizer:
-
     def __init__(
         self,
         pymorize_cfg=None,
         general_cfg=None,
         pipelines_cfg=None,
         rules_cfg=None,
+        dask_cfg=None,
         **kwargs,
     ):
         self._general_cfg = general_cfg or {}
         self._pymorize_cfg = pymorize_cfg or {}
+        self._dask_cfg = dask_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
+        self._post_init_configure_dask()
+        self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_data_request_variables()
+
+    def _post_init_configure_dask(self):
+        """
+        Sets up configuration for Dask-Distributed
+
+        See Also
+        --------
+        https://docs.dask.org/en/stable/configuration.html?highlight=config#directly-within-python
+        """
+        import dask.distributed  # Needed to pre-populate config, noqa: F401
+        import dask_jobqueue  # Needed to pre-populate config, noqa: F401
+
+        logger.info("Updating Dask configuration. Changed values will be:")
+        logger.info(yaml.dump(self._dask_cfg))
+        dask.config.update(dask.config.config, self._dask_cfg)
+        logger.info("Dask configuration updated!")
+
+    def _post_init_create_dask_cluster(self):
+        # FIXME: In the future, we can support PBS, too.
+        logger.info("Setting up SLURMCluster...")
+        self._cluster = SLURMCluster()
+        min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
+        max_jobs = self._pymorize_cfg.get("maximum_jobs", 10)
+        self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
+        logger.info(f"SLURMCluster can be found at: {self._cluster=}")
+        logger.info(f"Dashboard {self._cluster.dashboard_link}")
 
     def _post_init_read_bare_tables(self):
         """
@@ -97,7 +134,7 @@ class CMORizer:
             msg = f"No rule found for {data_request_variable}"
             if self._pymorize_cfg.get("raise_on_no_rule", False):
                 raise ValueError(msg)
-            else:
+            elif self._pymorize_cfg.get("warn_on_no_rule", True):
                 logger.warning(msg)
             return None
         if len(matches) > 1:
@@ -136,6 +173,8 @@ class CMORizer:
             if isinstance(p, Pipeline):
                 pipelines.append(p)
             elif isinstance(p, dict):
+                pl = Pipeline.from_dict(p)
+                pl.assign_cluster(self._cluster)
                 pipelines.append(Pipeline.from_dict(p))
             else:
                 raise ValueError(f"Invalid pipeline configuration for {p}")
@@ -154,16 +193,27 @@ class CMORizer:
         instance = cls(
             pymorize_cfg=data.get("pymorize", {}),
             general_cfg=data.get("general", {}),
+            dask_cfg={
+                "distributed": data.get("distributed", {}),
+                "jobqueue": data.get("jobqueue", {}),
+            },
         )
+        if "rules" in data:
+            if not RULES_VALIDATOR.validate({"rules": data["rules"]}):
+                raise ValueError(RULES_VALIDATOR.errors)
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
-        instance._post_init_populate_rules_with_tables()
-        instance._post_init_create_data_request()
-        instance._post_init_data_request_variables()
+        if "pipelines" in data:
+            if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
+                raise ValueError(PIPELINES_VALIDATOR.errors)
         for pipeline in data.get("pipelines", []):
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
+
+        instance._post_init_populate_rules_with_tables()
+        instance._post_init_create_data_request()
+        instance._post_init_data_request_variables()
         return instance
 
     def add_rule(self, rule):
@@ -174,6 +224,8 @@ class CMORizer:
     def add_pipeline(self, pipeline):
         if not isinstance(pipeline, Pipeline):
             raise TypeError("pipeline must be an instance of Pipeline")
+        # Assign the cluster to this pipeline:
+        pipeline.assign_cluster(self._cluster)
         self.pipelines.append(pipeline)
 
     def _rule_for_filepath(self, filepath):
@@ -197,7 +249,12 @@ class CMORizer:
         missing_variables = []
         for cmor_variable in self._cmor_tables[table_name]["variable_entry"]:
             if self._rule_for_cmor_variable(cmor_variable) == []:
-                logger.warning(f"No rule found for {cmor_variable}")
+                if self._pymorize_cfg.get("raise_on_no_rule", False):
+                    raise ValueError(f"No rule found for {cmor_variable}")
+                elif self._pymorize_cfg.get("warn_on_no_rule", True):
+                    # FIXME(PG): This should be handled by the logger automatically
+                    if not self._pymorize_cfg.get("quiet", True):
+                        logger.warning(f"No rule found for {cmor_variable}")
                 missing_variables.append(cmor_variable)
         if missing_variables:
             logger.warning("This CMORizer may be incomplete or badly configured!")
@@ -223,17 +280,39 @@ class CMORizer:
 
     def process(self, parallel=None):
         if parallel is None:
-            parallel = self._pymorize_cfg.get("parallel", False)
+            parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
             return self.parallel_process()
         else:
             return self.serial_process()
 
-    def parallel_process(self, external_client=None):
+    def parallel_process(self, backend="prefect"):
+        if backend == "prefect":
+            return self._parallel_process_prefect()
+        elif backend == "dask":
+            return self._parallel_process_dask()
+        else:
+            raise ValueError("Unknown backend for parallel processing")
+
+    def _parallel_process_prefect(self):
+        # prefect_logger = get_run_logger()
+        # logger = prefect_logger
+        # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        @flow
+        def dynamic_flow():
+            rule_results = []
+            for rule in self.rules:
+                rule_results.append(self._process_rule_prefect.submit(rule))
+            wait(rule_results)
+            return rule_results
+
+        return dynamic_flow()
+
+    def _parallel_process_dask(self, external_client=None):
         if external_client:
             client = external_client
         else:
-            client = Client()  # start a local Dask client
+            client = Client(cluster=self._cluster)  # start a local Dask client
 
         futures = [client.submit(self._process_rule, rule) for rule in self.rules]
 
@@ -254,5 +333,9 @@ class CMORizer:
         rule.match_pipelines(self.pipelines)
         data = None
         for pipeline in rule.pipelines:
-            data = pipeline.run(data, rule, self)
+            data = pipeline.run(data, rule)
         return data
+
+    @task
+    def _process_rule_prefect(self, rule):
+        return self._process_rule(rule)
