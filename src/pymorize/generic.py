@@ -15,33 +15,12 @@ The Full CMOR (yes, bad pun):
     * Performs time averaging
 """
 
-import datetime
 import tempfile
 from pathlib import Path
 
-import pandas as pd
 import xarray as xr
 
 from .logging import logger
-
-
-def time_average(data, rule_spec, *args, **kwargs):
-    if cmorizer["use_xarray_backend"]:
-        data = data.resample(time=rule_spec["frequency"]).mean()
-    else:
-        # CDO Call
-        pass
-    return data
-
-
-def load_data(data, rule_spec, cmorizer, *args, **kwargs):
-    """Loads data described by the rule_spec."""
-    ds_list = []
-    for pattern in rule_spec["input_patterns"]:
-        ds = xr.open_mfdataset(pattern, combine="by_coords")
-        ds_list.append(ds)
-    data = xr.concat(ds_list, dim="time")
-    return data
 
 
 def linear_transform(
@@ -235,7 +214,8 @@ def resample_monthly(data, rule_spec, *args, **kwargs):
     #     t = pd.to_datetime(mm.time.dt.strftime("%Y-%m-15").to_pandas())
     #     mm["time"] = t
     return mm
-    
+
+
 def resample_yearly(data, rule_spec, *args, **kwargs):
     """monthly means per year"""
     ym = data.resample(time="YE", **kwargs).mean(dim="time")
@@ -252,6 +232,6 @@ def multiyear_monthly_mean(data, rule_spec, *args, **kwargs):
     multiyear_monthly_mean = data.groupby("time.month").mean(dim="time")
     return multiyear_monthly_mean
 
+
 def trigger_compute(data, rule_spec, *args, **kwargs):
     return data.compute()
-                                                            
