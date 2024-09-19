@@ -121,7 +121,7 @@ def save_dataset(da: xr.DataArray, rule):
     for group_name, group_ds in groups:
         paths.append(create_filepath(group_ds, rule))
         datasets.append(group_ds)
-    xr.save_mfdataset(datasets, path)
+    xr.save_mfdataset(datasets, paths)
     return
 
 
