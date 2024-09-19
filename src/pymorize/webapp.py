@@ -1,14 +1,14 @@
-import os
 import json
-from collections import defaultdict, Counter
-from pathlib import Path
-import streamlit as st
-import requests
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import threading
+import os
 import socket
-import pandas as pd
+import threading
+from collections import Counter, defaultdict
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
 
+import pandas as pd
+import requests
+import streamlit as st
 
 github_url = "https://raw.githubusercontent.com/PCMDI/cmip6-cmor-tables/main/Tables/"
 
@@ -243,11 +243,13 @@ if table_source == "Local":
 
 
 if table_source:
-    st.markdown("""
+    st.markdown(
+        """
     # Tables - Frequencies - Variables
 
     ## Metrics
-    """)
+    """
+    )
 
     cols = st.columns(3)
 
