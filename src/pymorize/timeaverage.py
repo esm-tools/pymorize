@@ -1,6 +1,9 @@
 # timeaverage.py
 
+
 import xarray as xr
+import flox
+import flox.xarray
 import pandas as pd
 import itertools
 

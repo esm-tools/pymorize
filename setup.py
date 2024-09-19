@@ -46,6 +46,8 @@ setup(
         "rich-click",
         "versioneer",
         "xarray",
+        "flox",
+        "numbagg",
     ],
     extras_require={
         "dev": [
