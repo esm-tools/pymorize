@@ -146,7 +146,7 @@ def test_when_target_units_is_None_overrides_existing_units(rule_with_units, fro
     rule_spec.model_unit = None
     da = xr.DataArray(10, attrs={"units": from_unit})
     new_da = handle_unit_conversion(da, rule_spec)
-    assert new_da.attrs["units"] == to_unit
+    assert new_da.attrs["units"] == drv.unit
 
 
 @pytest.mark.parametrize("from_unit", ["m/s", None])
