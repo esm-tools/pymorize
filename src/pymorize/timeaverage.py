@@ -3,8 +3,8 @@
 
 import xarray as xr
 import flox
-import flox.xarray
-import pandas as pd
+import flox.xarray  # noqa: F401
+import pandas as pd  # noqa: F401
 import itertools
 
 
