@@ -112,6 +112,14 @@ RULES_SCHEMA = {
                 "cmor_units": {"type": "string", "required": False},
                 # FIXME(PS): How is it currently defined?
                 "model_units": {"type": "string", "required": False},
+                "variant_label": {
+                    "type": "string",
+                    "required": True,
+                    "regex": "^r\d+i\d+p\d+f\d+$",
+                },
+                "source_id": {"type": "string", "required": True},
+                "out_dir": {"type": "string", "required": False},
+                "instition_id": {"type": "string", "required": False},
             },
         },
     },
