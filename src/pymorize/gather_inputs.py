@@ -7,16 +7,41 @@ import pathlib
 import re
 from typing import List
 
+import deprecation
 import dpath
+import xarray as xr
+
+from .logging import logger
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
 """str: The address in the YAML file which stores the environment variable to be used for the pattern"""
 _PATTERN_ENV_VAR_NAME_DEFAULT = "PYMORIZE_INPUT_PATTERN"
 """str: The default value for the environment variable to be used for the pattern"""
 _PATTERN_ENV_VAR_VALUE_ADDR = "/pymorize/pattern_env_var_value"
-"""str: The address in the YAML file which stores the environment variable's value to be used if the variable is not set"""
+"""str: The address in the YAML file which stores the environment variable's value"""
 _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 """str: The default value for the environment variable's value to be used if the variable is not set"""
+
+
+class InputFileCollection:
+    def __init__(self, path, pattern):
+        self.path = pathlib.Path(path)
+        self.pattern = re.compile(pattern)  # Compile the regex pattern
+
+    # def __iter__(self):
+    @property
+    def files(self):
+        files = []
+        for file in self.path.iterdir():
+            if self.pattern.match(
+                file.name
+            ):  # Check if the filename matches the pattern
+                files.append(file)
+        return files
+
+    @classmethod
+    def from_dict(cls, d):
+        return cls(d["path"], d["pattern"])
 
 
 def _input_pattern_from_env(config: dict) -> re.Pattern:
@@ -132,6 +157,9 @@ def _resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     [Path('/path/to/file1'), Path('/path/to/file2')]
     """
     if not all(isinstance(f, pathlib.Path) for f in files):
+        logger.error("All files must be pathlib.Path objects. Got the following:")
+        for f in files:
+            logger.error(f"{f} {type(f)}")
         raise TypeError("All files must be pathlib.Path objects")
     return [f.resolve() if f.is_symlink() else f for f in files]
 
@@ -141,6 +169,17 @@ def _filter_by_year(
 ) -> List[pathlib.Path]:
     """
     Filters a list of files by the year in their name.
+
+    Parameters
+    ----------
+    files : list of pathlib.Path
+        A list of files to filter.
+    fpattern : re.Pattern
+        The regular expression pattern to match the files.
+    year_start : int
+        The start year to filter by.
+    year_end : int
+        The end year to filter by.
     """
     return [
         f
@@ -213,6 +252,27 @@ def _validate_rule_has_marked_regex(
     return all(re.search(rf"\(\?P<{mark}>", pattern) for mark in required_marks)
 
 
+def load_mfdataset(data, rule_spec):
+    """
+    Load a dataset from a list of files using xarray.
+
+    Parameters
+    ----------
+    data : Any
+        Data in the pipeline flow thus far.
+    rule_spec : Rule
+        Rule being handled
+    """
+    all_files = []
+    for file_collection in rule_spec.inputs:
+        for f in file_collection.files:
+            all_files.append(f)
+    all_files = _resolve_symlinks(all_files)
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
+    return mf_ds
+
+
+@deprecation.deprecated(details="Use load_mfdataset in your pipeline instead!")
 def gather_inputs(config: dict) -> dict:
     """
     Gather possible inputs from a user directory.
@@ -300,13 +360,13 @@ def gather_inputs(config: dict) -> dict:
         if year_end is not None:
             year_end = int(year_end)
         for input_pattern in input_patterns:
-            if _validate_rule_has_marked_regex(input_pattern):
-                pattern = re.compile(input_pattern["pattern"])
+            if _validate_rule_has_marked_regex(rule):
+                pattern = re.compile(rule["pattern"])
             else:
                 # FIXME(PG): This needs to be thought through...
                 # If the pattern is not marked, use the environment variable
                 pattern = _input_pattern_from_env(config)
-            files = _input_files_in_path(input_pattern["path"], pattern)
+            files = _input_files_in_path(input_pattern, pattern)
             files = _resolve_symlinks(files)
             if year_start is not None and year_end is not None:
                 files = _filter_by_year(files, pattern, year_start, year_end)

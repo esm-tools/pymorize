@@ -6,6 +6,9 @@ import json
 import os
 
 import randomname
+from prefect import flow
+from prefect.tasks import Task
+from prefect_dask import DaskTaskRunner
 
 from .logging import logger
 from .utils import get_callable_by_name
@@ -140,25 +143,68 @@ class PipelineDB:
 
 
 class Pipeline:
-    def __init__(self, *args, name=None):
+    def __init__(self, *args, name=None, workflow_backend="prefect", dask_cluster=None):
         self._steps = args
         self.name = name or randomname.get_name()
         self._db = PipelineDB(self)
+        self._workflow_backend = workflow_backend
+        self._cluster = dask_cluster
+
+        if self._workflow_backend == "prefect":
+            self._prefectize_steps()
+
+    def assign_cluster(self, cluster):
+        logger.debug("Assinging cluster to this pipeline")
+        self._cluster = cluster
+
+    def _prefectize_steps(self):
+        # Turn all steps into Prefect tasks:
+        prefect_tasks = []
+        for i, step in enumerate(self._steps):
+            logger.debug(
+                f"[{i+1}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
+            )
+            prefect_tasks.append(Task(step))
+
+        self._steps = prefect_tasks
 
     @property
     def steps(self):
         return self._steps
 
-    def run(self, data, rule_spec, cmorizer):
+    def run(self, data, rule_spec):
+        if self._workflow_backend == "native":
+            return self._run_native(data, rule_spec)
+        elif self._workflow_backend == "prefect":
+            return self._run_prefect(data, rule_spec)
+        else:
+            raise ValueError("Invalid workflow backend!")
+
+    def _run_native(self, data, rule_spec):
         for step in self.steps:
             with self._db as db:
                 if db.read(step).get("status") == "done":
                     continue
                 else:
                     self._start_step(step)
-                    data = step(data, rule_spec, cmorizer)
+                    data = step(data, rule_spec)
                     self._end_step(step)
         return data
+
+    def _run_prefect(self, data, rule_spec):
+        logger.debug(
+            f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
+        )
+
+        @flow(
+            task_runner=DaskTaskRunner(
+                address=self._cluster.scheduler_address
+            )
+        )
+        def dynamic_flow(data, rule_spec):
+            return self._run_native(data, rule_spec)
+
+        return dynamic_flow(data, rule_spec)
 
     def _start_step(self, step):
         logger.debug(f"Starting step: {step.__name__}")
@@ -233,7 +279,7 @@ class DefaultPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        "pymorize.generic.load_data",
+        "pymorize.gather_inputs.load_mfdataset",
         "pymorize.generic.create_cmor_directories",
         "pymorize.units.handle_unit_conversion",
     )
@@ -246,8 +292,8 @@ class DefaultPipeline(FrozenPipeline):
 class TestingPipeline(FrozenPipeline):
     """
     The TestingPipeline class is a subclass of the Pipeline class. It is designed for testing purposes. It includes
-    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and cannot be
-    customized, only the name of the pipeline can be customized.
+    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and
+    cannot be customized, only the name of the pipeline can be customized.
 
     Parameters
     ----------
@@ -259,7 +305,7 @@ class TestingPipeline(FrozenPipeline):
     An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
     """
 
-    __test__ = False  # Prevent pytest from thinking this is a unit or integration test
+    __test__ = False  # Prevent pytest from thinking this is a test, as the class name starts with test.
 
     STEPS = (
         "pymorize.generic.dummy_load_data",

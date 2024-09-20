@@ -27,7 +27,6 @@ import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
 
-from .cmorizer import CMORizer
 from .frequency import CMIP_FREQUENCIES
 from .logging import logger
 from .rule import Rule
@@ -91,7 +90,6 @@ def handle_chemicals(
 def handle_unit_conversion(
     da: xr.DataArray,
     rule_spec: Rule,
-    cmorizer: CMORizer,
     source_unit: Union[str, None] = None,
 ) -> xr.DataArray:
     """Performs the unit-aware data conversion.

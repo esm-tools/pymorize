@@ -7,9 +7,15 @@ from pymorize.rule import Rule
 @pytest.fixture
 def simple_rule():
     return Rule(
-        input_patterns=[
-            r"/some/files/containing/var1.*.nc",
-            r"/some/other/files/containing/var1_(?P<year>\d{4}).nc",
+        inputs=[
+            {
+                "path": "/some/files/containing/",
+                "pattern": "var1.*.nc",
+            },
+            {
+                "path": "/some/other/files/containing/",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
+            },
         ],
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
@@ -19,9 +25,15 @@ def simple_rule():
 @pytest.fixture
 def rule_with_mass_units():
     r = Rule(
-        input_patterns=[
-            r"/some/files/containing/var1.*.nc",
-            r"/some/other/files/containing/var1_(?P<year>\d{4}).nc",
+        inputs=[
+            {
+                "path": "/some/files/containing/",
+                "pattern": "var1.*.nc",
+            },
+            {
+                "path": "/some/other/files/containing/",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
+            },
         ],
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
@@ -47,9 +59,15 @@ def rule_with_mass_units():
 @pytest.fixture
 def rule_with_units():
     r = Rule(
-        input_patterns=[
-            r"/some/files/containing/var1.*.nc",
-            r"/some/other/files/containing/var1_(?P<year>\d{4}).nc",
+        inputs=[
+            {
+                "path": "/some/files/containing/",
+                "pattern": "var1.*.nc",
+            },
+            {
+                "path": "/some/other/files/containing/",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
+            },
         ],
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],

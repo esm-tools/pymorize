@@ -2,6 +2,7 @@ import asyncio
 import functools
 import multiprocessing
 import os
+import shutil
 import time
 
 import dill
@@ -150,6 +151,9 @@ def test_pipeline_can_interrupt_and_restart(timed_step, fake_pipeline_data):
     assert step3 in pipeline._db
 
 
+@pytest.mark.skipif(
+    shutil.which("sbatch") is None, reason="sbatch is not available on this host"
+)
 def test_dummy_pipeline():
     pl = TestingPipeline()
-    data = pl.run({}, {}, {})
+    data = pl.run({}, {})

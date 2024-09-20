@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 """
-This module defines the Frequency class and the TimeMethods Enum. 
+This module defines the Frequency class and the TimeMethods Enum.
 
-The Frequency class represents a frequency with a name, an approximate interval, and a time method. 
+The Frequency class represents a frequency with a name, an approximate interval, and a time method.
 The TimeMethods Enum represents various time methods declared in CMIP.
 
 Examples
