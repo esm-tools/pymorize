@@ -86,12 +86,7 @@ def handle_chemicals(
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-# FIXME: This needs to have a different signature!
-def handle_unit_conversion(
-    da: xr.DataArray,
-    rule_spec: Rule,
-    source_unit: Union[str, None] = None,
-) -> xr.DataArray:
+def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
     If `source_unit` is provided, it is used instead of the unit from DataArray.
@@ -101,8 +96,6 @@ def handle_unit_conversion(
     da: ~xr.DataArray
     unit: str
         unit to convert data to
-    source_unit: str or None
-        Override the unit on ``da.attrs.unit`` if needed.
 
     Returns
     -------
@@ -112,14 +105,15 @@ def handle_unit_conversion(
     if not isinstance(da, xr.DataArray):
         raise TypeError(f"Expected xr.DataArray, got {type(da)}")
     # data_request_variable needs to be defined at this point
-    drv = rule_spec.data_request_variable
+    drv = rule.data_request_variable
     to_unit = drv.unit
+    model_unit = rule.get("model_unit")
     from_unit = da.attrs.get("units")
-    if source_unit is not None:
+    if model_unit is not None:
         logger.debug(
-            f"using user defined unit ({source_unit}) instead of ({from_unit}) from DataArray "
+            f"using user defined unit ({model_unit}) instead of ({from_unit}) from DataArray "
         )
-        from_unit = source_unit
+        from_unit = model_unit
     handle_chemicals(from_unit)
     handle_chemicals(to_unit)
     new_da = da.pint.quantify(from_unit)
