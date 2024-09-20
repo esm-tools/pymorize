@@ -1,6 +1,7 @@
 import os
 import pathlib
 import sys
+from importlib import resources
 
 import pkg_resources
 import rich_click as click
@@ -8,6 +9,7 @@ import yaml
 from click_loguru import ClickLoguru
 from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
+from streamlit.web import cli as stcli
 
 from . import _version, dev_utils
 from .cmorizer import CMORizer
@@ -90,6 +92,15 @@ def process(config_file):
     cmorizer = CMORizer.from_dict(cfg)
     client = Client(cmorizer._cluster)
     cmorizer.process()
+
+
+@cli.command()
+@click_loguru.init_logger()
+def table_explorer():
+    logger.info("Launching table explorer...")
+    with resources.path("pymorize", "webapp.py") as webapp_path:
+        sys.argv = ["streamlit", "run", str(webapp_path)]
+        stcli.main()
 
 
 ################################################################################

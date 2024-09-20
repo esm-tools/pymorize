@@ -50,6 +50,7 @@ setup(
         "rich-click",
         "versioneer",
         "xarray",
+        "streamlit",
         "flox",
         "numbagg",
     ],
