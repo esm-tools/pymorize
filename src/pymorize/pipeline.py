@@ -196,11 +196,7 @@ class Pipeline:
             f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
         )
 
-        @flow(
-            task_runner=DaskTaskRunner(
-                address=self._cluster.scheduler_address
-            )
-        )
+        @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
         def dynamic_flow(data, rule_spec):
             return self._run_native(data, rule_spec)
 

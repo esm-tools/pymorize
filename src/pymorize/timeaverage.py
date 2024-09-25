@@ -71,6 +71,14 @@ def timeavg(da: xr.DataArray, rule):
         ds = da.resample(time=approx_interval).first()
     elif timemethod == "MEAN":
         ds = da.resample(time=approx_interval).mean()
+        adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+        if adjust_timestamp:
+            approx_interval = rule.table.approx_interval
+            # approx_interval is express in Days
+            # (30 days to represent a month, 0.125 days for 3hr)
+            # convert days to hours. offset is half of the interval
+            offset = pd.offsets.Hour(float(approx_interval) * 24 / 2)
+            ds["time"] = ds.time.to_pandas() + offset
     else:
         # CLIMATOLOGY
         if drv.table.frequency == "monC":
