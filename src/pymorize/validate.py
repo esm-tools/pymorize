@@ -43,6 +43,17 @@ class PipelineValidator(Validator):
             )
 
 
+class RuleValidator(Validator):
+    def _validate_is_directory(self, is_directory, field, value):
+        if is_directory and not isinstance(value, str):
+            self._error(field, "Must be a string")
+        if is_directory:
+            # - what to do if the directory does not exists? create?
+            # - if it exists, what to do with the files in it?
+            #   - may be ignore? is it validator business to care about it?
+            ...
+
+
 PIPELINES_SCHEMA = {
     "pipelines": {
         "type": "list",
@@ -118,7 +129,7 @@ RULES_SCHEMA = {
                     "regex": "^r\d+i\d+p\d+f\d+$",
                 },
                 "source_id": {"type": "string", "required": True},
-                "out_dir": {"type": "string", "required": False},
+                "out_dir": {"type": "string", "required": False, "is_directory": True},
                 "instition_id": {"type": "string", "required": False},
             },
         },
