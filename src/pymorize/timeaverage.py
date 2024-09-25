@@ -121,15 +121,16 @@ def create_filepath(ds, rule):
     table_id = rule.table.table_id  # Omon
     label = rule.variant_label  # r1i1p1f1
     source_id = rule.source_id  # AWI-CM-1-1-MR
+    experiment_id = rule.experiment_id  # historical
     out_dir = rule.out_dir  # where to save output files
-    institution = "AWI"
+    institution = rule.get("institution", "AWI")
     grid = "gn"  # grid_type
     if "time" in ds.dims:
         start = ds.time.data[0].strftime("%Y%m")
         end = ds.time.data[-1].strftime("%Y%m")
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_historical_{label}_{grid}_{start}-{end}.nc"
+        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{start}-{end}.nc"
     else:
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_historical_{label}_{grid}.nc"
+        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}.nc"
     return filepath
 
 

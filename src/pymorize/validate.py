@@ -131,6 +131,7 @@ RULES_SCHEMA = {
                 "source_id": {"type": "string", "required": True},
                 "out_dir": {"type": "string", "required": False, "is_directory": True},
                 "instition_id": {"type": "string", "required": False},
+                "experiment_id": {"type": "string", "required": True},
             },
         },
     },
