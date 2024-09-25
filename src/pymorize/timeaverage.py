@@ -58,12 +58,29 @@ def timeavg(da: xr.DataArray, rule):
     """Time averages data with respect to time-method (mean/climotolgy/instant.)"""
     # TODO: refactor file_timespan to a seperate function
     # before time-averaging figure out the timespan in a file
-    for selection, subset in split_by_chunks(da):
-        break
-    file_timespan = subset.time.data[-1] - subset.time.data[0]
+    #
+    # the following has a edge case when the first check does not
+    # realize the full extent of the time span
+    # example: netcdf file representing a year span of data may start
+    # in the middle of the year
+    #
+    # for selection, subset in split_by_chunks(da):
+    #     break
+    #
+    # considering first few chunks
+    chunks = split_by_chunks(da)
+    tmp_file_timespan = []
+    for i in range(3):
+        try:
+            subset = next(chunks)
+        except StopIteration:
+            pass
+        else:
+            tmp_file_timespan.append((subset.time.data[-1] - subset.time.data[0]).days)
+    file_timespan = max(tmp_file_timespan)
 
     # time-averaging part
-    rule.file_timespan = file_timespan.days
+    rule.file_timespan = file_timespan
     drv = rule.data_request_variable
     approx_interval = f"{float(drv.table.approx_interval)}D"
     timemethod = get_time_method(drv.table.table_id)
