@@ -88,7 +88,7 @@ def timeavg(da: xr.DataArray, rule):
         ds = da.resample(time=approx_interval).first()
     elif timemethod == "MEAN":
         ds = da.resample(time=approx_interval).mean()
-        adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+        adjust_timestamp = rule.get("adjust_timestamp", True)
         if adjust_timestamp:
             approx_interval = rule.table.approx_interval
             # approx_interval is express in Days
