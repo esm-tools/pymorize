@@ -47,15 +47,17 @@ class PipelineValidator(Validator):
 
 class RuleValidator(Validator):
     def _validate_is_directory(self, is_directory, field, value):
-        if is_directory and not isinstance(value, str):
-            self._error(field, "Must be a string")
         if is_directory:
-            if glob.has_magic(value):
-                self._error(field, "Using wildcards in path is not allowed")
             try:
-                pathlib.Path(value)
+                if glob.has_magic(value):
+                    self._error(field, "Must not contain glob characters")
             except TypeError as e:
-                self._error(field, f"{e.error}; Must be a string")
+                self._error(field, f"{e.args[0]}. Must be a string")
+            else:
+                try:
+                    pathlib.Path(value).expanduser().resolve()
+                except TypeError as e:
+                    self._error(field, f"{e.args[0]}. Must be a string")
 
 
 PIPELINES_SCHEMA = {
@@ -133,9 +135,14 @@ RULES_SCHEMA = {
                     "regex": "^r\d+i\d+p\d+f\d+$",
                 },
                 "source_id": {"type": "string", "required": False},  # True
-                "out_dir": {"type": "string", "required": False, "is_directory": True},
+                "output_directory": {
+                    "type": "string",
+                    "required": False,
+                    "is_directory": True,
+                },
                 "instition_id": {"type": "string", "required": False},
                 "experiment_id": {"type": "string", "required": False},  # True
+                "adjust_timestamp": {"type": "boolean", "required": False},
             },
         },
     },

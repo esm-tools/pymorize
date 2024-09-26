@@ -122,7 +122,7 @@ def create_filepath(ds, rule):
     label = rule.variant_label  # r1i1p1f1
     source_id = rule.source_id  # AWI-CM-1-1-MR
     experiment_id = rule.experiment_id  # historical
-    out_dir = rule.out_dir  # where to save output files
+    out_dir = rule.output_directory  # where to save output files
     institution = rule.get("institution", "AWI")
     grid = "gn"  # grid_type
     if "time" in ds.dims:
