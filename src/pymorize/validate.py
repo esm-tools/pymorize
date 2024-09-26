@@ -3,6 +3,8 @@ Provides validation of user configuration files by checking against a schema.
 """
 
 import importlib
+import pathlib
+import glob
 
 from cerberus import Validator
 
@@ -48,10 +50,12 @@ class RuleValidator(Validator):
         if is_directory and not isinstance(value, str):
             self._error(field, "Must be a string")
         if is_directory:
-            # - what to do if the directory does not exists? create?
-            # - if it exists, what to do with the files in it?
-            #   - may be ignore? is it validator business to care about it?
-            ...
+            if glob.has_magic(value):
+                self._error(field, "Using wildcards in path is not allowed")
+            try:
+                pathlib.Path(value)
+            except TypeError as e:
+                self._error(field, f"{e.error}; Must be a string")
 
 
 PIPELINES_SCHEMA = {
@@ -125,16 +129,16 @@ RULES_SCHEMA = {
                 "model_units": {"type": "string", "required": False},
                 "variant_label": {
                     "type": "string",
-                    "required": True,
+                    "required": False,  # True
                     "regex": "^r\d+i\d+p\d+f\d+$",
                 },
-                "source_id": {"type": "string", "required": True},
+                "source_id": {"type": "string", "required": False},  # True
                 "out_dir": {"type": "string", "required": False, "is_directory": True},
                 "instition_id": {"type": "string", "required": False},
-                "experiment_id": {"type": "string", "required": True},
+                "experiment_id": {"type": "string", "required": False},  # True
             },
         },
     },
 }
 """dict : Schema for validating rules configuration."""
-RULES_VALIDATOR = Validator(RULES_SCHEMA)
+RULES_VALIDATOR = RuleValidator(RULES_SCHEMA)
