@@ -1,35 +1,65 @@
-# timeaverage.py
+#!/usr/bin/env python
+"""
+This module contains functions for time averaging of data arrays.
 
-import xarray as xr
-import flox
-import flox.xarray  # noqa: F401
-import pandas as pd  # noqa: F401
+The approximate interval for time averaging is prescribed in the CMOR tables,
+using the key ``'approx_interval'``. This information is also provided
+in ~``pymorize.frequency``.
+
+Functions
+---------
+_split_by_chunks(dataset: xr.DataArray) -> Tuple[Dict, xr.DataArray]:
+    Split a large dataset into sub-datasets for each chunk.
+
+_get_time_method(table_id: str) -> str:
+    Determine the time method based on the table_id string.
+
+_frequency_from_approx_interval(interval: str) -> str:
+    Convert an interval expressed in days to a frequency string.
+
+_compute_file_timespan(da: xr.DataArray) -> int:
+    Compute the timespan of a given data array.
+
+timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
+    Time averages data with respect to time-method (mean/climatology/instant.)
+
+Module Variables
+----------------
+_IGNORED_CELL_METHODS : list
+    List of cell_methods to ignore when calculating time averages.
+
+"""
+
 import itertools
+
+import flox  # noqa: F401
+import flox.xarray  # noqa: F401
+import pandas as pd
+import xarray as xr
+
 from .logging import logger
 
-"""
-The approximate_interval for time averaging is prescribed in the cmor tables.
 
-In each table header approx_interval is provided. This information is also
-provided in frequency.py
-"""
-
-
-def monthly_mean(da: xr.DataArray):
-    """Monthly means per year.
-
-    In usual pratice, da.groupby('time.month').mean("time") does monthly means
-    over multiple years.  For instance, doing a monthly mean on a 5 year dataset
-    results in collapsing all years to 12 months (12 timesteps).  This function
-    preserves years, i.e., a 5 year dataset * 12 months => 60 timesteps.
+def _split_by_chunks(dataset: xr.DataArray):
     """
-    t = da.resample(time="ME").mean("time")
-    return t
+    Split a large dataset into sub-datasets for each chunk.
 
+    This function is useful for handling large datasets that cannot fit into memory all at once.
+    It yields a tuple containing the selection dictionary and the corresponding sub-dataset.
 
-def split_by_chunks(dataset: xr.DataArray):
-    """splitting large data into sub-datasets for each chunk
-    https://github.com/pydata/xarray/issues/1093#issuecomment-259213382
+    Parameters
+    ----------
+    dataset : xr.DataArray
+        The input dataset to be chunked. It can be either an xarray Dataset or DataArray.
+
+    Yields
+    ------
+    tuple
+        A tuple containing the selection dictionary and the corresponding sub-dataset.
+
+    References
+    ----------
+    .. [1] https://github.com/pydata/xarray/issues/1093#issuecomment-259213382
     """
     chunk_slices = {}
     logger.info(f"{dataset.chunks=}")
@@ -50,7 +80,25 @@ def split_by_chunks(dataset: xr.DataArray):
         yield (selection, dataset[selection])
 
 
-def get_time_method(table_id: str) -> str:
+def _get_time_method(table_id: str) -> str:
+    """
+    Determine the time method based on the table_id string.
+
+    This function checks the ending of the table_id string and returns a corresponding time method.
+    If the table_id ends with 'Pt', it returns 'INSTANTANEOUS'.
+    If the table_id ends with 'C' or 'CM', it returns 'CLIMATOLOGY'.
+    In all other cases, it returns 'MEAN'.
+
+    Parameters
+    ----------
+    table_id : str
+        The table_id string to check.
+
+    Returns
+    -------
+    str
+        The corresponding time method ('INSTANTANEOUS', 'CLIMATOLOGY', or 'MEAN').
+    """
     if table_id.endswith("Pt"):
         return "INSTANTANEOUS"
     if table_id.endswith("C") or table_id.endswith("CM"):
@@ -58,8 +106,29 @@ def get_time_method(table_id: str) -> str:
     return "MEAN"
 
 
-def frequency_from_approx_interval(interval: str):
-    "interval is expressed in days"
+def _frequency_from_approx_interval(interval: str):
+    """
+    Convert an interval expressed in days to a frequency string.
+
+    This function takes an interval expressed in days and converts it to a frequency string
+    in a suitable time unit (decade, year, month, day, hour, minute, second, millisecond).
+    The conversion is based on an approximate number of days for each time unit.
+
+    Parameters
+    ----------
+    interval : str
+        The interval expressed in days.
+
+    Returns
+    -------
+    str
+        The frequency string in a suitable time unit.
+
+    Raises
+    ------
+    ValueError
+        If the interval cannot be converted to a float.
+    """
     notation = [
         ("decade", lambda x: f"{x*10}YE" if x else "10YE", 3650),
         ("year", lambda x: f"{x}YE", 366),
@@ -85,24 +154,28 @@ def frequency_from_approx_interval(interval: str):
             value = round(value)
             value = "" if value == 1 else value
             return func(value)
-    return
 
 
-def timeavg(da: xr.DataArray, rule):
-    """Time averages data with respect to time-method (mean/climotolgy/instant.)"""
-    # TODO: refactor file_timespan to a seperate function
-    # before time-averaging figure out the timespan in a file
-    #
-    # the following has a edge case when the first check does not
-    # realize the full extent of the time span
-    # example: netcdf file representing a year span of data may start
-    # in the middle of the year
-    #
-    # for selection, subset in split_by_chunks(da):
-    #     break
-    #
-    # considering first few chunks
-    chunks = split_by_chunks(da)
+def _compute_file_timespan(da: xr.DataArray):
+    """
+    Compute the timespan of a given data array.
+
+    This function splits the data array into chunks and computes the timespan of each chunk.
+    The timespan of a chunk is defined as the difference between the last and the first time point in the chunk.
+    The function returns the maximum timespan among all chunks.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The data array to compute the timespan for.
+
+    Returns
+    -------
+    int
+        The maximum timespan among all chunks of the data array.
+
+    """
+    chunks = _split_by_chunks(da)
     tmp_file_timespan = []
     for i in range(3):
         try:
@@ -114,34 +187,50 @@ def timeavg(da: xr.DataArray, rule):
             logger.info(f"{subset.time.data[-1]=}")
             logger.info(f"{subset.time.data[0]=}")
             tmp_file_timespan.append(
-                    pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
+                pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
             )
     file_timespan = max(tmp_file_timespan)
+    return file_timespan
 
-    # time-averaging part
+
+def timeavg(da: xr.DataArray, rule):
+    """
+    Time averages data with respect to time-method (mean/climatology/instant.)
+
+    This function takes a data array and a rule, computes the timespan of the data array, and then performs time averaging
+    based on the time method specified in the rule. The time methods can be ``"INSTANTANEOUS"``,
+    ``"MEAN"``, or ``"CLIMATOLOGY"``.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The data array to compute the timespan for.
+    rule : dict
+        The rule dict containing the time method and other parameters.
+
+    Returns
+    -------
+    xr.DataArray
+        The time averaged data array.
+    """
+    file_timespan = _compute_file_timespan(da)
     rule.file_timespan = file_timespan
     drv = rule.data_request_variable
     approx_interval = drv.table.approx_interval
-    # approx_interval is express in Days
-    # (30 days to represent a month, 0.125 days for 3hr)
-    # convert days to hours.
     approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
-    frequency_str = frequency_from_approx_interval(approx_interval)
-    logger.info(f"{approx_interval=} {frequency_str=}")
-    timemethod = get_time_method(drv.table.table_id)
-    if timemethod == "INSTANTANEOUS":
-        #ds = da.resample(time=approx_interval_in_hours).first()
+    frequency_str = _frequency_from_approx_interval(approx_interval)
+    logger.debug(f"{approx_interval=} {frequency_str=}")
+    time_method = _get_time_method(drv.table.table_id)
+    if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
-    elif timemethod == "MEAN":
+    elif time_method == "MEAN":
         ds = da.resample(time=frequency_str).mean()
         adjust_timestamp = rule.get("adjust_timestamp", True)
         if adjust_timestamp:
-            #  offset is half of the approx_interval
             offset = pd.Timedelta(approx_interval_in_hours / 2)
             logger.info(f"{offset=}")
             ds["time"] = ds.time.to_pandas() + offset
-    else:
-        # CLIMATOLOGY
+    elif time_method == "CLIMATOLOGY":
         if drv.table.frequency == "monC":
             ds = da.groupby("time.month").mean("time")
         elif drv.table.frequency == "1hrCM":
@@ -150,63 +239,12 @@ def timeavg(da: xr.DataArray, rule):
             raise ValueError(
                 f"Unknown Climatology {drv.table.frequency} in Table {drv.table.table_id}"
             )
+    else:
+        raise ValueError(f"Unknown time method: {time_method}")
     return ds
 
 
-
-def create_filepath(ds, rule):
-    """Generate a filepath when given an xarray dataset
-    Parameters
-    ----------
-    ds: xarray dataset
-    prefix : prefix of the output file name
-    root_path : path to the output file. Defaults to current directory
-    """
-    name = rule.cmor_variable
-    table_id = rule.data_request_variable.table.table_id  # Omon
-    label = rule.variant_label  # r1i1p1f1
-    source_id = rule.source_id  # AWI-CM-1-1-MR
-    experiment_id = rule.experiment_id  # historical
-    out_dir = rule.output_directory  # where to save output files
-    institution = rule.get("institution", "AWI")
-    grid = "gn"  # grid_type
-    if "time" in ds.dims:
-        start = ds.time.data[0].strftime("%Y%m")
-        end = ds.time.data[-1].strftime("%Y%m")
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{start}-{end}.nc"
-    else:
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}.nc"
-    return filepath
-
-
-def save_dataset(da: xr.DataArray, rule):
-    """
-    save datasets to multiple files
-
-    NOTE: prior to calling this function, call dask.compute() method,
-    otherwise tasks will progress very slow.
-    """
-    file_timespan = rule.file_timespan
-    if "time" not in da.dims:
-        # climatology
-        filepath = create_filepath(da, rule)
-        da.to_netcdf(filepath, mode="w", format="NETCDF4")
-        return
-    if isinstance(da, xr.DataArray):
-        da = da.to_dataset()
-    frequency_str = frequency_from_approx_interval(file_timespan)
-    groups = da.resample(time=frequency_str)
-    paths = []
-    datasets = []
-    for group_name, group_ds in groups:
-        paths.append(create_filepath(group_ds, rule))
-        datasets.append(group_ds)
-    xr.save_mfdataset(datasets, paths)
-    return
-
-
-"""
-Cell Methods?? These are ignored at the momemt in the time-averaging step
+_IGNORED_CELL_METHODS = """
 area: depth: time: mean
 area: mean
 area: mean (comment: over land and sea ice) time: point
@@ -272,4 +310,7 @@ longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: m
 time: mean
 time: mean grid_longitude: mean
 time: point
-"""
+""".strip().split(
+    "\n"
+)
+"""list: cell_methods to ignore when calculating time averages"""
