@@ -193,7 +193,7 @@ def _compute_file_timespan(da: xr.DataArray):
     return file_timespan
 
 
-def timeavg(da: xr.DataArray, rule):
+def compute_average(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
 

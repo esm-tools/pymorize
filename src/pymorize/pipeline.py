@@ -276,8 +276,12 @@ class DefaultPipeline(FrozenPipeline):
 
     STEPS = (
         "pymorize.gather_inputs.load_mfdataset",
-        "pymorize.generic.create_cmor_directories",
+        "pymorize.generic.get_variable",
+        "pymorize.timeaverge.compute_average",
         "pymorize.units.handle_unit_conversion",
+        "pymorize.generic.trigger_compute",
+        "pymorize.generic.show_data",
+        "pymorize.files.save_dataset",
     )
 
     def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
