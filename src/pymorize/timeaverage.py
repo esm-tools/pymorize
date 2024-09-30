@@ -1,12 +1,11 @@
 # timeaverage.py
 
-
 import xarray as xr
 import flox
 import flox.xarray  # noqa: F401
 import pandas as pd  # noqa: F401
 import itertools
-
+from .logging import logger
 
 """
 The approximate_interval for time averaging is prescribed in the cmor tables.
@@ -33,7 +32,12 @@ def split_by_chunks(dataset: xr.DataArray):
     https://github.com/pydata/xarray/issues/1093#issuecomment-259213382
     """
     chunk_slices = {}
-    for dim, chunks in dataset.chunks.items():
+    logger.info(f"{dataset.chunks=}")
+    if isinstance(dataset, xr.Dataset):
+        chunker = dataset.chunks
+    elif isinstance(dataset, xr.DataArray):
+        chunker = {dim: chunk for dim, chunk in zip(dataset.dims, dataset.chunks)}
+    for dim, chunks in chunker.items():
         slices = []
         start = 0
         for chunk in chunks:
@@ -54,6 +58,36 @@ def get_time_method(table_id: str) -> str:
     return "MEAN"
 
 
+def frequency_from_approx_interval(interval: str):
+    "interval is expressed in days"
+    notation = [
+        ("decade", lambda x: f"{x*10}YE" if x else "10YE", 3650),
+        ("year", lambda x: f"{x}YE", 366),
+        ("year", lambda x: f"{x}YE", 365),
+        ("month", lambda x: f"{x}ME", 30),
+        ("day", lambda x: f"{x}D", 1),
+        ("hour", lambda x: f"{x}H", 24),
+        ("minute", lambda x: f"{x}min", 24 * 60),
+        ("second", lambda x: f"{x}s", 24 * 60 * 60),
+        ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
+    ]
+    try:
+        interval = float(interval)
+    except ValueError:
+        return interval
+    to_divide = {"decade", "year", "month", "day"}
+    for name, func, val in notation:
+        if name in to_divide:
+            value = interval // val
+        else:
+            value = interval * val
+        if value >= 1:
+            value = round(value)
+            value = "" if value == 1 else value
+            return func(value)
+    return
+
+
 def timeavg(da: xr.DataArray, rule):
     """Time averages data with respect to time-method (mean/climotolgy/instant.)"""
     # TODO: refactor file_timespan to a seperate function
@@ -72,29 +106,39 @@ def timeavg(da: xr.DataArray, rule):
     tmp_file_timespan = []
     for i in range(3):
         try:
-            subset = next(chunks)
+            subset_name, subset = next(chunks)
         except StopIteration:
             pass
         else:
-            tmp_file_timespan.append((subset.time.data[-1] - subset.time.data[0]).days)
+            logger.info(f"{subset_name=}")
+            logger.info(f"{subset.time.data[-1]=}")
+            logger.info(f"{subset.time.data[0]=}")
+            tmp_file_timespan.append(
+                    pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
+            )
     file_timespan = max(tmp_file_timespan)
 
     # time-averaging part
     rule.file_timespan = file_timespan
     drv = rule.data_request_variable
-    approx_interval = f"{float(drv.table.approx_interval)}D"
+    approx_interval = drv.table.approx_interval
+    # approx_interval is express in Days
+    # (30 days to represent a month, 0.125 days for 3hr)
+    # convert days to hours.
+    approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
+    frequency_str = frequency_from_approx_interval(approx_interval)
+    logger.info(f"{approx_interval=} {frequency_str=}")
     timemethod = get_time_method(drv.table.table_id)
     if timemethod == "INSTANTANEOUS":
-        ds = da.resample(time=approx_interval).first()
+        #ds = da.resample(time=approx_interval_in_hours).first()
+        ds = da.resample(time=frequency_str).first()
     elif timemethod == "MEAN":
-        ds = da.resample(time=approx_interval).mean()
+        ds = da.resample(time=frequency_str).mean()
         adjust_timestamp = rule.get("adjust_timestamp", True)
         if adjust_timestamp:
-            approx_interval = rule.table.approx_interval
-            # approx_interval is express in Days
-            # (30 days to represent a month, 0.125 days for 3hr)
-            # convert days to hours. offset is half of the interval
-            offset = pd.offsets.Hour(float(approx_interval) * 24 / 2)
+            #  offset is half of the approx_interval
+            offset = pd.Timedelta(approx_interval_in_hours / 2)
+            logger.info(f"{offset=}")
             ds["time"] = ds.time.to_pandas() + offset
     else:
         # CLIMATOLOGY
@@ -109,6 +153,7 @@ def timeavg(da: xr.DataArray, rule):
     return ds
 
 
+
 def create_filepath(ds, rule):
     """Generate a filepath when given an xarray dataset
     Parameters
@@ -117,8 +162,8 @@ def create_filepath(ds, rule):
     prefix : prefix of the output file name
     root_path : path to the output file. Defaults to current directory
     """
-    name = rule.cmor_varialbe
-    table_id = rule.table.table_id  # Omon
+    name = rule.cmor_variable
+    table_id = rule.data_request_variable.table.table_id  # Omon
     label = rule.variant_label  # r1i1p1f1
     source_id = rule.source_id  # AWI-CM-1-1-MR
     experiment_id = rule.experiment_id  # historical
@@ -137,6 +182,9 @@ def create_filepath(ds, rule):
 def save_dataset(da: xr.DataArray, rule):
     """
     save datasets to multiple files
+
+    NOTE: prior to calling this function, call dask.compute() method,
+    otherwise tasks will progress very slow.
     """
     file_timespan = rule.file_timespan
     if "time" not in da.dims:
@@ -144,7 +192,10 @@ def save_dataset(da: xr.DataArray, rule):
         filepath = create_filepath(da, rule)
         da.to_netcdf(filepath, mode="w", format="NETCDF4")
         return
-    groups = da.resample(time=f"{file_timespan}D")
+    if isinstance(da, xr.DataArray):
+        da = da.to_dataset()
+    frequency_str = frequency_from_approx_interval(file_timespan)
+    groups = da.resample(time=frequency_str)
     paths = []
     datasets = []
     for group_name, group_ds in groups:
