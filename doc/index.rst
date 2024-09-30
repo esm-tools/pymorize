@@ -16,6 +16,7 @@ Contents
    pymorize_building_blocks
    pymorize_config_file
    including_subcommand_plugins
+   schemas
    developer_guide
    API
 
