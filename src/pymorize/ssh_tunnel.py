@@ -20,7 +20,10 @@ def ssh_tunnel_cli(local_port, remote_port, gateway, compute_node, username):
         f"ssh -nNT -L {local_port}:{compute_node}:{remote_port} {username}@{gateway}"
     )
 
-    click.echo(f"Creating SSH tunnel: {ssh_command}")
+    click.echo(f"Creating SSH tunnel via: {ssh_command}")
+    click.echo(
+        f"Port forwarding: localhost:{local_port} -> {gateway}:{remote_port} -> {compute_node}:{remote_port}"
+    )
     click.echo(f"Dashboard will be accessible at http://localhost:{local_port}/status")
     click.echo("Press Ctrl+C to close the tunnel")
 
