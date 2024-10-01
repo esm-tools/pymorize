@@ -16,9 +16,7 @@ def ssh_tunnel_cli(local_port, remote_port, gateway, compute_node, username):
     This script sets up an SSH tunnel to access a Dask dashboard running
     on a remote compute node, routed through a gateway server.
     """
-    ssh_command = (
-        f"ssh -nNT -L {local_port}:{compute_node}:{remote_port} {username}@{gateway}"
-    )
+    ssh_command = f"ssh -nNT -L {local_port}:{compute_node}:{remote_port} -L 4200:{compute_node}:4200 {username}@{gateway}"
 
     click.echo(f"Creating SSH tunnel via: {ssh_command}")
     click.echo(
