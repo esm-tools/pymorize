@@ -153,6 +153,16 @@ class Pipeline:
         if self._workflow_backend == "prefect":
             self._prefectize_steps()
 
+    def __str__(self):
+        name_header = f"Pipeline: {self.name}"
+        name_uline = "-" * len(name_header)
+        step_header = "steps"
+        step_uline = "-" * len(step_header)
+        r_val = [name_header, name_uline, step_header, step_uline]
+        for i, step in enumerate(self.steps):
+            r_val.append(f"[{i+1}/{len(self.steps)}] {step.__name__}")
+        return "\n".join(r_val)
+
     def assign_cluster(self, cluster):
         logger.debug("Assinging cluster to this pipeline")
         self._cluster = cluster
@@ -277,7 +287,7 @@ class DefaultPipeline(FrozenPipeline):
     STEPS = (
         "pymorize.gather_inputs.load_mfdataset",
         "pymorize.generic.get_variable",
-        "pymorize.timeaverge.compute_average",
+        "pymorize.timeaverage.compute_average",
         "pymorize.units.handle_unit_conversion",
         "pymorize.generic.trigger_compute",
         "pymorize.generic.show_data",

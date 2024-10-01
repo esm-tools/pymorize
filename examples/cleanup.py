@@ -20,6 +20,22 @@ def cleanup():
                 print(f"Removed file: {item}")
             except Exception as e:
                 print(f"Error removing file {item}: {e}")
+        if (
+            item.is_file()
+            and item.name.startswith("pymorize")
+            and item.name.endswith("json")
+        ):
+            try:
+                item.unlink()
+                print(f"Removed file: {item}")
+            except Exception as e:
+                print(f"Error removing file {item}: {e}")
+        if item.is_file() and item.name.endswith("nc"):
+            try:
+                item.unlink()
+                print(f"Removed file: {item}")
+            except Exception as e:
+                print(f"Error removing file {item}: {e}")
 
         elif item.is_dir() and item.name == "logs":
             try:

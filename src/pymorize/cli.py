@@ -14,6 +14,7 @@ from streamlit.web import cli as stcli
 from . import _version, dev_utils
 from .cmorizer import CMORizer
 from .logging import logger
+from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -152,6 +153,31 @@ def ls(directory, output_file, verbose, quiet, logfile, profile_mem):
 ################################################################################
 # COMMANDS FOR validate
 ################################################################################
+
+
+@validate.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument("config_file", type=click.Path(exists=True))
+def config(config_file, verbose, quiet, logfile, profile_mem):
+    logger.info(f"Checking if a CMORizer can be built from {config_file}")
+    with open(config_file, "r") as f:
+        cfg = yaml.safe_load(f)
+        if "pipelines" in cfg:
+            pipelines = cfg["pipelines"]
+            PIPELINES_VALIDATOR.validate({"pipelines": pipelines})
+        if "rules" in cfg:
+            rules = cfg["rules"]
+            RULES_VALIDATOR.validate({"rules": rules})
+        if not PIPELINES_VALIDATOR.errors and not RULES_VALIDATOR.errors:
+            logger.success(
+                f"Configuration {config_file} is valid for both rules and pipelines!"
+            )
+        for key, error in {
+            **PIPELINES_VALIDATOR.errors,
+            **RULES_VALIDATOR.errors,
+        }.items():
+            logger.error(f"{key}: {error}")
 
 
 @validate.command()

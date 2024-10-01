@@ -2,9 +2,9 @@
 Provides validation of user configuration files by checking against a schema.
 """
 
+import glob
 import importlib
 import pathlib
-import glob
 
 from cerberus import Validator
 
@@ -131,17 +131,17 @@ RULES_SCHEMA = {
                 "model_units": {"type": "string", "required": False},
                 "variant_label": {
                     "type": "string",
-                    "required": False,  # True
+                    "required": True,
                     "regex": "^r\d+i\d+p\d+f\d+$",
                 },
-                "source_id": {"type": "string", "required": False},  # True
+                "source_id": {"type": "string", "required": True},
                 "output_directory": {
                     "type": "string",
-                    "required": False,
+                    "required": True,
                     "is_directory": True,
                 },
                 "instition_id": {"type": "string", "required": False},
-                "experiment_id": {"type": "string", "required": False},  # True
+                "experiment_id": {"type": "string", "required": True},
                 "adjust_timestamp": {"type": "boolean", "required": False},
             },
         },

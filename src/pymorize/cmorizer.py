@@ -329,10 +329,14 @@ class CMORizer:
         return data
 
     def _process_rule(self, rule):
+        logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
         rule.match_pipelines(self.pipelines)
         data = None
+        if not len(rule.pipelines) > 0:
+            logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
+            logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
 

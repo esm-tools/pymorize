@@ -6,6 +6,8 @@ saving the resulting datasets to the generated filepaths.
 
 import xarray as xr
 
+from .timeaverage import _frequency_from_approx_interval
+
 
 def _filename_time_range(ds, rule) -> str:
     """
@@ -105,7 +107,7 @@ def save_dataset(da: xr.DataArray, rule):
         return da.to_netcdf(filepath, mode="w", format="NETCDF4")
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
-    frequency_str = frequency_from_approx_interval(file_timespan)
+    frequency_str = _frequency_from_approx_interval(file_timespan)
     groups = da.resample(time=frequency_str)
     paths = []
     datasets = []
