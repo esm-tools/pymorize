@@ -32,8 +32,6 @@ _IGNORED_CELL_METHODS : list
 
 import itertools
 
-import flox  # noqa: F401
-import flox.xarray  # noqa: F401
 import pandas as pd
 import xarray as xr
 

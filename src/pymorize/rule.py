@@ -9,8 +9,7 @@ import yaml
 
 from . import data_request, pipeline
 from .gather_inputs import InputFileCollection
-
-# from .logging import logger
+from .logging import logger
 
 
 class Rule:
@@ -83,16 +82,25 @@ class Rule:
             Pipeline objects. The order of the pipelines will be preserved.
         """
         if self._pipelines_are_mapped and not force:
+            logger.debug("Pipelines already mapped, nothing to do")
             return self.pipelines
         known_pipelines = {p.name: p for p in pipelines}
-        matched_pipelines = OrderedDict()
+        logger.debug("The following pipelines are known:")
+        for pl_name, pl in known_pipelines.items():
+            logger.debug(f"{pl_name}: {pl}")
+        matched_pipelines = list()
         for pl in self.pipelines:
+            logger.debug(f"Working on: {pl}")
             # Pipeline was already matched
             if isinstance(pl, pipeline.Pipeline):
-                continue
-            # Pipeline name:
-            matched_pipelines[pl] = known_pipelines[pl]
-        self.pipelines = list(matched_pipelines.values())
+                matched_pipelines.append(pl)
+            elif isinstance(pl, str):
+                # Pipeline name:
+                matched_pipelines.append(known_pipelines[pl])
+            else:
+                logger.error(f"No known way to match the pipeline {pl}")
+                raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
+        self.pipelines = matched_pipelines
         self._pipelines_are_mapped = True
 
     @classmethod
