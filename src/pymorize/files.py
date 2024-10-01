@@ -7,6 +7,55 @@ saving the resulting datasets to the generated filepaths.
 import xarray as xr
 
 
+def _filename_time_range(ds, rule) -> str:
+    """
+    Determine the time range used in naming the file.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The input dataset.
+    rule : Rule
+        The rule object containing information for generating the filepath.
+
+    Returns
+    -------
+    str
+        time_range in filepath.
+    """
+    start = ds.time.data[0]
+    end = ds.time.data[-1]
+    start_year = start.strftime("%Y")
+    end_year = end.strftime("%Y")
+    frequency_str = rule.get("frequency_str")
+    time_method = rule.get("time_method")
+    # NOTE: the commented out return statments: Although they report the actual
+    # time limits in the file, the hard-coded version is chosen 2 reason,
+    # a) to replicate code in seamore tool
+    # b) to have consistent time range scheme in filename (Hmmm.... ?)
+    if frequency_str is None:
+        return f"{start_year}-{end_year}"
+    if frequency_str.endswith("YE"):
+        return f"{start_year}-{end_year}"
+    if frequency_str.endswith("ME"):
+        # return f"{start.strftime('%Y%m')}-{end.strftime('%Y%m')}"
+        return f"{start_year}01-{end_year}12"
+    if frequency_str.endswith("D"):
+        # return f"{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}"
+        return f"{start_year}0101-{end_year}1231"
+    if frequency_str.endswith("H"):
+        # return f"{start.strftime('%Y%m%d%H')}-{end.strftime('%Y%m%d%H')}"
+        if time_method == "INSTANTANEOUS":
+            return f"{start_year}01010030-{end_year}12312330"
+        else:
+            return f"{start_year}01010000-{end_year}12312300"
+    # the following is not covered in seamore tool, hopefully they are used.
+    if frequency_str.endswith("min"):
+        return f"{start.strftime('%Y%m%d%H%M')}-{end.strftime('%Y%m%d%H%M')}"
+    else:
+        return f"{start.strftime('%Y%m%d%H%M%S')}-{end.strftime('%Y%m%d%H%M%S')}"
+
+
 def create_filepath(ds, rule):
     """
     Generate a filepath when given an xarray dataset and a rule.
@@ -38,12 +87,8 @@ def create_filepath(ds, rule):
     out_dir = rule.output_directory  # where to save output files
     institution = rule.get("institution", "AWI")
     grid = "gn"  # grid_type
-    if "time" in ds.dims:
-        start = ds.time.data[0].strftime("%Y%m")
-        end = ds.time.data[-1].strftime("%Y%m")
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{start}-{end}.nc"
-    else:
-        filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}.nc"
+    time_range = _filename_time_range(ds, rule)
+    filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{time_range}.nc"
     return filepath
 
 

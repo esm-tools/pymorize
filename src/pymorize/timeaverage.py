@@ -220,7 +220,10 @@ def compute_average(da: xr.DataArray, rule):
     approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
+    # attach the frequency_str to rule, it is referenced when creating file name
+    rule.frequency_str = frequency_str
     time_method = _get_time_method(drv.table.table_id)
+    rule.time_method = time_method
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
     elif time_method == "MEAN":
