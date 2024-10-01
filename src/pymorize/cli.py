@@ -14,6 +14,7 @@ from streamlit.web import cli as stcli
 from . import _version, dev_utils
 from .cmorizer import CMORizer
 from .logging import logger
+from .ssh_tunnel import ssh_tunnel_cli
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -190,6 +191,7 @@ def main():
         cli.add_command(entry_point["callable"], name=entry_point_name)
     cli.add_command(validate)
     cli.add_command(develop)
+    cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
     cli(auto_envvar_prefix="PYMORIZE")
 
 
