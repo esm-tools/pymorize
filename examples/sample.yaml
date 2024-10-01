@@ -15,19 +15,19 @@ pymorize:
   # minimum_jobs: 8
   # maximum_jobs: 30
 rules:
-  # - name: paul_example_rule
-  #   description: "You can put some text here"
-  #   inputs:
-  #     - path: /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom
-  #       pattern: CO2f_fesom_.*nc
-  #   cmor_variable: fgco2
-  #   model_variable: CO2f
-  #   output_directory: .
-  #   variant_label: r1i1p1f1
-  #   experiment_id: piControl
-  #   source_id: ocean
-  #   pipelines:
-  #     - default
+  - name: paul_example_rule
+    description: "You can put some text here"
+    inputs:
+      - path: /work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom
+        pattern: CO2f_fesom_.*nc
+    cmor_variable: fgco2
+    model_variable: CO2f
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: ocean
+    pipelines:
+      - default
   - name: Salinity of the Ocean
     description: "Here is some text for humans. It isn't used anywhere."
     inputs:
