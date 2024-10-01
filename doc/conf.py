@@ -61,6 +61,7 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
     "sphinx_toolbox.collapse",
+    "sphinx.ext.intersphinx",
 ]
 
 # Strip the input promps for code cells when copying
@@ -70,6 +71,20 @@ copybutton_prompt_is_regexp = True
 templates_path = ["_templates"]
 exclude_patterns = ["_build", "Thumbs.db", ".DS_Store"]
 
+intersphinx_mapping = {
+    "python": ("http://docs.python.org/", None),
+    "numpy": ("http://docs.scipy.org/doc/numpy/", None),
+    "scipy": ("http://docs.scipy.org/doc/scipy/reference/", None),
+    "matplotlib": ("https://matplotlib.org/stable/", None),
+    "pandas": ("http://pandas.pydata.org/pandas-docs/stable/", None),
+    "xarray": ("http://xarray.pydata.org/en/stable/", None),
+    "chemicals": ("https://chemicals.readthedocs.io/", None),
+    "cerberus": ("https://docs.python-cerberus.org/", None),
+}
+
+
+# -- Custom directives --------------------------------------------------------
+napoleon_custom_sections = [("Mutates", "params_style")]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

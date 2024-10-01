@@ -1,7 +1,7 @@
 """Log from another module."""
 
 # third-party imports
-from loguru import logger
+from .logging import logger
 
 
 def other_module_levels():

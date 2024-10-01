@@ -1,8 +1,8 @@
 import rich_click as click
-from loguru import logger
 
 from .cli import (NAME, VERSION, click_loguru,  # , pymorize_cli_group
                   find_subcommands)
+from .logging import logger
 
 
 @click_loguru.logging_options

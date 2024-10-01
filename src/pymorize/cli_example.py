@@ -1,4 +1,5 @@
 """An extremely simple command-line application."""
+
 # standard library imports
 import array
 import sys
@@ -8,9 +9,9 @@ from time import sleep
 import rich_click as click
 # module imports
 from click_loguru import ClickLoguru
-from loguru import logger
 
 # self imports
+from .logging import logger
 from .other_module import other_module_levels
 
 # global constants

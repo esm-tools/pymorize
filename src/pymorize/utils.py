@@ -3,10 +3,12 @@ Various utility functions needed around the package
 """
 
 import inspect
+import time
 from functools import partial
 
 import pkg_resources
-from loguru import logger
+
+from .logging import logger
 
 
 def get_callable_by_name(name):
@@ -157,3 +159,27 @@ def can_be_partialized(
             param_names.remove(kwarg)
     # Check that there is only one argument left and that it is open_arg
     return len(param_names) == 1 and param_names[0] == open_arg
+
+
+def wait_for_workers(client, n_workers, timeout=600):
+    """
+    Wait for a specific number of workers to be available.
+
+    Args:
+    client (distributed.Client): The Dask client
+    n_workers (int): The number of workers to wait for
+    timeout (int): Maximum time to wait in seconds
+
+    Returns:
+    bool: True if the required number of workers are available, False if timeout occurred
+    """
+    start_time = time.time()
+    while len(client.scheduler_info()["workers"]) < n_workers:
+        if time.time() - start_time > timeout:
+            logger.critical(
+                f"Timeout reached. Only {len(client.scheduler_info()['workers'])} workers available."
+            )
+            return False
+        time.sleep(1)  # Wait for 1 second before checking again
+    logger.info(f"{n_workers} workers are now available.")
+    return True

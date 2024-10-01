@@ -14,6 +14,9 @@ def read(filename):
         return re.sub(text_type(r":[a-z]+:`~?(.*?)`"), text_type(r"``\1``"), fd.read())
 
 
+docs_require = read("doc/requirements.txt").splitlines()
+
+
 setup(
     name="pymorize",
     python_requires=">=3.9, <4",
@@ -28,30 +31,47 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
+        "cerberus",
+        "cftime",
         "cf_xarray",
         "chemicals",
         "click-loguru",
-        "dill",
+        "dask",
+        "dask_jobqueue",
+        "deprecation",
+        "distributed",
+        "dpath",
         "pendulum",
         "pint-xarray",
+        "prefect[dask]",
         "pyyaml",
         "questionary",
+        "randomname",
         "rich-click",
         "versioneer",
         "xarray",
+        "streamlit",
+        "flox",
+        "numbagg",
     ],
-    development_requires=[
-        "black",
-        "flake8",
-        "isort",
-        "pre-commit",
-        "pytest",
-        "pytest-asyncio",
-        "pytest-cov",
-        "pytest-xdist",
-        "sphinx",
-        "sphinx_rtd_theme",
-    ],
+    extras_require={
+        "dev": [
+            "black",
+            "dill",
+            "flake8",
+            "isort",
+            "pooch",
+            "pre-commit",
+            "pyfakefs",
+            "pytest",
+            "pytest-asyncio",
+            "pytest-cov",
+            "pytest-xdist",
+            "sphinx",
+            "sphinx_rtd_theme",
+        ],
+        "doc": docs_require,
+    },
     entry_points={
         "console_scripts": [
             "pymorize=pymorize.cli:main",

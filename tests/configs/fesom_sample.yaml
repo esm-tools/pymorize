@@ -1,13 +1,5 @@
-pymorize:
-  # Settings for configurizing Pymorize itself
-  version: 0.1.0
-  interactive: true # If true, prompt user for input
-global:
-  cmor_table_dir: ./cmip6-cmor-tables/Tables/
-  output_dir: /path/to/output/dir
-  global_nc_attrs:
-    CMIP_Era: CMIP6
-    CMIP_Version: v20191001
+cmor_table_dir: ./cmip6-cmor-tables/Tables/
+output_dir: /path/to/output/dir
 pipelines:
   - id: generic_pipe
     actions:
@@ -32,4 +24,32 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_u.nc
     pipelines: [generic_pipe]
-    CMIP_Era: CMIP5 # Override global setting
+  - model_variable: salt
+    model_units: PSU
+    cmor_variable: so
+    cmor_table: CMIP6_Omon.json
+    input_patterns:
+      - /path/to/fesom/output/files/*_salt.nc
+    output_file: salt.nc
+  - model_variable: ssh
+    model_units: m
+    cmor_variable: zos
+    cmor_table: CMIP6_Omon.json
+    input_patterns:
+      - /path/to/fesom/output/files/*_ssh.nc
+    output_file: ssh.nc
+  - model_variable: u
+    model_units: m/s
+    cmor_variable: uo
+    cmor_table: CMIP6_Omon.json
+    input_patterns:
+      - /path/to/fesom/output/files/*_u.nc
+    output_file: u.nc
+  - model_variable: temp
+    model_units: degC
+    cmor_variable: thetao
+    cmor_table: CMIP6_Omon.json
+    input_patterns:
+      - /path/to/fesom/output/files/*_temp.nc
+    output_file: temp.nc
+
