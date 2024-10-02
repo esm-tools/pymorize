@@ -2,16 +2,13 @@
 Pipeline of the data processing steps.
 """
 
-import json
-import os
-
 import randomname
 from prefect import flow
 from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
 from .logging import logger
-from .utils import get_callable
+from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
@@ -89,7 +86,7 @@ class Pipeline:
 
     @classmethod
     def from_callable_strings(cls, step_strings: list, name=None):
-        return cls.from_list([get_callable(name) for name in qualnames], name=name)
+        return cls.from_list([get_callable(name) for name in step_strings], name=name)
 
     @classmethod
     def from_dict(cls, data):
