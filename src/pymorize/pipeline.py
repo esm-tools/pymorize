@@ -70,8 +70,14 @@ class Pipeline:
         logger.debug(
             f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
         )
+        cmor_name = rule_spec.get("cmor_name")
+        rule_name = rule_spec.get("name", cmor_name)
 
-        @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        @flow(
+            flow_run_name=f"{self.name} - {rule_name}",
+            description=f"{rule.get('description', '')}",
+            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+        )
         def dynamic_flow(data, rule_spec):
             return self._run_native(data, rule_spec)
 
