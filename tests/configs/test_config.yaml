@@ -32,6 +32,10 @@ rules:
     cmor_variable: "tas"
     input_type: "xr.DataArray"
     input_source: "xr_tutorial"
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: ocean
     inputs:
       - path: "./"
         pattern: "test_input"
@@ -43,9 +47,17 @@ rules:
       - path: "/a/b/c"
         pattern: ".*"
     cmor_variable: "so"
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: ocean
   - name: test_rule4
     cmor_variable: "thetao"
     pipelines: ["sleeper_pipeline"]
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: ocean
     inputs:
       - path: "/a/b/c"
         pattern: ".*"

@@ -16,6 +16,7 @@ from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
+from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 
@@ -64,11 +65,31 @@ class CMORizer:
         # FIXME: In the future, we can support PBS, too.
         logger.info("Setting up SLURMCluster...")
         self._cluster = SLURMCluster()
-        min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
-        max_jobs = self._pymorize_cfg.get("maximum_jobs", 10)
-        self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
+        cluster_mode = self._pymorize_cfg.get("cluster_mode", "adapt")
+        if cluster_mode == "adapt":
+            min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
+            max_jobs = self._pymorize_cfg.get("maximum_jobs", 10)
+            self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
+        elif cluster_mode == "fixed":
+            jobs = self._pymorize_cfg.get("fixed_jobs", 5)
+            self._cluster.scale(jobs=jobs)
+        else:
+            raise ValueError(
+                "You need to specify adapt or fixed for pymorize.cluster_mode"
+            )
+        # Wait for at least min_jobs to be available...
+        # FIXME: Client needs to be available here?
         logger.info(f"SLURMCluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
+
+        dask_extras = 0
+        logger.info("Importing Dask Extras...")
+        if self._pymorize_cfg.get("use_flox", True):
+            dask_extras += 1
+            logger.info("...flox...")
+            import flox  # noqa: F401
+            import flox.xarray  # noqa: F401
+        logger.info(f"...done! Imported {dask_extras} libraries.")
 
     def _post_init_read_bare_tables(self):
         """
@@ -313,13 +334,15 @@ class CMORizer:
             client = external_client
         else:
             client = Client(cluster=self._cluster)  # start a local Dask client
+        if wait_for_workers(client, 1):
+            futures = [client.submit(self._process_rule, rule) for rule in self.rules]
 
-        futures = [client.submit(self._process_rule, rule) for rule in self.rules]
+            results = client.gather(futures)
 
-        results = client.gather(futures)
-
-        logger.success("Processing completed.")
-        return results
+            logger.success("Processing completed.")
+            return results
+        else:
+            logger.error("Timeout reached waiting for dask cluster, sorry...")
 
     def serial_process(self):
         data = {}
@@ -329,10 +352,14 @@ class CMORizer:
         return data
 
     def _process_rule(self, rule):
+        logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
         rule.match_pipelines(self.pipelines)
         data = None
+        if not len(rule.pipelines) > 0:
+            logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
+            logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
 

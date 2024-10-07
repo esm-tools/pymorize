@@ -51,6 +51,8 @@ setup(
         "versioneer",
         "xarray",
         "streamlit",
+        "flox",
+        "numbagg",
     ],
     extras_require={
         "dev": [

@@ -2,7 +2,9 @@
 Provides validation of user configuration files by checking against a schema.
 """
 
+import glob
 import importlib
+import pathlib
 
 from cerberus import Validator
 
@@ -41,6 +43,21 @@ class PipelineValidator(Validator):
             self._error(
                 "document", 'At least one of "steps" or "uses" must be specified'
             )
+
+
+class RuleValidator(Validator):
+    def _validate_is_directory(self, is_directory, field, value):
+        if is_directory:
+            try:
+                if glob.has_magic(value):
+                    self._error(field, "Must not contain glob characters")
+            except TypeError as e:
+                self._error(field, f"{e.args[0]}. Must be a string")
+            else:
+                try:
+                    pathlib.Path(value).expanduser().resolve()
+                except TypeError as e:
+                    self._error(field, f"{e.args[0]}. Must be a string")
 
 
 PIPELINES_SCHEMA = {
@@ -112,9 +129,23 @@ RULES_SCHEMA = {
                 "cmor_units": {"type": "string", "required": False},
                 # FIXME(PS): How is it currently defined?
                 "model_units": {"type": "string", "required": False},
+                "variant_label": {
+                    "type": "string",
+                    "required": True,
+                    "regex": "^r\d+i\d+p\d+f\d+$",
+                },
+                "source_id": {"type": "string", "required": True},
+                "output_directory": {
+                    "type": "string",
+                    "required": True,
+                    "is_directory": True,
+                },
+                "instition_id": {"type": "string", "required": False},
+                "experiment_id": {"type": "string", "required": True},
+                "adjust_timestamp": {"type": "boolean", "required": False},
             },
         },
     },
 }
 """dict : Schema for validating rules configuration."""
-RULES_VALIDATOR = Validator(RULES_SCHEMA)
+RULES_VALIDATOR = RuleValidator(RULES_SCHEMA)
