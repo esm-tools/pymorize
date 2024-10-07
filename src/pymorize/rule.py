@@ -57,7 +57,7 @@ class Rule:
     def get(self, key, default=None):
         return getattr(self, key, default)
 
-    def set(self, key, value, force=False):
+    def set(self, key, value, force=False, warn=True):
         """
         Set a new attribute for the object.
 
@@ -70,6 +70,10 @@ class Rule:
         force : bool, optional
             If True, the attribute will be overwritten if it already exists.
             If False (default), an AttributeError will be raised if the attribute already exists.
+        warn : bool, optional
+            If True (default) a warning will be issued if the attribute already exists, and
+            it will not be overwritten. If False, an AttributeError will be raised if the attribute
+            already exists.
 
         Returns
         -------
@@ -79,12 +83,17 @@ class Rule:
         Raises
         ------
         AttributeError
-            If the attribute already exists and force is False.
+            If the attribute already exists and force and warn are both False.
         """
         if hasattr(self, key) and not force:
-            raise AttributeError(
-                f"Attribute {key} already exists. Use force=True to overwrite."
-            )
+            if warn:
+                warnings.warn(
+                    f"Attribute {key} already exists. Use force=True to overwrite."
+                )
+            else:
+                raise AttributeError(
+                    f"Attribute {key} already exists. Use force=True to overwrite."
+                )
         return setattr(self, key, value)
 
     def __repr__(self):

@@ -92,6 +92,6 @@ Rules can inherit global values. To do so, you should include them in the ``inhe
           pipelines:
             - my_pipeline
 
-  The rule ``my_rule`` will inherit the frequency ``mon`` from the global configuration, and can be accessed in
-  Python code as ``rule_spec.frequency``.
+The rule ``my_rule`` will inherit the frequency ``mon`` from the global configuration, and can be accessed in
+Python code as ``rule_spec.frequency``.
 
