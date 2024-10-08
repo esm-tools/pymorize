@@ -75,11 +75,31 @@ class Pipeline:
             flow_run_name=f"{self.name} - {rule_name}",
             description=f"{rule.get('description', '')}",
             task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            on_completion=[self.on_completion],
+            on_failure=[self.on_failure],
         )
         def dynamic_flow(data, rule_spec):
             return self._run_native(data, rule_spec)
 
         return dynamic_flow(data, rule_spec)
+
+    @staticmethod
+    def on_completion(flow, flowrun, state):
+        with open("pauls_log.txt", "a") as f:
+            f.write("Success...\n")
+            f.write(f"{flow=}\n")
+            f.write(f"{flowrun=}\n")
+            f.write(f"{state=}\n")
+            f.write("Good job! :-) \n")
+
+    @staticmethod
+    def on_failure(flow, flowrun, state):
+        with open("pauls_log.txt", "a") as f:
+            f.write("Failure...\n")
+            f.write(f"{flow=}\n")
+            f.write(f"{flowrun=}\n")
+            f.write(f"{state=}\n")
+            f.write("Better luck next time :-( \n")
 
     @classmethod
     def from_list(cls, steps, name=None):
