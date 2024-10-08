@@ -33,7 +33,7 @@ class Pipeline:
         return "\n".join(r_val)
 
     def assign_cluster(self, cluster):
-        logger.debug("Assinging cluster to this pipeline")
+        logger.debug("Assigning cluster to this pipeline")
         self._cluster = cluster
 
     def _prefectize_steps(self):
