@@ -2,10 +2,12 @@
 Pipeline of the data processing steps.
 """
 
+from datetime import timedelta
 
 import randomname
 from prefect import flow
-from prefect.tasks import Task
+from prefect.cache_policies import INPUTS, TASK_SOURCE
+from prefect.tasks import Task, task_input_hash
 from prefect_dask import DaskTaskRunner
 
 from .logging import logger
@@ -43,7 +45,14 @@ class Pipeline:
             logger.debug(
                 f"[{i+1}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
             )
-            prefect_tasks.append(Task(step))
+            prefect_tasks.append(
+                Task(
+                    fn=step,
+                    # cache_key_fn=task_input_hash,
+                    cache_expiration=timedelta(days=1),
+                    cache_policy=TASK_SOURCE + INPUTS,
+                )
+            )
 
         self._steps = prefect_tasks
 
