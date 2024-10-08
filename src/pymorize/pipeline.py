@@ -72,8 +72,9 @@ class Pipeline:
         rule_name = rule_spec.get("name", cmor_name)
 
         @flow(
-            flow_run_name=f"{self.name} - {rule_name}",
-            description=f"{rule.get('description', '')}",
+            name=f"Pipeline: {self.name}",
+            flow_run_name=f"Pipeline: {self.name} for Rule: {rule_name}",
+            description=f"{rule_spec.get('description', '')}",
             task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
             on_completion=[self.on_completion],
             on_failure=[self.on_failure],
