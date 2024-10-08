@@ -13,7 +13,7 @@ from streamlit.web import cli as stcli
 
 from . import _version, dev_utils
 from .cmorizer import CMORizer
-from .logging import logger
+from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -88,6 +88,9 @@ def cli(verbose, quiet, logfile, profile_mem):
 @click_loguru.init_logger()
 @click.argument("config_file", type=click.Path(exists=True))
 def process(config_file):
+    # NOTE(PG): The ``init_logger`` decorator above removes *ALL* previously configured loggers,
+    #           so we need to re-create the report logger here. Paul does not like this at all.
+    add_report_logger()
     logger.info(f"Processing {config_file}")
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)

@@ -1,49 +1,37 @@
 import warnings
+from functools import wraps
 
-import prefect
 from loguru import logger
 from rich.logging import RichHandler
 
-logger.remove()
-
-# Set up logging
-showwarning_ = warnings.showwarning
-
 
 def showwarning(message, *args, **kwargs):
+    """Set up warnings to use logger"""
     logger.warning(message)
-    # showwarning_(message, *args, **kwargs)
+
+
+def report_filter(record):
+    """Checks if the record should be added to the report log or not"""
+    return record["extra"].get("add_to_report", False)
+
+
+def add_to_report_log(func):
+    """Decorator for logging to the report log"""
+
+    @wraps(func)
+    def wrapper(*args, **kwargs):
+        with logger.contextualize(add_to_report=True):
+            return func(*args, **kwargs)
+
+    return wrapper
+
+
+def add_report_logger():
+    logger.add(
+        "pymorize_report.log", format="{time} {level} {message}", filter=report_filter
+    )
 
 
 warnings.showwarning = showwarning
-
-
-# Function to forward loguru logs to Prefect logger if available
-def loguru_to_prefect(message):
-    try:
-        # Try to get Prefect logger
-        prefect_logger = prefect.context.get("logger")
-        level = message.record["level"].name
-        msg = message.record["message"]
-
-        # Forward loguru logs to Prefect logger based on level
-        if level == "DEBUG":
-            prefect_logger.debug(msg)
-        elif level == "INFO":
-            prefect_logger.info(msg)
-        elif level == "WARNING":
-            prefect_logger.warning(msg)
-        elif level == "ERROR":
-            prefect_logger.error(msg)
-        elif level == "CRITICAL":
-            prefect_logger.critical(msg)
-    except (KeyError, AttributeError):
-        # If no Prefect logger is found, fallback to regular loguru log
-        pass
-
-
-# Add the Prefect logger as a sink for Loguru, with a try-except fallback
-logger.add(loguru_to_prefect)
-
-# Configure loguru with a rich handler for general logging
-logger.configure(handlers=[{"sink": RichHandler(), "format": "{message}"}])
+logger.remove()
+rich_handler_id = logger.add(RichHandler(), format="{message}", level="INFO")

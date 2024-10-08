@@ -7,7 +7,7 @@ from prefect import flow
 from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
-from .logging import logger
+from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 
 
@@ -67,12 +67,38 @@ class Pipeline:
         logger.debug(
             f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
         )
+        cmor_name = rule_spec.get("cmor_name")
+        rule_name = rule_spec.get("name", cmor_name)
 
-        @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        @flow(
+            flow_run_name=f"{self.name} - {rule_name}",
+            description=f"{rule_spec.get('description', '')}",
+            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            on_completion=[self.on_completion],
+            on_failure=[self.on_failure],
+        )
         def dynamic_flow(data, rule_spec):
             return self._run_native(data, rule_spec)
 
         return dynamic_flow(data, rule_spec)
+
+    @staticmethod
+    @add_to_report_log
+    def on_completion(flow, flowrun, state):
+        logger.success("Success...\n")
+        logger.success(f"{flow=}\n")
+        logger.success(f"{flowrun=}\n")
+        logger.success(f"{state=}\n")
+        logger.success("Good job! :-) \n")
+
+    @staticmethod
+    @add_to_report_log
+    def on_failure(flow, flowrun, state):
+        logger.error("Failure...\n")
+        logger.error(f"{flow=}\n")
+        logger.error(f"{flowrun=}\n")
+        logger.error(f"{state=}\n")
+        logger.error("Better luck next time :-( \n")
 
     @classmethod
     def from_list(cls, steps, name=None):
