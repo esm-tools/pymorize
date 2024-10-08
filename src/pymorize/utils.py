@@ -2,6 +2,7 @@
 Various utility functions needed around the package
 """
 
+import importlib
 import inspect
 import time
 from functools import partial
@@ -9,6 +10,28 @@ from functools import partial
 import pkg_resources
 
 from .logging import logger
+
+
+def get_callable(name):
+    """Get a callable from a string
+    First, tries standard import, then tries entry points, then from script
+    """
+    try:
+        return get_callable_by_name(name)
+    except (ImportError, AttributeError):
+        pass
+
+    try:
+        return get_entrypoint_by_name(name)
+    except ValueError:
+        pass
+
+    try:
+        return get_callable_by_script(name)
+    except ValueError:
+        pass
+
+    raise ValueError(f"Callable '{name}' not found")
 
 
 def get_callable_by_name(name):
@@ -48,7 +71,7 @@ def get_callable_by_name(name):
     return getattr(module, callable_name)
 
 
-def get_entrypoint_by_name(name, group="pymorize.rules"):
+def get_entrypoint_by_name(name, group="pymorize.steps"):
     """
     Get an entry point by its name.
 
@@ -159,6 +182,47 @@ def can_be_partialized(
             param_names.remove(kwarg)
     # Check that there is only one argument left and that it is open_arg
     return len(param_names) == 1 and param_names[0] == open_arg
+
+
+def get_function_from_script(script_path: str, function_name: str):
+    """
+    Get a function from a Python script.
+
+    This function takes the path to a Python script and the name of a function defined in that script,
+    and returns the actual function object. If the script does not exist or the function is not defined
+    in the script, this function will raise an ImportError.
+
+    Parameters
+    ----------
+    script_path : str
+        The path to the Python script where the function is defined.
+    function_name : str
+        The name of the function to be retrieved.
+
+    Returns
+    -------
+    callable
+        The function object that corresponds to the given name in the specified script.
+
+    Raises
+    ------
+    ImportError
+        If the script does not exist or the function is not defined in the script.
+    """
+    logger.debug(f"Importing function '{function_name}' from script '{script_path}'")
+    spec = importlib.util.spec_from_file_location("script", script_path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return getattr(module, function_name)
+
+
+def get_callable_by_script(step_signature):
+    if not step_signature.startswith("script://"):
+        raise ValueError(f"Step signature '{step_signature}' is not a script step")
+    script_spec = step_signature.split("script://")[1]
+    script_path = script_spec.split(":")[0]
+    function_name = script_spec.split(":")[1]
+    return get_function_from_script(script_path, function_name)
 
 
 def wait_for_workers(client, n_workers, timeout=600):
