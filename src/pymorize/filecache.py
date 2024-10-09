@@ -199,5 +199,4 @@ class Filecache:
 
 
 datapath = "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom"
-filepat = f"CO2f_fesom_*nc"
-
+filepat = "CO2f_fesom_*nc"
