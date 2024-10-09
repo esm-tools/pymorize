@@ -3,7 +3,7 @@
 import re
 import json
 from pathlib import Path
-from loguru import logger
+# from loguru import logger
 
 # TODO: no need to hard-code these values, can be directly read from cmip6-cmor-tables/Tables/CMIP6_CV.json
 _fields = (
@@ -51,7 +51,35 @@ _parent_fields = (
 )
 
 
-def parse_variant_label(label: str) -> dict:
+defaults = {
+    "institution_id": "AWI",
+    "license_type": "CC BY-SA 4.0",
+    "maintainer_url": None,
+}
+
+
+def set_global_attributes(ds, rule):
+    gattrs = {}
+    cvs = rule.get("cvs", {})
+    variant_label = rule.get("variant_label")
+    update_variant_label(variant_label, gattrs)
+    source_id = rule.get("source_id")
+    experiment_id = rule.get("experiment_id")
+    activity_id = rule.get("activity_id", None)
+    if activity_id is None:
+        _experiment_id_cv = cvs.get("experiment_id", {}).get(experiment_id, {})
+        activity_id = _experiment_id_cv.get("activity_id", [])
+        if activity_id and len(activity_id) > 1:
+            activity_ids = ", ".join(activity_id)
+            raise ValueError(
+                f"activity_id -- {activity_ids} -- has multiple value for experiment_id {experiment_id}."
+            )
+
+    experiment = _experiment_id_cv.get("experiment", "")
+    parent_activity_id = _experiment_id_cv.get("parent_activity_id", "")
+
+
+def _parse_variant_label(label: str) -> dict:
     """Extracts indices values from variant label.
     `label` must be of the form "r<int>i<int>p<int>f<int>".
     Example: "r1i1p1f1"
@@ -76,19 +104,12 @@ def parse_variant_label(label: str) -> dict:
     return d
 
 
-def update_variant_label(label: str, gattrs: dict) -> dict:
+def _update_variant_label(label: str, gattrs: dict) -> dict:
     "Add variant_label to global attributes"
-    variant_label_indices = parse_variant_label(label)
+    variant_label_indices = _parse_variant_label(label)
     gattrs |= variant_label_indices
     gattrs["variant_label"] = label
     return gattrs
-
-
-defaults = {
-    "institution_id": "AWI",
-    "license_type": "CC BY-SA 4.0",
-    "maintainer_url": None,
-}
 
 
 def load_cvs(path: Path):
