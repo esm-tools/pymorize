@@ -239,6 +239,19 @@ def inspect_prefect(cache_dir, verbose, quiet, logfile, profile_mem):
     return 0
 
 
+@cache.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument(
+    "result",
+    type=click.Path(exists=True),
+)
+def inspect_result(result, verbose, quiet, logfile, profile_mem):
+    obj = caching.inspect_result(result)
+    logger.info(obj)
+    return 0
+
+
 ################################################################################
 ################################################################################
 ################################################################################

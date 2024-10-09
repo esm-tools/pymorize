@@ -1,6 +1,8 @@
 """
 This module contains the functions that are used to cache the results of the tasks.
 """
+
+import base64
 import json
 import pickle
 from pathlib import Path
@@ -42,3 +44,13 @@ def inspect_cache(cache_dir="~/.prefect/storage"):
             logger.error(f"  Error reading file: {str(e)}")
             raise e
         logger.info("\n")
+
+
+def inspect_result(result):
+    with open(result, "r") as file:
+        cached_data = json.load(file)
+    # FIXME: handle pickling library...
+    pickled_result_base64 = cached_data["result"]
+    pickled_result = base64.b64decode(pickled_result_base64)
+    unpickled_result = pickle.loads(pickled_result)
+    return unpickled_result
