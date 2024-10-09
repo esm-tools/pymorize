@@ -1,16 +1,14 @@
-import glob
 import json
 import os
-import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from contextlib import contextmanager
+from typing import Dict
 
 import pandas as pd
 import xarray as xr
 from imohash import hashfile
 from tqdm.contrib.concurrent import process_map
-from typing import List, Dict
 
 
 @contextmanager
