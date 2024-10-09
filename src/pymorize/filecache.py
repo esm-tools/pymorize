@@ -67,7 +67,9 @@ class Filecache:
         else:
             filestat = self._stats(filepath)
             index, rec = self._find_record(filepath, index=True)
-            if (filestat["filesize"] == rec["filesize"]) and (filestat["mtime"] == rec["mtime"]):
+            if (filestat["filesize"] == rec["filesize"]) and (
+                filestat["mtime"] == rec["mtime"]
+            ):
                 print(f"File already exists {filepath}")
                 return
             print("File changed on disk. updating...")
@@ -109,7 +111,9 @@ class Filecache:
         else:
             filestat = self._stats(filepath)
             index, rec = self._find_record(filepath, index=True)
-            if (filestat["filesize"] == rec["filesize"]) and (filestat["mtime"] == rec["mtime"]):
+            if (filestat["filesize"] == rec["filesize"]) and (
+                filestat["mtime"] == rec["mtime"]
+            ):
                 print(f"File already exists {filepath}")
                 return
             print("File changed on disk. updating...")
@@ -183,15 +187,15 @@ class Filecache:
 
     @property
     def summary(self):
-        return self.cache['summary']
+        return self.cache["summary"]
 
     @property
     def files(self):
-        return list(self.cache['files'])
+        return list(self.cache["files"])
 
     @property
     def variables(self):
-        return list(self.cache['details'])
+        return list(self.cache["details"])
 
 
 datapath = "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom"
