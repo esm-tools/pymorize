@@ -73,7 +73,7 @@ class Filecache:
             print("File changed on disk. updating...")
             self.cache.get("details").get(varname).pop(index)
             self.cache.get("files").pop(filepath)
-            self.add_file(filepath, flush, sort)
+            self.add_file(filepath, flush)
         if flush:
             self.save()
 
