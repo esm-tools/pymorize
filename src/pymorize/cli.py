@@ -11,7 +11,7 @@ from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
-from . import _version, dev_utils
+from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
 from .logging import logger
 from .ssh_tunnel import ssh_tunnel_cli
@@ -124,6 +124,14 @@ def develop(verbose, quiet, logfile, profile_mem):
     return 0
 
 
+@click_loguru.logging_options
+@click.group()
+@click_loguru.stash_subcommand()
+@click.version_option(version=VERSION, prog_name=NAME)
+def cache(verbose, quiet, logfile, profile_mem):
+    return 0
+
+
 ################################################################################
 ################################################################################
 ################################################################################
@@ -211,12 +219,37 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
 ################################################################################
 ################################################################################
 
+################################################################################
+# COMMANDS FOR cache
+################################################################################
+
+
+@cache.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument(
+    "cache_dir",
+    default=f"{os.environ['HOME']}/.prefect/storage/",
+    type=click.Path(exists=True, dir_okay=True),
+)
+def inspect_prefect(cache_dir, verbose, quiet, logfile, profile_mem):
+    """Print information about items in Prefect's storage cache"""
+    logger.info(f"Inspecting Prefect Cache at {cache_dir}")
+    caching.inspect_cache(cache_dir)
+    return 0
+
+
+################################################################################
+################################################################################
+################################################################################
+
 
 def main():
     for entry_point_name, entry_point in find_subcommands().items():
         cli.add_command(entry_point["callable"], name=entry_point_name)
     cli.add_command(validate)
     cli.add_command(develop)
+    cli.add_command(cache)
     cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
     cli(auto_envvar_prefix="PYMORIZE")
 
