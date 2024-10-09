@@ -28,11 +28,13 @@ class CMORizer:
         pipelines_cfg=None,
         rules_cfg=None,
         dask_cfg=None,
+        inherit_cfg=None,
         **kwargs,
     ):
         self._general_cfg = general_cfg or {}
         self._pymorize_cfg = pymorize_cfg or {}
         self._dask_cfg = dask_cfg or {}
+        self._inherit_cfg = inherit_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
@@ -203,6 +205,12 @@ class CMORizer:
 
     def _post_init_create_rules(self):
         self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
+        self._post_init_inherit_rules()
+
+    def _post_init_inherit_rules(self):
+        for rule_attr, rule_value in self._inherit_cfg.items():
+            for rule in self.rules:
+                rule.set(rule_attr, rule_value)
 
     def _post_init_checks(self):
         # Sanity Checks:
@@ -225,6 +233,7 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+        instance._post_init_inherit_rules()
         if "pipelines" in data:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
                 raise ValueError(PIPELINES_VALIDATOR.errors)

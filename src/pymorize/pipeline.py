@@ -11,7 +11,7 @@ from prefect.tasks import Task, task_input_hash
 from prefect_dask import DaskTaskRunner
 
 from .logging import logger
-from .utils import get_callable_by_name
+from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
@@ -122,6 +122,10 @@ class Pipeline:
         )
 
     @classmethod
+    def from_callable_strings(cls, step_strings: list, name=None):
+        return cls.from_list([get_callable(name) for name in step_strings], name=name)
+
+    @classmethod
     def from_dict(cls, data):
         if "uses" in data and "steps" in data:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
@@ -129,7 +133,7 @@ class Pipeline:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
             return get_callable_by_name(data["uses"])(name=data.get("name"))
         if "steps" in data:
-            return cls.from_qualname_list(data["steps"], name=data.get("name"))
+            return cls.from_callable_strings(data["steps"], name=data.get("name"))
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
@@ -178,6 +182,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.generic.get_variable",
         "pymorize.timeaverage.compute_average",
         "pymorize.units.handle_unit_conversion",
+        "pymorize.caching.manual_checkpoint",
         "pymorize.generic.trigger_compute",
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
