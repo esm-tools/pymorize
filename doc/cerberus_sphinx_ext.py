@@ -1,10 +1,9 @@
 import importlib.util
 
+from cerberus import Validator
 from docutils import nodes
 # from docutils.parsers.rst import Directive
 from sphinx.util.docutils import SphinxDirective
-
-from cerberus import Validator
 
 
 class CerberusSchemaDirective(SphinxDirective):
@@ -62,14 +61,14 @@ class CerberusSchemaDirective(SphinxDirective):
             validator_class = spec.loader.exec_module(module)
 
         try:
-            validator = validator_class(schema)
+            validator_class(schema)
         except Exception as e:
             return [
                 nodes.error(
                     None,
-                    nodes.title(text=schema_name),
+                    nodes.title(text=schema_title),
                     nodes.paragraph(text=f"Error in schema: {str(e)}"),
-                    nodes.literal_block(text=schema_content),
+                    nodes.literal_block(text=schema),
                 )
             ]
 
@@ -109,7 +108,6 @@ class CerberusSchemaDirective(SphinxDirective):
             tbody += row
 
             # Field name
-            indent = "  " * level
             field_name = full_key
             row += nodes.entry("", nodes.paragraph(text=field_name))
 
