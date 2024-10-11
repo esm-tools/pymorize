@@ -2,16 +2,13 @@
 Pipeline of the data processing steps.
 """
 
-import json
-import os
-
 import randomname
 from prefect import flow
 from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
-from .logging import logger
-from .utils import get_callable_by_name
+from .logging import add_to_report_log, logger
+from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
@@ -70,12 +67,38 @@ class Pipeline:
         logger.debug(
             f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
         )
+        cmor_name = rule_spec.get("cmor_name")
+        rule_name = rule_spec.get("name", cmor_name)
 
-        @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        @flow(
+            flow_run_name=f"{self.name} - {rule_name}",
+            description=f"{rule_spec.get('description', '')}",
+            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            on_completion=[self.on_completion],
+            on_failure=[self.on_failure],
+        )
         def dynamic_flow(data, rule_spec):
             return self._run_native(data, rule_spec)
 
         return dynamic_flow(data, rule_spec)
+
+    @staticmethod
+    @add_to_report_log
+    def on_completion(flow, flowrun, state):
+        logger.success("Success...\n")
+        logger.success(f"{flow=}\n")
+        logger.success(f"{flowrun=}\n")
+        logger.success(f"{state=}\n")
+        logger.success("Good job! :-) \n")
+
+    @staticmethod
+    @add_to_report_log
+    def on_failure(flow, flowrun, state):
+        logger.error("Failure...\n")
+        logger.error(f"{flow=}\n")
+        logger.error(f"{flowrun=}\n")
+        logger.error(f"{state=}\n")
+        logger.error("Better luck next time :-( \n")
 
     @classmethod
     def from_list(cls, steps, name=None):
@@ -88,6 +111,10 @@ class Pipeline:
         )
 
     @classmethod
+    def from_callable_strings(cls, step_strings: list, name=None):
+        return cls.from_list([get_callable(name) for name in step_strings], name=name)
+
+    @classmethod
     def from_dict(cls, data):
         if "uses" in data and "steps" in data:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
@@ -95,7 +122,7 @@ class Pipeline:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
             return get_callable_by_name(data["uses"])(name=data.get("name"))
         if "steps" in data:
-            return cls.from_qualname_list(data["steps"], name=data.get("name"))
+            return cls.from_callable_strings(data["steps"], name=data.get("name"))
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
