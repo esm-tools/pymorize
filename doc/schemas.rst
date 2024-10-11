@@ -2,7 +2,8 @@
 User Configuration Schemas
 ==========================
 
-This page documents the configuration schemas used for validation in the project.
+This page documents the configuration schemas used for validation of the
+yaml configuration file.
 
 
 .. cerberus-schema:: Pipeline Schema
