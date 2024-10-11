@@ -15,6 +15,7 @@ Contents
    installation
    pymorize_building_blocks
    pymorize_cli
+   table_explorer
    pymorize_on_slurm
    schemas
    standard_library

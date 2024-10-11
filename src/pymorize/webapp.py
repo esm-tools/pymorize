@@ -1,3 +1,38 @@
+"""
+================================
+Web Viewer for CMIP6 Data Tables
+================================
+We provide a Streamlit web application that provides an interface for interacting with CMIP6 (Coupled Model Intercomparison Project Phase 6) data tables. 
+
+Launch it from the command line with::
+
+    $ pymorize table-explorer
+
+The application allows users to load these tables from three different sources: GitHub, a local directory, or directly from the user's laptop. The tables are JSON files containing metadata about climate model outputs.
+
+The main features of the application are:
+
+1. **Table Source Selection**: Users can select the source of the tables. The options are 'github', 'Local', and 'Laptop'. Depending on the selection, the user can provide a URL (for GitHub), a directory path (for Local), or upload files (for Laptop).
+
+2. **Table Processing**: The application processes each table, extracting key information such as table ID, frequency, and variable entries. Tables that do not contain variable entries or frequency are added to an ignore list.
+
+3. **Variable Selection and Display**: Users can select a variable from the processed tables. The application then displays all tables and frequencies where this variable is found, along with additional information such as the time method (Instantaneous, Climatology, or Mean).
+
+4. **Metrics Display**: The application displays metrics about the processed tables, including the number of tables, frequencies, and variables.
+
+5. **Ignored Tables**: The application provides an expander to view all ignored tables.
+
+The application uses multithreading to load and process tables from GitHub, improving performance when dealing with a large number of tables.
+
+This module contains several functions:
+
+- `process_table(tbl_name: str, data: dict)`: Processes a single table, extracting key information and updating global data structures.
+- `show_selected_variable(varname)`: Displays information about the selected variable.
+- `load_data_from_github(f, ctx)`: Loads a single table from GitHub.
+
+The application uses several global data structures to store information about the tables and variables, including `tbls`, `tbl_raw_data`, `var_to_tbl`, `frequencies`, `tids`, and `ignored_table_files`.
+"""
+
 import json
 import os
 import socket
