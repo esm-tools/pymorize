@@ -17,6 +17,7 @@ Contents
    pymorize_cli
    pymorize_on_slurm
    schemas
+   standard_library
    including_custom_steps
    including_subcommand_plugins
    developer_guide
