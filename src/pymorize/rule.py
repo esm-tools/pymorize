@@ -231,8 +231,8 @@ class Rule:
         """Remove a data request variable from the rule."""
         self.data_request_variables.remove(drv)
 
-    @deprecation.deprecated(details="Use inputs instead")
     def input_patterns(self):
+        """Return a list of compiled regex patterns for the input files."""
         return [re.compile(f"{inp.path}/{inp.pattern}") for inp in self.inputs]
 
     def clone(self):
