@@ -8,7 +8,7 @@ from pymorize.rule import Rule
 
 def test_direct_init(simple_rule):
     rule = simple_rule
-    assert all(isinstance(ip, re.Pattern) for ip in rule.inputs)
+    assert all(isinstance(ip, re.Pattern) for ip in rule.input_patterns)
     assert isinstance(rule.cmor_variable, str)
     assert all(isinstance(p, str) for p in rule.pipelines)
 
