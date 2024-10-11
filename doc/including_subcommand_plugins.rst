@@ -1,6 +1,6 @@
-============================
-Including Custom Subcommands
-============================
+======================================
+Develop: Including Custom Subcommands
+======================================
 
 ``pymorize`` is built in a modular way such that it is easy to extend by adding new command line subcommands via Python's `entry_points` mechanism.
 You can add your own such subcommands by creating a Python package with a ``Click.Group`` object and registering it as an entry point in your ``setup.py``.
