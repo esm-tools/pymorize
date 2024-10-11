@@ -33,7 +33,7 @@ file and import it in your pipeline configuration file:
   pipelines:
    - name: custom_pipeline 
      steps:
-        - script:///albedo/home/pgierz/Code/playground/my_custom_step.py::my_custom_step
+        - script:///albedo/home/pgierz/Code/playground/my_custom_step.py:my_custom_step
 
 Note that the ``script://`` prefix is required! Thereafter, you should still start your
 path with a slash, e.g. use an absolute path all the way. The function inside your file
