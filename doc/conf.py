@@ -9,6 +9,7 @@ import sys
 
 import sphinx.ext.apidoc
 
+sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../src"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -62,7 +63,9 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
     "sphinx_toolbox.collapse",
+    "sphinx_jinja",
     "sphinx.ext.intersphinx",
+    "cerberus_sphinx_ext",
 ]
 
 # Strip the input promps for code cells when copying

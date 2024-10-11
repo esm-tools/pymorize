@@ -16,6 +16,8 @@ Contents
    pymorize_building_blocks
    pymorize_config_file
    pymorize_cli
+   including_subcommand_plugins
+   schemas
    developer_guide
    including_custom_steps
    including_subcommand_plugins
