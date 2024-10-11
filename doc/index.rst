@@ -15,8 +15,10 @@ Contents
    installation
    pymorize_building_blocks
    pymorize_config_file
-   including_subcommand_plugins
+   pymorize_cli
    developer_guide
+   including_custom_steps
+   including_subcommand_plugins
    API
 
 

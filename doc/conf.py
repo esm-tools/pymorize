@@ -29,9 +29,9 @@ except FileExistsError:
     os.makedirs("api")
 
 with open("API.rst", "w") as rst:
-    rst.write("==================\n")
-    rst.write("Code Documentation\n")
-    rst.write("==================\n")
+    rst.write("=============================\n")
+    rst.write("Reference: Code Documentation\n")
+    rst.write("=============================\n")
     rst.write(".. toctree::\n")
     rst.write("   :glob:\n\n")
     rst.write("   api/*")
@@ -42,6 +42,7 @@ with open("API.rst", "w") as rst:
                 "--no-toc",
                 "--module-first",
                 "--output-dir",
+                # "--private",
                 "api",
                 "../src/" + mod,
             ]

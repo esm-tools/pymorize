@@ -1,6 +1,6 @@
-===================================
-The ``pymorize`` Configuration File
-===================================
+==========================================
+Usage: The ``pymorize`` Configuration File
+==========================================
 
 The configuration file used for ``pymorize`` is a simple YAML file. A breakdown of each section is provided below.
 

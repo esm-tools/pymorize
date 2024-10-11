@@ -20,6 +20,24 @@ the CLI. The configuration file is divided into four sections:
 4. ``rules``: This section contains the configuration for the rules. Each rule describes a set of files needed to produce a CMOR output variable. You must specify the CMOR variable of interest, the input
    patterns to use to find the files, and the pipeline(s) to apply to the files.
 
+Steps
+-----
+The true heart of ``pymorize`` are so-called ``Steps``, which are nothing more than Python functions
+that take a data as input and return a possible modified dataset as output:
+
+  .. code-block:: python
+  
+      def dummy_step(data, rule):
+          # Do something with data
+          data = ...
+          return data
+
+Steps will **always** have the call signature ``def step(data: Any, rule: dict) -> Any``. The ``data``
+parameter is the data that this step will operate on, and could be *anything*, but is typically either
+a :py:class:`~xarray.Dataset` or a :py:class:`~numpy.ndarray`. The ``rule`` parameter is a special ``pymorize``
+object that contains information about the current data being processed, including it's CMOR name,
+the files it comes from, and other valuable information described in the CMIP data requests.
+
 Pipelines
 ---------
 
@@ -52,7 +70,10 @@ custom pipeline:
 Rules
 -----
 
-Rules are the heart of the ``pymorize`` CLI. They specify the files needed to produce a CMOR output variable. Each rule has a name, a CMOR variable, and a list of input patterns. The input patterns are used to find the files needed to produce the CMOR output variable. Here is an example of a rule:
+Rules describe which files the program is aware of and how it should process them. Each rule
+specifies the files needed to produce a particular CMOR output variable, and minimally has a name, 
+a CMOR variable, and a list of input patterns. The Rule is also connected to one or more pipelines.
+Here's an example of a rule:
 
   .. code-block:: yaml
   
