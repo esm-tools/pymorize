@@ -8,6 +8,8 @@ Launch it from the command line with::
 
     $ pymorize table-explorer
 
+.. image:: images/table-explorer.png
+
 The application allows users to load these tables from three different sources: GitHub, a local directory, or directly from the user's laptop. The tables are JSON files containing metadata about climate model outputs.
 
 The main features of the application are:
