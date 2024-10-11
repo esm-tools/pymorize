@@ -3,7 +3,7 @@ Usage: ``pymorize``'s Building Blocks
 =====================================
 
 The ``pymorize`` CLI and it's main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
-will give you a brief overview of these concepts. Suggestions for improvements are always welcome!
+will give you a brief overview of these concepts. 
 
 Configuration
 -------------
@@ -76,7 +76,7 @@ Rules
 -----
 
 Rules describe which files the program is aware of and how it should process them. Each rule
-specifies the files needed to produce a particular CMOR output variable, and minimally has a name, 
+specifies the files needed to produce **one single** particular CMOR output variable, and minimally has a name, 
 a CMOR variable, and a list of input patterns. The Rule is also connected to one or more pipelines.
 Here's an example of a rule:
 
@@ -86,8 +86,9 @@ Here's an example of a rule:
       rules:
         - name: my_rule
           cmor_variable: tas
-          patterns:
-            - 'tas_*.nc'
+          inputs:
+            - path: /some/path/to/files/
+              pattern: 'tas_*.nc'
           pipelines:
             - my_pipeline
       # ... other configuration
@@ -111,11 +112,13 @@ Rules can inherit global values. To do so, you should include them in the ``inhe
       rules:
         - name: my_rule
           cmor_variable: tas
-          patterns:
-            - 'tas_*.nc'
+          inputs:
+            - path: /some/path/to/files/
+              pattern: 'tas_*.nc'
           pipelines:
             - my_pipeline
 
 The rule ``my_rule`` will inherit the frequency ``mon`` from the global configuration, and can be accessed in
-Python code as ``rule_spec.frequency``.
+Python code as ``rule_spec.frequency``. This would be useful when you want global attributes applied to all the rules,
+such as institution ID, realization of the simulation, and so on.
 
