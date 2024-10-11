@@ -14,8 +14,8 @@ Contents
   
    installation
    pymorize_building_blocks
-   pymorize_config_file
    pymorize_cli
+   pymorize_on_slurm
    schemas
    including_custom_steps
    including_subcommand_plugins

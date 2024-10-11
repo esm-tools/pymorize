@@ -2,14 +2,14 @@
 Usage: ``pymorize``'s Building Blocks
 =====================================
 
-The ``pymorize`` CLI has a few basic concepts you should be familiar with before you start using it. This guide
+The ``pymorize`` CLI and it's main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
 will give you a brief overview of these concepts. Suggestions for improvements are always welcome!
 
 Configuration
 -------------
 
 The configuration is the central piece of the ``pymorize`` CLI. It is a YAML file that specifies the behavior of
-the CLI. The configuration file is divided into four sections:
+the CLI. The configuration file is divided into several sections:
 
 1. ``pymorize``: This section contains the configuration for the CLI itself. It specifies the program version, log verbosity, the location of the user configuration file, and the location of the log file.
 2. ``general``: This section contains information that will be passed to all pipelines. You will specify the location of the data directory (your model output files),
@@ -22,9 +22,12 @@ the CLI. The configuration file is divided into four sections:
 5. ``inherit``: This section contains key-value pairs that will be added to all rules, unless the rules already have an attribute
    of this name attached to them.
 
+The handbook section on :ref:`schemas` provides more information about the data
+types and structures that are expected in the configuration file.
+
 Steps
 -----
-The true heart of ``pymorize`` are so-called ``Steps``, which are nothing more than Python functions
+The true heart of ``pymorize`` are so-called ``steps``, which are nothing more than Python functions
 that take a data as input and return a possible modified dataset as output:
 
   .. code-block:: python
@@ -34,7 +37,7 @@ that take a data as input and return a possible modified dataset as output:
           data = ...
           return data
 
-Steps will **always** have the call signature ``def step(data: Any, rule: dict) -> Any``. The ``data``
+Steps will **always** have the call signature ``def step(data: Any, rule: Rule) -> Any``. The ``data``
 parameter is the data that this step will operate on, and could be *anything*, but is typically either
 a :py:class:`~xarray.Dataset` or a :py:class:`~numpy.ndarray`. The ``rule`` parameter is a special ``pymorize``
 object that contains information about the current data being processed, including it's CMOR name,
