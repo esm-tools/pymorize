@@ -1,9 +1,9 @@
-import json
+import io
 import os
-import time
-from collections import defaultdict
+import shutil
 from pathlib import Path
-from typing import List, Dict, Union, Optional
+from typing import List, Optional, Union
+import datetime
 
 import numpy as np
 import pandas as pd
@@ -111,13 +111,33 @@ class Filecache:
         pd.DataFrame
             A pandas DataFrame containing the file cache.
         """
-        return cls(pd.read_csv(CACHE_FILE, comment="#"))
+        with open(Path(CACHE_FILE).expanduser(), "r") as f:
+            comment = f.readline()
+            comment = comment.strip()
+            if comment.startswith("#"):
+                meta_string = comment
+            else:
+                # there no date recorded for the cache.
+                # create todays date
+                _date = datetime.datetime.now().strftime("%Y-%m-%d")
+                _checkfreq = "1ME"
+                meta_string = f"#{_date};{_checkfreq}"
+            meta_string = meta_string.rstrip() + "\n"
+        obj = cls(pd.read_csv(CACHE_FILE, comment="#"))
+        setattr(obj, "cache_meta", meta_string)
+        return obj
 
     def save(self) -> None:
         """
         Save the file cache to the default location.
         """
-        self.df.to_csv(CACHE_FILE, index=False)
+        buf = io.StringIO()
+        buf.write(self.cache_meta)
+        self.df.to_csv(buf, index=False)
+        with open(Path(CACHE_FILE).expanduser(), "w") as f:
+            buf.seek(0)
+            shutil.copyfileobj(buf, f)
+        # self.df.to_csv(CACHE_FILE, index=False)
 
     def _add_file(self, filename: str) -> None:
         """
