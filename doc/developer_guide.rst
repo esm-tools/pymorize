@@ -1,5 +1,6 @@
-Developer Guide
-===============
+=============================
+Develop: Main Developer Guide
+=============================
 
 Thanks for helping develop ``pymorize``! This document will guide you through
 the code structure and layout, and provide a few tips on how to contribute.

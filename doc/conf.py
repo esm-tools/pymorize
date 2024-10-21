@@ -9,6 +9,7 @@ import sys
 
 import sphinx.ext.apidoc
 
+sys.path.insert(0, os.path.abspath("."))
 sys.path.insert(0, os.path.abspath("../src"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
@@ -29,9 +30,9 @@ except FileExistsError:
     os.makedirs("api")
 
 with open("API.rst", "w") as rst:
-    rst.write("==================\n")
-    rst.write("Code Documentation\n")
-    rst.write("==================\n")
+    rst.write("=============================\n")
+    rst.write("Reference: Code Documentation\n")
+    rst.write("=============================\n")
     rst.write(".. toctree::\n")
     rst.write("   :glob:\n\n")
     rst.write("   api/*")
@@ -42,6 +43,7 @@ with open("API.rst", "w") as rst:
                 "--no-toc",
                 "--module-first",
                 "--output-dir",
+                # "--private",
                 "api",
                 "../src/" + mod,
             ]
@@ -61,7 +63,10 @@ extensions = [
     "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
     "sphinx_toolbox.collapse",
+    "sphinx_jinja",
     "sphinx.ext.intersphinx",
+    "cerberus_sphinx_ext",
+    "sphinx_click",
 ]
 
 # Strip the input promps for code cells when copying

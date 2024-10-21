@@ -11,6 +11,7 @@ import deprecation
 import dpath
 import xarray as xr
 
+from .filecache import register_cache
 from .logging import logger
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
@@ -268,7 +269,9 @@ def load_mfdataset(data, rule_spec):
         for f in file_collection.files:
             all_files.append(f)
     all_files = _resolve_symlinks(all_files)
-    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
+    mf_ds = xr.open_mfdataset(
+        all_files, parallel=True, use_cftime=True, preprocess=register_cache
+    )
     return mf_ds
 
 
