@@ -64,7 +64,7 @@ class Pipeline:
                 Task(
                     fn=step,
                     # cache_key_fn=task_input_hash,
-                    cache_expiration=timedelta(days=1),
+                    cache_expiration=self._cache_expiration
                     cache_policy=TASK_SOURCE + INPUTS,
                 )
             )
