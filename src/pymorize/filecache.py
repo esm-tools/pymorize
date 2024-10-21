@@ -1,17 +1,3 @@
-import atexit
-import datetime
-import io
-import os
-import shutil
-from pathlib import Path
-from typing import List, Optional, Union
-
-import numpy as np
-import pandas as pd
-import xarray as xr
-from imohash import hashfile
-from tqdm.contrib.concurrent import process_map
-
 """
 This module contains functions for creating, loading and manipulating a file cache.
 
@@ -78,6 +64,20 @@ given range.
     >>> c = cache.select_range(variable="tas", start="1850-01-01", end="1900-01-01")
 
 """
+
+import atexit
+import datetime
+import io
+import os
+import shutil
+from pathlib import Path
+from typing import List, Optional, Union
+
+import numpy as np
+import pandas as pd
+import xarray as xr
+from imohash import hashfile
+from tqdm.contrib.concurrent import process_map
 
 CACHE_FILE = "~/.cache/pymorize_filecache.csv"
 
