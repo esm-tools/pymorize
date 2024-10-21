@@ -12,6 +12,14 @@ from prefect.states import Completed
 from .logging import logger
 
 
+def generate_cache_key(task, inputs):
+    """Generate a cache key for the task"""
+    task_name = task.name
+    input_hash = hash(json.dumps(inputs, sort_keys=True))
+    cache_key = f"{task_name}_{input_hash}"
+    return cache_key
+
+
 def manual_checkpoint(data, rule):
     """Manually insert a checkpoint in the flow"""
     logger.info("Manually inserting checkpoint")

@@ -10,6 +10,7 @@ from prefect.cache_policies import INPUTS, TASK_SOURCE
 from prefect.tasks import Task, task_input_hash
 from prefect_dask import DaskTaskRunner
 
+from .caching import generate_cache_key
 from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 
@@ -63,7 +64,7 @@ class Pipeline:
             prefect_tasks.append(
                 Task(
                     fn=step,
-                    # cache_key_fn=task_input_hash,
+                    cache_key_fn=generate_cache_key,
                     cache_expiration=self._cache_expiration,
                     cache_policy=TASK_SOURCE + INPUTS,
                 )
