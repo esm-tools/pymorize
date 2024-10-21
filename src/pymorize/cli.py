@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 from importlib import resources
+from typing import List
 
 import pkg_resources
 import rich_click as click
@@ -13,6 +14,7 @@ from streamlit.web import cli as stcli
 
 from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
+from .filecache import fc
 from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
@@ -235,7 +237,7 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
     default=f"{os.environ['HOME']}/.prefect/storage/",
     type=click.Path(exists=True, dir_okay=True),
 )
-def inspect_prefect(cache_dir, verbose, quiet, logfile, profile_mem):
+def inspect_prefect_global(cache_dir, verbose, quiet, logfile, profile_mem):
     """Print information about items in Prefect's storage cache"""
     logger.info(f"Inspecting Prefect Cache at {cache_dir}")
     caching.inspect_cache(cache_dir)
@@ -249,10 +251,17 @@ def inspect_prefect(cache_dir, verbose, quiet, logfile, profile_mem):
     "result",
     type=click.Path(exists=True),
 )
-def inspect_result(result, verbose, quiet, logfile, profile_mem):
+def inspect_prefect_result(result, verbose, quiet, logfile, profile_mem):
     obj = caching.inspect_result(result)
     logger.info(obj)
     return 0
+
+
+@cache.command()
+@click_loguru.logging_options
+@click.argument("files", type=click.Path(exists=True), nargs=-1)
+def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
+    fc.add_files(files)
 
 
 ################################################################################

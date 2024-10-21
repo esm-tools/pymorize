@@ -53,6 +53,8 @@ setup(
         "streamlit",
         "flox",
         "numbagg",
+        "imohash",
+        "tqdm",
     ],
     extras_require={
         "dev": [

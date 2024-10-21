@@ -1,9 +1,10 @@
+import atexit
+import datetime
 import io
 import os
 import shutil
 from pathlib import Path
 from typing import List, Optional, Union
-import datetime
 
 import numpy as np
 import pandas as pd
@@ -78,7 +79,7 @@ given range.
 
 """
 
-CACHE_FILE = "~/.config/pymorize_filecache.csv"
+CACHE_FILE = "~/.cache/pymorize_filecache.csv"
 
 
 class Filecache:
@@ -111,7 +112,11 @@ class Filecache:
         pd.DataFrame
             A pandas DataFrame containing the file cache.
         """
-        with open(Path(CACHE_FILE).expanduser(), "r") as f:
+        p = Path(CACHE_FILE)
+        if not p.exists():
+            p.parent.mkdir(exist_ok=True, parents=True)
+            p.touch()
+        with p.open() as f:
             comment = f.readline()
             comment = comment.strip()
             if comment.startswith("#"):
@@ -123,7 +128,11 @@ class Filecache:
                 _checkfreq = "1ME"
                 meta_string = f"#{_date};{_checkfreq}"
             meta_string = meta_string.rstrip() + "\n"
-        obj = cls(pd.read_csv(CACHE_FILE, comment="#"))
+        if p.stat().st_size == 0:
+            data = None
+        else:
+            data = pd.read_csv(str(p.expanduser()), comment="#")
+        obj = cls(data)
         setattr(obj, "cache_meta", meta_string)
         return obj
 
@@ -482,5 +491,33 @@ class Filecache:
         return df
 
 
+fc = Filecache.load()
+
+
+@atexit.register
+def _save():
+    """
+    Perform the save operation on the file cache.
+
+    This function is registered to execute at program exit using `atexit.register`.
+    It triggers the `save` method of the `fc` object, which saves the file cache.
+    """
+    fc.save()
+
+
+def register_cache(ds):
+    """
+    Register a dataset in the file cache.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset to register. The source filename is extracted from the
+        dataset's encoding and added to the cache.
+    """
+    filename = ds.encoding["source"]
+    fc.add_file(filename)
+
+
 datapath = "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom"
-filepat = "CO2f_fesom_*nc"
+# filepat = "CO2f_fesom_*nc"
