@@ -15,11 +15,26 @@ from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
-    def __init__(self, *args, name=None, workflow_backend="prefect", dask_cluster=None):
+    def __init__(
+        self,
+        *args,
+        name=None,
+        workflow_backend="prefect",
+        dask_cluster=None,
+        cache_expiration=None,
+    ):
         self._steps = args
         self.name = name or randomname.get_name()
         self._workflow_backend = workflow_backend
         self._cluster = dask_cluster
+
+        if cache_expiration is None:
+            self._cache_expiration = timedelta(days=1)
+        else:
+            if isinstance(cache_expiration, timedelta):
+                self._cache_expiration = cache_expiration
+            else:
+                raise TypeError("Cache expiration must be a timedelta!")
 
         if self._workflow_backend == "prefect":
             self._prefectize_steps()
@@ -111,18 +126,20 @@ class Pipeline:
         logger.error("Better luck next time :-( \n")
 
     @classmethod
-    def from_list(cls, steps, name=None):
-        return cls(*steps, name=name)
+    def from_list(cls, steps, name=None, **kwargs):
+        return cls(*steps, name=name, **kwargs)
 
     @classmethod
-    def from_qualname_list(cls, qualnames: list, name=None):
+    def from_qualname_list(cls, qualnames: list, name=None, **kwargs):
         return cls.from_list(
-            [get_callable_by_name(name) for name in qualnames], name=name
+            [get_callable_by_name(name) for name in qualnames], name=name, **kwargs
         )
 
     @classmethod
-    def from_callable_strings(cls, step_strings: list, name=None):
-        return cls.from_list([get_callable(name) for name in step_strings], name=name)
+    def from_callable_strings(cls, step_strings: list, name=None, **kwargs):
+        return cls.from_list(
+            [get_callable(name) for name in step_strings], name=name, **kwargs
+        )
 
     @classmethod
     def from_dict(cls, data):
@@ -130,9 +147,15 @@ class Pipeline:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
-            return get_callable_by_name(data["uses"])(name=data.get("name"))
+            return get_callable_by_name(data["uses"])(
+                name=data.get("name"), cache_expiration=data.get("cache_expiration")
+            )
         if "steps" in data:
-            return cls.from_callable_strings(data["steps"], name=data.get("name"))
+            return cls.from_callable_strings(
+                data["steps"],
+                name=data.get("name"),
+                cache_expiration=data.get("cache_expiration"),
+            )
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
@@ -187,9 +210,9 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.files.save_dataset",
     )
 
-    def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
+    def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class TestingPipeline(FrozenPipeline):
@@ -216,6 +239,6 @@ class TestingPipeline(FrozenPipeline):
         "pymorize.generic.dummy_save_data",
     )
 
-    def __init__(self, name="pymorize.pipeline.TestingPipeline"):
+    def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)
