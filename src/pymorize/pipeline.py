@@ -126,8 +126,8 @@ class Pipeline:
         logger.error("Better luck next time :-( \n")
 
     @classmethod
-    def from_list(cls, steps, name=None):
-        return cls(*steps, name=name)
+    def from_list(cls, steps, name=None, **kwargs):
+        return cls(*steps, name=name, **kwargs)
 
     @classmethod
     def from_qualname_list(cls, qualnames: list, name=None, **kwargs):
