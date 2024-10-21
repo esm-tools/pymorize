@@ -262,6 +262,7 @@ def inspect_prefect_result(result, verbose, quiet, logfile, profile_mem):
 @click.argument("files", type=click.Path(exists=True), nargs=-1)
 def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
     fc.add_files(files)
+    fc.save()
 
 
 ################################################################################

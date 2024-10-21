@@ -101,6 +101,7 @@ class Filecache:
         if cache is None:
             cache = pd.DataFrame([], columns=self._fields)
         self.df: pd.DataFrame = cache
+        self._new_record = False
 
     @classmethod
     def load(cls):
@@ -112,7 +113,7 @@ class Filecache:
         pd.DataFrame
             A pandas DataFrame containing the file cache.
         """
-        p = Path(CACHE_FILE)
+        p = Path(CACHE_FILE).expanduser()
         if not p.exists():
             p.parent.mkdir(exist_ok=True, parents=True)
             p.touch()
@@ -131,7 +132,7 @@ class Filecache:
         if p.stat().st_size == 0:
             data = None
         else:
-            data = pd.read_csv(str(p.expanduser()), comment="#")
+            data = pd.read_csv(str(p), comment="#")
         obj = cls(data)
         setattr(obj, "cache_meta", meta_string)
         return obj
@@ -140,13 +141,13 @@ class Filecache:
         """
         Save the file cache to the default location.
         """
-        buf = io.StringIO()
-        buf.write(self.cache_meta)
-        self.df.to_csv(buf, index=False)
-        with open(Path(CACHE_FILE).expanduser(), "w") as f:
-            buf.seek(0)
-            shutil.copyfileobj(buf, f)
-        # self.df.to_csv(CACHE_FILE, index=False)
+        if self._new_record:
+            buf = io.StringIO()
+            buf.write(self.cache_meta)
+            self.df.to_csv(buf, index=False)
+            with open(Path(CACHE_FILE).expanduser(), "w") as f:
+                buf.seek(0)
+                shutil.copyfileobj(buf, f)
 
     def _add_file(self, filename: str) -> None:
         """
@@ -171,6 +172,7 @@ class Filecache:
         """
         name = Path(filename).name
         if name not in self.df.filename.values:
+            self._new_record = True
             record = self._make_record(filename).to_frame().T
             if self.df.empty:
                 self.df = record
@@ -191,6 +193,10 @@ class Filecache:
         _files = np.asarray(files)
         mask = np.isin(_files, self.df.filepath.values)
         files = _files[~mask].tolist()
+        if not files:
+            print("No new files found")
+            return
+        self._new_record = True
         records = process_map(
             self._make_record,
             files,
@@ -241,7 +247,7 @@ class Filecache:
         ds.close()
         return pd.Series(record)
 
-    def summary(self) -> pd.DataFrame:
+    def summary(self, variable=None) -> pd.DataFrame:
         """
         Return a summary of the cached files.
 
@@ -277,7 +283,15 @@ class Filecache:
             return pd.Series(d)
 
         info = self.df.groupby(["variable"]).apply(_summary, include_groups=False)
-        return info.T
+        info = info.T
+        if variable:
+            if variable in info.columns:
+                return info[variable]
+            else:
+                raise ValueError(
+                    f"Variable not found. Possible variables: {list(info.columns)}"
+                )
+        return info
 
     def details(self) -> pd.DataFrame:
         return self.df
@@ -488,7 +502,8 @@ class Filecache:
             if Path(filename).exists():
                 self.add_file(filename)
                 return self.get(filename)
-        return df
+        series = df.iloc[0]
+        return series
 
 
 fc = Filecache.load()
