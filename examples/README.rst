@@ -6,7 +6,7 @@ See the ``examples`` directory for a sample configuration file, ``sample.yaml``.
 three rules, each of which runs the ``default`` pipeline on a different dataset. To run this, you
 can use the provided ``pymorize.slurm`` script, which looks like this:
 
-.. literalinclude:: pymorize.slurm
+.. literalinclude:: ../examples/pymorize.slurm
    :linenos:
    :language: bash
 
