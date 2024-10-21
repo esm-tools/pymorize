@@ -522,16 +522,21 @@ def _save():
 
 def register_cache(ds):
     """
-    Register a dataset in the file cache.
+    Register a dataset in the file cache. use this as a preprocessing step with ~xr.open_mfdataset.
 
     Parameters
     ----------
     ds : xarray.Dataset
         The dataset to register. The source filename is extracted from the
         dataset's encoding and added to the cache.
+
+    Returns
+    -------
+    xr.Dataset
     """
     filename = ds.encoding["source"]
     fc.add_file(filename)
+    return ds
 
 
 datapath = "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom"
