@@ -66,6 +66,7 @@ extensions = [
     "sphinx_jinja",
     "sphinx.ext.intersphinx",
     "cerberus_sphinx_ext",
+    "sphinx_click",
 ]
 
 # Strip the input promps for code cells when copying

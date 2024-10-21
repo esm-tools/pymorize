@@ -214,13 +214,14 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
 ################################################################################
 ################################################################################
 
+cli.add_command(validate)
+cli.add_command(develop)
+cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
+
 
 def main():
     for entry_point_name, entry_point in find_subcommands().items():
         cli.add_command(entry_point["callable"], name=entry_point_name)
-    cli.add_command(validate)
-    cli.add_command(develop)
-    cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
     cli(auto_envvar_prefix="PYMORIZE")
 
 

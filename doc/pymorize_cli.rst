@@ -47,3 +47,10 @@ a full summary of the commands.
   tables that are available in the CMIP6 data request.
 
 * ``pymorize validate``: Runs checks on a configuration file.
+
+Command Line Reference
+======================
+
+.. click:: pymorize.cli:cli
+   :prog: pymorize
+   :nested: full
