@@ -6,6 +6,7 @@ saving the resulting datasets to the generated filepaths.
 
 import xarray as xr
 
+from .logging import logger
 from .timeaverage import _frequency_from_approx_interval
 
 
@@ -31,7 +32,7 @@ def _filename_time_range(ds, rule) -> str:
     end_year = end.strftime("%Y")
     frequency_str = rule.get("frequency_str")
     time_method = rule.get("time_method")
-    # NOTE: the commented out return statments: Although they report the actual
+    # NOTE: the commented out return statements: Although they report the actual
     # time limits in the file, the hard-coded version is chosen 2 reason,
     # a) to replicate code in seamore tool
     # b) to have consistent time range scheme in filename (Hmmm.... ?)
