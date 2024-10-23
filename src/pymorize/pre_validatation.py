@@ -35,8 +35,19 @@ def check_frequency(ds, rule):
         rule.data_request_variable.table.approx_interval
     )
     # get this from filecache instead
-    filename = rule.input_files[0]
-    data_freq = fc.get(filename).freq
+    first_filenames = []
+    for input_collection in rule.inputs:
+        first_filenames.append(input_collection.files[0])
+    if len(first_filenames) == 1:
+        filename = first_filenames[0]
+        data_freq = fc.get(filename).freq
+    else:  # Multi-variable Rule, handle differently
+        data_freqs = set([fc.get(filename).freq for filename in first_filenames])
+        if len(data_freqs) != 1:
+            raise ValueError(f"You have a compound variable and have multiple internal frequencies! This is not allowed: {data_freqs}")
+        data_freq = data_freqs[0]
+        
+
     # data_freq = pd.tseries.frequencies.infer_freq(ds.time.data)
     # if data_freq is None:
     #     nfreq = list(ds.time.data.diff().dropna().unique())
