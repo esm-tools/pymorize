@@ -11,18 +11,38 @@ Things to validate:
 """
 
 import pandas as pd
-# from .filecache import fc
+from .timeaverage import _frequency_from_approx_interval
+from .filecache import fc
 
 
 def check_frequency(ds, rule):
-    table_freq = rule.table.frequency
+    """
+    Check if the frequency in the input file is a sub-period of the frequency specified in the table.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The input dataset.
+    rule : Rule
+        The rule object containing information for generating the filepath.
+
+    Returns
+    -------
+    bool
+        True if the input frequency is a sub-period of the table frequency, False otherwise.
+    """
+    table_freq = _frequency_from_approx_interval(
+        rule.data_request_variable.table.approx_interval
+    )
     # get this from filecache instead
-    data_freq = pd.tseries.frequencies.infer_freq(ds.time.data)
-    if data_freq is None:
-        nfreq = list(ds.time.data.diff().dropna().unique())
-        if not len(nfreq) == 1:
-            raise ValueError(f"Multiple freq. detected {nfreq}")
-        data_freq = nfreq[0]
+    filename = rule.input_files[0]
+    data_freq = fc.get(filename).freq
+    # data_freq = pd.tseries.frequencies.infer_freq(ds.time.data)
+    # if data_freq is None:
+    #     nfreq = list(ds.time.data.diff().dropna().unique())
+    #     if not len(nfreq) == 1:
+    #         raise ValueError(f"Multiple freq. detected {nfreq}")
+    #     data_freq = nfreq[0]
     return pd.tseries.frequencies.is_subperiod(data_freq, table_freq)
 
 
