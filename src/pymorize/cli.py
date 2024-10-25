@@ -68,7 +68,7 @@ def find_subcommands():
 
 
 @click_loguru.logging_options
-@click.group(name="pymorize", help="Pymorize - Makes CMOR Simple (or Great Again!)")
+@click.group(name="pymorize", help="Pymorize - Makes CMOR Simple")
 @click_loguru.stash_subcommand()
 @click.version_option(version=VERSION, prog_name=NAME)
 def cli(verbose, quiet, logfile, profile_mem):
