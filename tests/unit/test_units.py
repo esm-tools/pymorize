@@ -156,3 +156,11 @@ def test_when_tartget_unit_is_empty_string_raises_error(rule_with_units, from_un
     da = xr.DataArray(10, attrs={"units": from_unit})
     with pytest.raises(ValueError):
         handle_unit_conversion(da, rule_spec)
+
+
+def test_units_with_psu():
+    da = xr.DataArray(10, attrs={"units": "psu"})
+    new_da = da.pint.quantify("psu")
+    new_da = new_da.pint.to("0.001").pint.dequantify()
+    assert new_da.data == np.array(10)
+    assert new_da.attrs.get("units") == "0.001"
