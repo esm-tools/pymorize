@@ -8,6 +8,10 @@ not convert from a dimentionless base to something with dimension. Dealing with
 such thing have to done with `action` section in the Rules module on a per
 variable basis.
 
+Units are taken from ``pint``'s predefined unit library. One extra unit, ``PSU``, is
+defined for salinity conversions, defined as the dimensionless ratio of mass of salt
+to mass of water in a sample of seawater expressed in grams per kilogram.
+
 Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
 names and corresponding number of days are available as a dictionary in the
 ``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
@@ -32,6 +36,23 @@ from .logging import logger
 from .rule import Rule
 
 ureg = pint_xarray.unit_registry
+
+
+# Add PSU to the unit registry for salinity conversions:
+# ureg.define("PSU = 1 * ppt")
+# ureg.define("0.001 = ppt")
+
+
+@xr.register_dataarray_accessor("pint")
+class PSUAwarePintDataArrayAccessor(pint_xarray.accessors.PintDataArrayAccessor):
+    def to(self, unit):
+        if unit == "0.001":
+            logger.critical(">>>> PG PART!!!!")
+            return super().to("ppt")
+        return super().to(unit)
+
+
+# Register the PSUAwarePintDataArrayAccessor accessor with xarray DataArray
 
 
 def assign_frequency_to_unit_registry():
