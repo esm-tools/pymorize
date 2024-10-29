@@ -38,21 +38,24 @@ from .rule import Rule
 ureg = pint_xarray.unit_registry
 
 
-# Add PSU to the unit registry for salinity conversions:
-# ureg.define("PSU = 1 * ppt")
-# ureg.define("0.001 = ppt")
+ureg.define("ppt = 1.0 / 1000.0")
 
 
 @xr.register_dataarray_accessor("pint")
 class PSUAwarePintDataArrayAccessor(pint_xarray.accessors.PintDataArrayAccessor):
     def to(self, unit):
+        """
+        Convert the data array to the specified unit. If the unit is "ppt", the conversion
+        is done to the "ppt" unit defined in the unit registry as 1.0 / 1000.0.
+
+        Parameters
+        ----------
+        unit : str
+            The unit to convert the data array to.
+        """
         if unit == "0.001":
-            logger.critical(">>>> PG PART!!!!")
             return super().to("ppt")
         return super().to(unit)
-
-
-# Register the PSUAwarePintDataArrayAccessor accessor with xarray DataArray
 
 
 def assign_frequency_to_unit_registry():
