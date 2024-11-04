@@ -28,7 +28,7 @@ jobs:
           if ${{ matrix.python-version == '3.12' }}; then pip install --upgrade setuptools; fi
       - name: Install package
         run: |
-          python -m pip install .[dev, fesom]
+          python -m pip install ".[dev, fesom]"
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
