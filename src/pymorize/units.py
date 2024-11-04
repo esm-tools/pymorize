@@ -34,6 +34,46 @@ from .rule import Rule
 ureg = pint_xarray.unit_registry
 
 
+def is_unitless(units: str):
+    """
+    Check if units is a unitless value.
+
+    Parameters
+    ----------
+    units : str
+        The string representing units.
+
+    Returns
+    -------
+    bool
+        ``True`` if unitless, ``False`` otherwise.
+    """
+    try:
+        float(units)
+    except ValueError:
+        return False
+    return True
+
+
+def has_scalar(units: str, scalar=re.compile(r"^\s*-?\d.*").search):
+    """
+    Check if units has a scalar value. (e.g. "10kg")
+
+    Parameters
+    ----------
+    units : str
+        The string representing units
+
+    Returns
+    -------
+    bool
+        ``True`` if the units has a scalar value, ``False`` otherwise.
+    """
+    if scalar(units):
+        return True
+    return False
+
+
 def assign_frequency_to_unit_registry():
     """Assign the CMIP6 frequencies to the unit registry."""
     for freq_name, days in CMIP_FREQUENCIES.items():
@@ -118,7 +158,13 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     handle_chemicals(to_unit)
     new_da = da.pint.quantify(from_unit)
     logger.debug(f"Converting units: {from_unit} -> {to_unit}")
-    new_da = new_da.pint.to(to_unit).pint.dequantify()
+    if has_scalar(to_unit):
+        logger.debug(
+            f"scalar value in to_unit {to_unit} detected. This is not supported. Performing workaround."
+        )
+        new_da = new_da.pint.dequantify()
+    else:
+        new_da = new_da.pint.to(to_unit).pint.dequantify()
     if new_da.attrs.get("units") != to_unit:
         logger.debug(
             "Pint auto-unit attribute setter different from requested unit string, setting manually."
