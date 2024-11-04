@@ -69,6 +69,8 @@ def has_scalar(units: str, scalar=re.compile(r"^\s*-?\d.*").search):
     bool
         ``True`` if the units has a scalar value, ``False`` otherwise.
     """
+    if units is None:
+        return False
     if scalar(units):
         return True
     return False
