@@ -1,7 +1,7 @@
 import numpy as np
 import xarray as xr
 from pyfesom2.load_mesh_data import load_mesh
-from pyfesom.regridding import fesom2regular
+from pyfesom2.regridding import fesom2regular
 
 from .pipeline import FrozenPipeline
 
