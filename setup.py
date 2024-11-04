@@ -71,6 +71,9 @@ setup(
             "sphinx_rtd_theme",
         ],
         "doc": docs_require,
+        "fesom": [
+            "pyfesom2",
+        ],
     },
     entry_points={
         "console_scripts": [

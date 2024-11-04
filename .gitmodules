@@ -1,3 +1,6 @@
 [submodule "cmip6-cmor-tables"]
 	path = cmip6-cmor-tables
 	url = https://github.com/PCMDI/cmip6-cmor-tables.git
+[submodule "tests/data/test_experiments/piControl_on_PI/mesh/pi"]
+	path = tests/data/test_experiments/piControl_on_PI/mesh/pi
+	url = https://gitlab.awi.de/fesom/pi.git
