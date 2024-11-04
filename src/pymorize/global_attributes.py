@@ -10,7 +10,7 @@ _fields = (
     "activity_id",
     "Conventions",
     "creation_date",
-    "date_specs_version",
+    "data_specs_version",
     "experiment",
     "experiment_id",
     "forcing_index",
@@ -79,6 +79,18 @@ def set_global_attributes(ds, rule):
     parent_activity_id = _experiment_id_cv.get("parent_activity_id", "")
 
 
+def update_global_attributes(ds, rule):
+    """ """
+    table = rule.data_request_variable.table
+    header = table._data["Header"]
+    attrs = {}
+    attrs["data_specs_version"] = header["data_specs_version"]
+    attrs["Conventions"] = header["Conventions"]
+    attrs["mip_era"] = header["mip_era"]
+    attrs["realm"] = header["realm"]
+    attrs["product"] = header["product"]
+
+
 def _parse_variant_label(label: str) -> dict:
     """Extracts indices values from variant label.
     `label` must be of the form "r<int>i<int>p<int>f<int>".
@@ -127,7 +139,7 @@ def update_license(
     cv: dict,
     institution_id: str = None,
     license_type: str = None,
-    maintainer_url: str = None,
+    further_info_url: str = None,
 ):
     """
     Updates the license attribute in the global attributes dictionary.
@@ -137,7 +149,7 @@ def update_license(
         cv (dict): The controlled vocabulary dictionary.
         institution_id (str, optional): The institution ID. Defaults to None.
         license_type (str, optional): The license type. Defaults to None.
-        maintainer_url (str, optional): The maintainer URL. Defaults to None.
+        further_info_url (str, optional): The maintainer URL. Defaults to None.
 
     Returns:
         None
@@ -148,15 +160,15 @@ def update_license(
 
     institution_id = institution_id or defaults.get("institution_id")
     license_type = license_type or defaults.get("license_type")
-    maintainer_url = maintainer_url or defaults.get("maintainer_url")
+    further_info_url = further_info_url or defaults.get("further_info_url")
     logger.debug(f"{institution_id=}")
     logger.debug(f"{license_type=}")
-    logger.debug(f"{maintainer_url=}")
+    logger.debug(f"{further_info_url=}")
     lic = cv["license"]
     license_text = lic["license"]
     license_id = lic["license_options"][license_type]["license_id"]
     license_url = lic["license_options"][license_type]["license_url"]
-    if maintainer_url is None:
+    if further_info_url is None:
         logger.debug(
             "Removing placeholder for maintainer url from license text as it is not provided."
         )
@@ -170,9 +182,9 @@ def update_license(
         "Creating place-holders in license template found in CMIP6_license.json"
     )
     text = make_placeholders(license_text)
-    if maintainer_url is None:
+    if further_info_url is None:
         text = text.format(institution, license_id, license_url)
     else:
-        text = text.format(institution, license_id, license_url, maintainer_url)
+        text = text.format(institution, license_id, license_url, further_info_url)
     logger.debug(f"License: {text}")
     gattrs["license"] = text
