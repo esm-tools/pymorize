@@ -6,6 +6,11 @@ from pyfesom2.regridding import fesom2regular
 from .pipeline import FrozenPipeline
 
 
+def attach_mesh_to_rule(data, rule):
+    rule.mesh = load_mesh(rule.mesh_file)
+    return data
+
+
 def regrid_to_regular(data, rule):
     mesh = load_mesh(rule.mesh_file)
     box = rule.get("box", "-180, 180, -90, 90")
