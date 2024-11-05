@@ -72,8 +72,7 @@ setup(
         ],
         "doc": docs_require,
         "fesom": [
-            "scipy<=1.6.0",  # Needed for pyfesom2 regridding to work correctly
-            "pyfesom2",
+            "git+https://github.com/fesom/pyfesom2.git@0.3.0",  # FIXME(PG): We should talk with Nikolay, this is not optimal...
         ],
     },
     entry_points={
