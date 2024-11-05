@@ -47,6 +47,7 @@ class CMORizer:
         self._post_init_populate_rules_with_tables()
         self._post_init_data_request_variables()
 
+
     def _post_init_configure_dask(self):
         """
         Sets up configuration for Dask-Distributed
@@ -214,8 +215,44 @@ class CMORizer:
 
     def _post_init_checks(self):
         # Sanity Checks:
-        self._check_rules_for_table()
-        self._check_rules_for_output_dir()
+        # :PS: @PG the following functions are not defined yet
+        # self._check_rules_for_table()
+        # self._check_rules_for_output_dir()
+        self._check_is_subperiod()
+
+    def _check_is_subperiod(self):
+        import pandas as pd
+        from .timeaverage import _frequency_from_approx_interval
+        from .filecache import fc
+        logger.info('checking frequency in netcdf file and in table...')
+        try:
+            rule = self.rules[0]
+        except IndexError:
+            logger.info('No rules found to for checking frequency. ..skiping..')
+            return
+        table_freq = _frequency_from_approx_interval(
+            rule.data_request_variable.table.approx_interval
+        )
+        # is_subperiod from pandas does not support YE or ME notation
+        table_freq = table_freq.rstrip('E')
+        first_filenames = []
+        for input_collection in rule.inputs:
+            first_filenames.append(input_collection.files[0])
+        if len(first_filenames) == 1:
+            filename = first_filenames[0]
+            data_freq = fc.get(filename).freq
+        else:  # Multi-variable Rule, handle differently
+            data_freqs = set([fc.get(filename).freq for filename in first_filenames])
+            if len(data_freqs) != 1:
+                raise ValueError(
+                    f"You have a compound variable and have multiple internal frequencies! This is not allowed: {data_freqs}"
+                )
+            data_freq = data_freqs[0]
+        is_subperiod = pd.tseries.frequencies.is_subperiod(data_freq, table_freq)
+        if not is_subperiod:
+            raise ValueError(f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}.")
+        logger.info(f'Frequency of data {data_freq}. Frequency in tables {table_freq}')
+
 
     @classmethod
     def from_dict(cls, data):
@@ -244,6 +281,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
+        instance._post_init_checks()
         return instance
 
     def add_rule(self, rule):
