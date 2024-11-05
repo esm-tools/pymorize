@@ -14,7 +14,7 @@ def regrid_to_regular(data, rule):
     y = np.linspace(y_min, y_max, int(y_max - y_min))
     lon, lat = np.meshgrid(x, y)
     interpolated = fesom2regular(data, mesh, lon, lat)
-    return xr.DataArray(interpolated, coords=[("lat", lat), ("lon", lon)])
+    return xr.DataArray(interpolated, coords=[("lon", lon), ("lat", lat)])
 
 
 class FESOMRegridPipeline(FrozenPipeline):
