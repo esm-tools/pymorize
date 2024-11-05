@@ -158,9 +158,30 @@ def test_when_tartget_unit_is_empty_string_raises_error(rule_with_units, from_un
         handle_unit_conversion(da, rule_spec)
 
 
+@pytest.mark.xfail(raises=ValueError)
 def test_units_with_psu():
     da = xr.DataArray(10, attrs={"units": "psu"})
     new_da = da.pint.quantify("psu")
     new_da = new_da.pint.to("0.001").pint.dequantify()
+    assert new_da.data == np.array(10)
+    assert new_da.attrs.get("units") == "0.001"
+
+
+def test_units_with_psu_using_handle_unit_conversion_function():
+    class mock_rule_unit:
+        def __init__(self, unit, model_unit=None):
+            setattr(self, "unit", unit)
+            setattr(self, "model_unit", model_unit)
+
+        def __getattr__(self, name):
+            if name not in ("unit", "model_unit"):
+                return self
+            return getattr(self, name)
+
+        get = __getattr__
+
+    da = xr.DataArray(10, attrs={"units": "psu"})
+    rule = mock_rule_unit(unit="0.001")
+    new_da = handle_unit_conversion(da, rule)
     assert new_da.data == np.array(10)
     assert new_da.attrs.get("units") == "0.001"

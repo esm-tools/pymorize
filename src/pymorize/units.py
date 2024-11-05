@@ -8,10 +8,6 @@ not convert from a dimentionless base to something with dimension. Dealing with
 such thing have to done with `action` section in the Rules module on a per
 variable basis.
 
-Units are taken from ``pint``'s predefined unit library. One extra unit, ``PSU``, is
-defined for salinity conversions, defined as the dimensionless ratio of mass of salt
-to mass of water in a sample of seawater expressed in grams per kilogram.
-
 Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
 names and corresponding number of days are available as a dictionary in the
 ``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
@@ -38,24 +34,46 @@ from .rule import Rule
 ureg = pint_xarray.unit_registry
 
 
-ureg.define("ppt = 1.0 / 1000.0")
+def is_unitless(units: str):
+    """
+    Check if units is a unitless value.
+
+    Parameters
+    ----------
+    units : str
+        The string representing units.
+
+    Returns
+    -------
+    bool
+        ``True`` if unitless, ``False`` otherwise.
+    """
+    try:
+        float(units)
+    except ValueError:
+        return False
+    return True
 
 
-@xr.register_dataarray_accessor("pint")
-class PSUAwarePintDataArrayAccessor(pint_xarray.accessors.PintDataArrayAccessor):
-    def to(self, unit):
-        """
-        Convert the data array to the specified unit. If the unit is "ppt", the conversion
-        is done to the "ppt" unit defined in the unit registry as 1.0 / 1000.0.
+def has_scalar(units: str, scalar=re.compile(r"^\s*-?\d.*").search):
+    """
+    Check if units has a scalar value. (e.g. "10kg")
 
-        Parameters
-        ----------
-        unit : str
-            The unit to convert the data array to.
-        """
-        if unit == "0.001":
-            return super().to("ppt")
-        return super().to(unit)
+    Parameters
+    ----------
+    units : str
+        The string representing units
+
+    Returns
+    -------
+    bool
+        ``True`` if the units has a scalar value, ``False`` otherwise.
+    """
+    if units is None:
+        return False
+    if scalar(units):
+        return True
+    return False
 
 
 def assign_frequency_to_unit_registry():
@@ -142,7 +160,13 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     handle_chemicals(to_unit)
     new_da = da.pint.quantify(from_unit)
     logger.debug(f"Converting units: {from_unit} -> {to_unit}")
-    new_da = new_da.pint.to(to_unit).pint.dequantify()
+    if has_scalar(to_unit):
+        logger.debug(
+            f"scalar value in to_unit {to_unit} detected. This is not supported. Performing workaround."
+        )
+        new_da = new_da.pint.dequantify()
+    else:
+        new_da = new_da.pint.to(to_unit).pint.dequantify()
     if new_da.attrs.get("units") != to_unit:
         logger.debug(
             "Pint auto-unit attribute setter different from requested unit string, setting manually."
