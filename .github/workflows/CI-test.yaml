@@ -17,6 +17,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           submodules: recursive
+      - name: Check Mesh
+        run: |
+          ls tests/data/test_experiments/piControl_on_PI/mesh/pi/ 
+          cat tests/data/test_experiments/piControl_on_PI/mesh/pi/aux3d.out
+          cat tests/data/test_experiments/piControl_on_PI/mesh/pi/elem2d.out
+          cat tests/data/test_experiments/piControl_on_PI/mesh/pi/nod2d.out
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v3
         with:
