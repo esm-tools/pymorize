@@ -18,8 +18,23 @@ def regrid_to_regular(data, rule):
     x = np.linspace(x_min, x_max, int(x_max - x_min))
     y = np.linspace(y_min, y_max, int(y_max - y_min))
     lon, lat = np.meshgrid(x, y)
-    interpolated = fesom2regular(data, mesh, lon, lat)
-    return xr.DataArray(interpolated, coords=[("lon", lon), ("lat", lat)])
+    # This works on a timestep-by-timestep basis, so we need to
+    # run an apply here...
+    # Apply `fesom2regular` function to each time step
+    interpolated = xr.apply_ufunc(
+        fesom2regular,
+        data,
+        mesh,
+        lon,
+        lat,
+        input_core_dims=[["time"], [], ["lon", "lat"]],
+        output_core_dims=[["time", "lat", "lon"]],
+        vectorize=True,  # Applies function to each timestep
+    )
+
+    return xr.DataArray(
+        interpolated, coords=[("time", data.time), ("lon", lon), ("lat", lat)]
+    )
 
 
 class FESOMRegridPipeline(FrozenPipeline):
