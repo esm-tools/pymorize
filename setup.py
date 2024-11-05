@@ -72,6 +72,7 @@ setup(
         ],
         "doc": docs_require,
         "fesom": [
+            "scipy<=1.6.0",  # Needed for pyfesom2 regridding to work correctly
             "pyfesom2",
         ],
     },
