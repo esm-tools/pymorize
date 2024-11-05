@@ -72,7 +72,7 @@ setup(
         ],
         "doc": docs_require,
         "fesom": [
-            "git+https://github.com/fesom/pyfesom2.git@0.3.0",  # FIXME(PG): We should talk with Nikolay, this is not optimal...
+            "pyfesom2 @ git+https://github.com/fesom/pyfesom2.git@0.3.0",  # FIXME(PG): We should talk with Nikolay, this is not optimal...
         ],
     },
     entry_points={
