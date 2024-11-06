@@ -84,12 +84,13 @@ def _input_pattern_from_env(config: dict) -> re.Pattern:
     re.compile('.*')
     >>> bool(pattern.match('test'))
     True
-    >>> pattern = _input_pattern_from_env(config_only_env_name)
     >>> os.environ["CMOR_PATTERN"] = "test*nc"
+    >>> pattern = _input_pattern_from_env(config_only_env_name)
     >>> pattern
     re.compile('test*nc')
     >>> bool(pattern.match('test'))
-    True
+    False
+    >>> del os.environ["CMOR_PATTERN"]
     >>> pattern = _input_pattern_from_env(config_only_env_value)
     >>> pattern
     re.compile('.*')

@@ -11,7 +11,7 @@ Creating a Frequency instance:
 
 >>> freq = Frequency("day", 1.0)
 >>> print(freq.name)
-'day'
+day
 >>> print(freq.approx_interval)
 1.0
 >>> print(freq.time_method)
