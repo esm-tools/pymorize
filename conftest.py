@@ -17,11 +17,11 @@ pytest_plugins = [
 ]
 
 
-# @pytest.hookimpl(tryfirst=True)
-# def pytest_collection_modifyitems(config, items):
-#     for item in items:
-#         if item.fspath and item.fspath.ext == ".py":
-#             item.add_marker(pytest.mark.doctest)
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(config, items):
+    for item in items:
+        if item.fspath and item.fspath.ext == ".py":
+            item.add_marker(pytest.mark.doctest)
 
 
 @pytest.fixture(autouse=True)

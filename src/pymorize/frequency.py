@@ -28,7 +28,7 @@ Getting a Frequency instance for a given name:
 
 >>> freq = Frequency.for_name("day")
 >>> print(freq.name)
-'day'
+day
 """
 
 from enum import Enum
