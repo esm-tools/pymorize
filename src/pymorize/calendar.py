@@ -16,13 +16,10 @@ Examples
 >>> print(year_bounds)
 [[2000, 2001], [2002, 2003], [2004, 2005], [2006, 2007], [2008, 2009], [2010, 2010]]
 
->>> date_range = date_ranges_from_bounds(year_bounds, freq="Y")
->>> print(date_range)
-([Timestamp('2000-12-31 00:00:00', freq='A-DEC'), Timestamp('2001-12-31 00:00:00', freq='A-DEC')], [Timestamp('2002-12-31 00:00:00', freq='A-DEC'), Timestamp('2003-12-31 00:00:00', freq='A-DEC')], [Timestamp('2004-12-31 00:00:00', freq='A-DEC'), Timestamp('2005-12-31 00:00:00', freq='A-DEC')], [Timestamp('2006-12-31 00:00:00', freq='A-DEC'), Timestamp('2007-12-31 00:00:00', freq='A-DEC')], [Timestamp('2008-12-31 00:00:00', freq='A-DEC'), Timestamp('2009-12-31 00:00:00', freq='A-DEC')], [Timestamp('2010-12-31 00:00:00', freq='A-DEC')])
-
->>> date_range = date_ranges_from_year_bounds(year_bounds, freq="Y")
->>> print(date_range)
-([Timestamp('2000-12-31 00:00:00', freq='A-DEC'), Timestamp('2001-12-31 00:00:00', freq='A-DEC')], [Timestamp('2002-12-31 00:00:00', freq='A-DEC'), Timestamp('2003-12-31 00:00:00', freq='A-DEC')], [Timestamp('2004-12-31 00:00:00', freq='A-DEC'), Timestamp('2005-12-31 00:00:00', freq='A-DEC')], [Timestamp('2006-12-31 00:00:00', freq='A-DEC'), Timestamp('2007-12-31 00:00:00', freq='A-DEC')], [Timestamp('2008-12-31 00:00:00', freq='A-DEC'), Timestamp('2009-12-31 00:00:00', freq='A-DEC')], [Timestamp('2010-12-31 00:00:00', freq='A-DEC')])
+>>> bounds = [("2020-01-01", "2020-12-31")]
+>>> date_ranges = date_ranges_from_bounds(bounds, freq="M")
+>>> print(date_ranges)
+(DatetimeIndex(['2020-01-31', '2020-02-29', ..., '2020-12-31'], dtype='datetime64[ns]', freq='M'),)
 """
 
 import pendulum

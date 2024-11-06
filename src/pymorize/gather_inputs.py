@@ -297,62 +297,8 @@ def gather_inputs(config: dict) -> dict:
     config:
         The configuration dictionary with the input files added.
 
-
-    Examples
-    --------
-    Assuming a filesystem with::
-
-        /path/to/input/files/test2000.nc
-        /path/to/input/files/test2001.nc
-        /path/to/input/files/test2002.nc
-        /path/to/input/files/test2003.nc
-        /path/to/input/files/test2004.nc
-        /path/to/input/files/test2005.nc
-        /path/to/input/files/test2006.nc
-        /path/to/input/files/test2007.nc
-        /path/to/input/files/test2008.nc
-        /path/to/input/files/test2009.nc
-        /path/to/input/files/test2010.nc
-
-    >>> config = {
-    ...     "rules": [
-    ...         {
-    ...             "input_patterns": [
-    ...                 "/path/to/input/files/test*nc"
-    ...             ],
-    ...             "year_start": 2000,
-    ...             "year_end": 2010
-    ...         }
-    ...     ]
-    ... }
-    >>> gather_inputs(config)
-    {
-        "rules": [
-            {
-                "input_patterns": [
-                    "/path/to/input/files/test*nc"
-                ],
-                "year_start": 2000,
-                "year_end": 2010,
-                "input_files": {
-                    "/path/to/input/files/test*nc": [
-                        "/path/to/input/files/test2000.nc",
-                        "/path/to/input/files/test2001.nc",
-                        "/path/to/input/files/test2002.nc",
-                        "/path/to/input/files/test2003.nc",
-                        "/path/to/input/files/test2004.nc",
-                        "/path/to/input/files/test2005.nc",
-                        "/path/to/input/files/test2006.nc",
-                        "/path/to/input/files/test2007.nc",
-                        "/path/to/input/files/test2008.nc",
-                        "/path/to/input/files/test2009.nc",
-                        "/path/to/input/files/test2010.nc"
-                    ],
-                 }
-            }
-        ]
-    }
     """
+    # NOTE(PG): Example removed from docstring as it is scheduled for deprecation.
     rules = config.get("rules", [])
     for rule in rules:
         input_patterns = rule.get("input_patterns", [])
