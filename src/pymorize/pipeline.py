@@ -2,182 +2,144 @@
 Pipeline of the data processing steps.
 """
 
-import json
-import os
+from datetime import timedelta
 
 import randomname
+from prefect import flow
+from prefect.cache_policies import INPUTS, TASK_SOURCE
+from prefect.tasks import Task, task_input_hash
+from prefect_dask import DaskTaskRunner
 
-from .logging import logger
-from .utils import get_callable_by_name
-
-
-class PipelineDB:
-    """
-    This class provides a JSON-based database for managing pipeline data.
-    It provides CRUD (Create, Read, Update, Delete) operations for pipeline data.
-    The database is stored in a JSON file, with the filename based on the process ID and the ID of the pipeline object.
-    """
-
-    def __init__(self, pipeline, keep_db=False):
-        """
-        Initializes the PipelineDB object.
-
-        Parameters
-        ----------
-        pipeline: object
-            The pipeline object that this database is associated with.
-        keep_db: bool, optional
-            If True, the database file will not be deleted when the object is deleted. Default is False.
-        """
-        pid = os.getpid()
-        self._db_file = f"pymorize_{pid}_pipeline_{id(pipeline)}.json"
-        self._db = {}
-        self._keep_db = keep_db
-
-    def save(self):
-        """
-        Saves the in-memory database to a file.
-        """
-        with open(self._db_file, "w") as f:
-            json.dump(self._db, f)
-
-    def load(self):
-        """
-        Loads the database from a file into memory.
-        If the file does not exist, initializes an empty database.
-        """
-        if os.path.exists(self._db_file):
-            with open(self._db_file, "r") as f:
-                self._db = json.load(f)
-        else:
-            self._db = {}
-
-    def create(self, step, data):
-        """
-        Creates a new entry in the database.
-
-        Parameters
-        ----------
-        step: function
-            The step function.
-        data: dict
-            The data to be associated with the step.
-        """
-        self._db[f"{step.__name__}_{id(step)}"] = data
-
-    def read(self, step, default={}):
-        """
-        Reads an entry from the database.
-
-        Parameters
-        ----------
-        step: function
-            The step function.
-
-        Returns
-        -------
-        dict
-            The data associated with the step.
-        """
-        return self._db.get(f"{step.__name__}_{id(step)}", default)
-
-    def update(self, step, data):
-        """
-        Updates an entry in the database.
-
-        Parameters
-        ----------
-        step : callable
-            The step function.
-        data : dict
-            The data to be updated.
-
-        Raises
-        ------
-        KeyError
-            If the step is not found in the database.
-        """
-        step_dict = self._db[f"{step.__name__}_{id(step)}"]
-        step_dict.update(data)
-
-    def delete(self, step):
-        """
-        Deletes an entry from the database.
-
-        Parameters
-        ----------
-        step: callable
-            The step function.
-        """
-        del self._db[f"{step.__name__}_{id(step)}"]
-
-    def __enter__(self):
-        """
-        Loads the database from a file into memory when entering the context.
-        """
-        self.load()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        """
-        Saves the in-memory database to a file when exiting the context.
-        """
-        self.save()
-
-    def __del__(self):
-        """
-        Removes the database file when the object is deleted if all steps have status "done".
-        """
-        if (
-            all(step.get("status") == "done" for step in self._db.values())
-            and os.path.exists(self._db_file)
-            and not self._keep_db
-        ):
-            os.remove(self._db_file)
-
-    def __contains__(self, step):
-        return f"{step.__name__}_{id(step)}" in self._db
+from .caching import generate_cache_key
+from .logging import add_to_report_log, logger
+from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
-    def __init__(self, *args, name=None):
+    def __init__(
+        self,
+        *args,
+        name=None,
+        workflow_backend="prefect",
+        dask_cluster=None,
+        cache_expiration=None,
+    ):
         self._steps = args
         self.name = name or randomname.get_name()
-        self._db = PipelineDB(self)
+        self._workflow_backend = workflow_backend
+        self._cluster = dask_cluster
+
+        if cache_expiration is None:
+            self._cache_expiration = timedelta(days=1)
+        else:
+            if isinstance(cache_expiration, timedelta):
+                self._cache_expiration = cache_expiration
+            else:
+                raise TypeError("Cache expiration must be a timedelta!")
+
+        if self._workflow_backend == "prefect":
+            self._prefectize_steps()
+
+    def __str__(self):
+        name_header = f"Pipeline: {self.name}"
+        name_uline = "-" * len(name_header)
+        step_header = "steps"
+        step_uline = "-" * len(step_header)
+        r_val = [name_header, name_uline, step_header, step_uline]
+        for i, step in enumerate(self.steps):
+            r_val.append(f"[{i+1}/{len(self.steps)}] {step.__name__}")
+        return "\n".join(r_val)
+
+    def assign_cluster(self, cluster):
+        logger.debug("Assinging cluster to this pipeline")
+        self._cluster = cluster
+
+    def _prefectize_steps(self):
+        # Turn all steps into Prefect tasks:
+        prefect_tasks = []
+        for i, step in enumerate(self._steps):
+            logger.debug(
+                f"[{i+1}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
+            )
+            prefect_tasks.append(
+                Task(
+                    fn=step,
+                    cache_key_fn=generate_cache_key,
+                    cache_expiration=self._cache_expiration,
+                    cache_policy=TASK_SOURCE + INPUTS,
+                )
+            )
+
+        self._steps = prefect_tasks
 
     @property
     def steps(self):
         return self._steps
 
-    def run(self, data, rule_spec, cmorizer):
+    def run(self, data, rule_spec):
+        if self._workflow_backend == "native":
+            return self._run_native(data, rule_spec)
+        elif self._workflow_backend == "prefect":
+            return self._run_prefect(data, rule_spec)
+        else:
+            raise ValueError("Invalid workflow backend!")
+
+    def _run_native(self, data, rule_spec):
         for step in self.steps:
-            with self._db as db:
-                if db.read(step).get("status") == "done":
-                    continue
-                else:
-                    self._start_step(step)
-                    data = step(data, rule_spec, cmorizer)
-                    self._end_step(step)
+            data = step(data, rule_spec)
         return data
 
-    def _start_step(self, step):
-        logger.debug(f"Starting step: {step.__name__}")
-        with self._db as db:
-            db.create(step, {"status": "running"})
+    def _run_prefect(self, data, rule_spec):
+        logger.debug(
+            f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
+        )
+        cmor_name = rule_spec.get("cmor_name")
+        rule_name = rule_spec.get("name", cmor_name)
 
-    def _end_step(self, step):
-        logger.debug(f"Ending step: {step.__name__}")
-        with self._db as db:
-            db.update(step, {"status": "done"})
+        @flow(
+            flow_run_name=f"{self.name} - {rule_name}",
+            description=f"{rule_spec.get('description', '')}",
+            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            on_completion=[self.on_completion],
+            on_failure=[self.on_failure],
+        )
+        def dynamic_flow(data, rule_spec):
+            return self._run_native(data, rule_spec)
+
+        return dynamic_flow(data, rule_spec)
+
+    @staticmethod
+    @add_to_report_log
+    def on_completion(flow, flowrun, state):
+        logger.success("Success...\n")
+        logger.success(f"{flow=}\n")
+        logger.success(f"{flowrun=}\n")
+        logger.success(f"{state=}\n")
+        logger.success("Good job! :-) \n")
+
+    @staticmethod
+    @add_to_report_log
+    def on_failure(flow, flowrun, state):
+        logger.error("Failure...\n")
+        logger.error(f"{flow=}\n")
+        logger.error(f"{flowrun=}\n")
+        logger.error(f"{state=}\n")
+        logger.error("Better luck next time :-( \n")
 
     @classmethod
-    def from_list(cls, steps, name=None):
-        return cls(*steps, name=name)
+    def from_list(cls, steps, name=None, **kwargs):
+        return cls(*steps, name=name, **kwargs)
 
     @classmethod
-    def from_qualname_list(cls, qualnames: list, name=None):
+    def from_qualname_list(cls, qualnames: list, name=None, **kwargs):
         return cls.from_list(
-            [get_callable_by_name(name) for name in qualnames], name=name
+            [get_callable_by_name(name) for name in qualnames], name=name, **kwargs
+        )
+
+    @classmethod
+    def from_callable_strings(cls, step_strings: list, name=None, **kwargs):
+        return cls.from_list(
+            [get_callable(name) for name in step_strings], name=name, **kwargs
         )
 
     @classmethod
@@ -186,9 +148,15 @@ class Pipeline:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
-            return get_callable_by_name(data["uses"])(name=data.get("name"))
+            return get_callable_by_name(data["uses"])(
+                name=data.get("name"), cache_expiration=data.get("cache_expiration")
+            )
         if "steps" in data:
-            return cls.from_qualname_list(data["steps"], name=data.get("name"))
+            return cls.from_callable_strings(
+                data["steps"],
+                name=data.get("name"),
+                cache_expiration=data.get("cache_expiration"),
+            )
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
@@ -233,21 +201,26 @@ class DefaultPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        "pymorize.generic.load_data",
-        "pymorize.generic.create_cmor_directories",
+        "pymorize.gather_inputs.load_mfdataset",
+        "pymorize.generic.get_variable",
+        "pymorize.timeaverage.compute_average",
         "pymorize.units.handle_unit_conversion",
+        "pymorize.caching.manual_checkpoint",
+        "pymorize.generic.trigger_compute",
+        "pymorize.generic.show_data",
+        "pymorize.files.save_dataset",
     )
 
-    def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
+    def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class TestingPipeline(FrozenPipeline):
     """
     The TestingPipeline class is a subclass of the Pipeline class. It is designed for testing purposes. It includes
-    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and cannot be
-    customized, only the name of the pipeline can be customized.
+    steps for loading data fake data, performing a logic step, and saving data. The specific steps are fixed and
+    cannot be customized, only the name of the pipeline can be customized.
 
     Parameters
     ----------
@@ -259,12 +232,14 @@ class TestingPipeline(FrozenPipeline):
     An internet connection is required to run this pipeline, as the load_data step fetches data from the internet.
     """
 
+    __test__ = False  # Prevent pytest from thinking this is a test, as the class name starts with test.
+
     STEPS = (
         "pymorize.generic.dummy_load_data",
         "pymorize.generic.dummy_logic_step",
         "pymorize.generic.dummy_save_data",
     )
 
-    def __init__(self, name="pymorize.pipeline.TestingPipeline"):
+    def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)

@@ -7,19 +7,37 @@ In case of missing units in either model files or CMIP Tables, this module can
 not convert from a dimentionless base to something with dimension. Dealing with
 such thing have to done with `action` section in the Rules module on a per
 variable basis.
+
+Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
+names and corresponding number of days are available as a dictionary in the
+``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
+can be done with the ``assign_frequency_to_unit_registry`` function.
 """
 
 import re
+import warnings
 from typing import Pattern, Union
 
-import cf_xarray.units
+warnings.filterwarnings(
+    "ignore", message=".*unavailable to set up matplotlib support.*"
+)
+
+import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
 
+from .frequency import CMIP_FREQUENCIES
 from .logging import logger
+from .rule import Rule
 
 ureg = pint_xarray.unit_registry
+
+
+def assign_frequency_to_unit_registry():
+    """Assign the CMIP6 frequencies to the unit registry."""
+    for freq_name, days in CMIP_FREQUENCIES.items():
+        ureg.define(f"{freq_name} = {days} * d")
 
 
 def handle_chemicals(
@@ -68,13 +86,7 @@ def handle_chemicals(
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-# FIXME: This needs to have a different signature!
-def handle_unit_conversion(
-    da: xr.DataArray,
-    rule_spec,
-    cmorizer,
-    source_unit: Union[str, None] = None,
-) -> xr.DataArray:
+def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     """Performs the unit-aware data conversion.
 
     If `source_unit` is provided, it is used instead of the unit from DataArray.
@@ -84,25 +96,39 @@ def handle_unit_conversion(
     da: ~xr.DataArray
     unit: str
         unit to convert data to
-    source_unit: str or None
-        Override the unit on ``da.attrs.unit`` if needed.
 
     Returns
     -------
     ~xr.DataArray
         DataArray with units converted to `unit`.
     """
-    unit = getattr(rule_spec, "cmor_units", None)
+    if not isinstance(da, xr.DataArray):
+        raise TypeError(f"Expected xr.DataArray, got {type(da)}")
+    # data_request_variable needs to be defined at this point
+    drv = rule.data_request_variable
+    to_unit = drv.unit
+    model_unit = rule.get("model_unit")
     from_unit = da.attrs.get("units")
-    if source_unit is not None:
+    if model_unit is not None:
         logger.debug(
-            f"using user defined unit ({source_unit}) instead of ({from_unit}) from DataArray "
+            f"using user defined unit ({model_unit}) instead of ({from_unit}) from DataArray "
         )
-        from_unit = source_unit
+        from_unit = model_unit
     handle_chemicals(from_unit)
-    handle_chemicals(unit)
+    handle_chemicals(to_unit)
     new_da = da.pint.quantify(from_unit)
-    new_da = new_da.pint.to(unit).pint.dequantify()
-    logger.debug(f"setting units on DataArray: {unit}")
-    new_da.attrs["units"] = unit
+    logger.debug(f"Converting units: {from_unit} -> {to_unit}")
+    new_da = new_da.pint.to(to_unit).pint.dequantify()
+    if new_da.attrs.get("units") != to_unit:
+        logger.debug(
+            "Pint auto-unit attribute setter different from requested unit string, setting manually."
+        )
+        new_da.attrs["units"] = to_unit
+    # Ensure a units attribute is present, default to None (this should never happen)
+    if "units" not in new_da.attrs:
+        logger.warning(
+            "Units attribute not present in DataArray after conversion, please check carefully!"
+        )
+        logger.warning("Setting to None")
+        new_da.attrs["units"] = None
     return new_da

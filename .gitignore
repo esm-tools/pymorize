@@ -1,4 +1,5 @@
 *.py[cod]
+.ipynb_checkpoints
 
 # C extensions
 *.so
@@ -42,3 +43,4 @@ doc/_build/
 doc/api/
 doc/API.rst
 .direnv
+sandbox/

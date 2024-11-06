@@ -15,7 +15,6 @@ The Full CMOR (yes, bad pun):
     * Performs time averaging
 """
 
-import datetime
 import tempfile
 from pathlib import Path
 
@@ -24,16 +23,7 @@ import xarray as xr
 from .logging import logger
 
 
-def time_average(data, rule_spec, cmorizer, *args, **kwargs):
-    if cmorizer["use_xarray_back"]:
-        data = data.resample(time=rule_spec["frequency"]).mean()
-    else:
-        # CDO Call
-        pass
-    return data
-
-
-def load_data(data, rule_spec, cmorizer, *args, **kwargs):
+def load_data(data, rule_spec, *args, **kwargs):
     """Loads data described by the rule_spec."""
     ds_list = []
     for pattern in rule_spec["input_patterns"]:
@@ -122,9 +112,7 @@ def create_cmor_directories(config: dict) -> dict:
     #          <version>
     mip_era = config["mip_era"]
     activity_id = config["activity_id"]
-    institution_id = config.get(
-        "institution_id", "Alfred Wegener Institure for Polar and Marine Research"
-    )
+    institution_id = config.get("institution_id", "AWI")
     source_id = config.get("source_id", "AWI-ESM-1-1-LR")
     experiment_id = config["experiment_id"]
     member_id = config["member_id"]
@@ -154,16 +142,20 @@ def create_cmor_directories(config: dict) -> dict:
     return config
 
 
-def dummy_load_data(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_load_data(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Loads the xarray tutorial data
     """
     logger.info("Loading data")
-    data = xr.tutorial.open_dataset("air_temperature")
+    input_source = rule_spec.get("input_source", "xr_tutorial")
+    if input_source == "xr_tutorial":
+        data = xr.tutorial.open_dataset("air_temperature")
+    if rule_spec.get("input_type") == "xr.DataArray":
+        data = getattr(data, rule_spec.get("da_name", "air"))
     return data
 
 
-def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_logic_step(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Prints data to screen and adds a dummy attribute to the data.
     """
@@ -174,7 +166,7 @@ def dummy_logic_step(data, rule_spec, cmorizer, *args, **kwargs):
     return data
 
 
-def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
+def dummy_save_data(data, rule_spec, *args, **kwargs):
     """
     A dummy function for testing. Saves the data to a netcdf file.
     """
@@ -184,7 +176,7 @@ def dummy_save_data(data, rule_spec, cmorizer, *args, **kwargs):
     return data
 
 
-def dummy_sleep(data, rule_spec, cmorizer, *arg, **kwargs):
+def dummy_sleep(data, rule_spec, *arg, **kwargs):
     """
     A dummy function for testing. Sleeps for 5 seconds.
     """
@@ -192,3 +184,64 @@ def dummy_sleep(data, rule_spec, cmorizer, *arg, **kwargs):
 
     time.sleep(5)
     return data
+
+
+def show_data(data, rule_spec, *args, **kwargs):
+    """
+    Prints data to screen. Useful for debugging
+    """
+    logger.info("Printing data...")
+    logger.info(data)
+    return data
+
+
+def get_variable(data, rule_spec, *args, **kwargs):
+    """
+    Gets a particular variable out of a xr.Dataset
+
+    Parameters
+    ----------
+    data : xr.Dataset
+        Assumes data is a dataset already. No checks are done
+        for this!!
+    rule_spec : Rule
+        Rule describing the DataRequestVariable for this pipeline run
+
+    Returns
+    -------
+    xr.DataArray
+    """
+    return data[rule_spec.model_variable]
+
+
+def resample_monthly(data, rule_spec, *args, **kwargs):
+    """monthly means per year"""
+    mm = data.resample(time="ME", **kwargs).mean(dim="time")
+    # cdo adjusts timestamp to mean-time-value.
+    # with xarray timestamp defaults to end_time. Re-adjusting timestamp to mean-time-value like cdo
+    # adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+    # if adjust_timestamp:
+    #     t = pd.to_datetime(mm.time.dt.strftime("%Y-%m-15").to_pandas())
+    #     mm["time"] = t
+    return mm
+
+
+def resample_yearly(data, rule_spec, *args, **kwargs):
+    """monthly means per year"""
+    ym = data.resample(time="YE", **kwargs).mean(dim="time")
+    # cdo adjusts timestamp to mean-time-value.
+    # with xarray timestamp defaults to end_time. Re-adjusting timestamp to mean-time-value like cdo
+    # adjust_timestamp = rule_spec.get("adjust_timestamp", True)
+    # if adjust_timestamp:
+    #     t = pd.to_datetime(mm.time.dt.strftime("%Y-%m-15").to_pandas())
+    #     mm["time"] = t
+    return ym
+
+
+def multiyear_monthly_mean(data, rule_spec, *args, **kwargs):
+    multiyear_monthly_mean = data.groupby("time.month").mean(dim="time")
+    return multiyear_monthly_mean
+
+
+def trigger_compute(data, rule_spec, *args, **kwargs):
+    return data.compute()

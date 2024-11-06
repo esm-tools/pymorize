@@ -48,6 +48,15 @@ Licence
 
 ``pymorize`` is licensed under the MIT license. See the LICENSE file for more details.
 
+Contributors
+-----------
+
+Thank you to all of our contributors!
+
+.. image:: https://contrib.rocks/image?repo=esm-tools/pymorize
+   :target: https://github.com/esm-tools/pymorize/graphs/contributors
+   :alt: Contributors
+
 Authors
 -------
 

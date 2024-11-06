@@ -79,6 +79,7 @@ intersphinx_mapping = {
     "pandas": ("http://pandas.pydata.org/pandas-docs/stable/", None),
     "xarray": ("http://xarray.pydata.org/en/stable/", None),
     "chemicals": ("https://chemicals.readthedocs.io/", None),
+    "cerberus": ("https://docs.python-cerberus.org/", None),
 }
 
 
