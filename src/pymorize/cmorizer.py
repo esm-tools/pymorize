@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import dask
+import pandas as pd
 import questionary
 import yaml
 from dask.distributed import Client
@@ -13,9 +14,11 @@ from rich.progress import track
 
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
+from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
+from .timeaverage import _frequency_from_approx_interval
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -46,7 +49,6 @@ class CMORizer:
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_data_request_variables()
-
 
     def _post_init_configure_dask(self):
         """
@@ -221,26 +223,23 @@ class CMORizer:
         self._check_is_subperiod()
 
     def _check_is_subperiod(self):
-        import pandas as pd
-        from .timeaverage import _frequency_from_approx_interval
-        from .filecache import fc
-        logger.info('checking frequency in netcdf file and in table...')
+        logger.info("checking frequency in netcdf file and in table...")
         try:
             rule = self.rules[0]
         except IndexError:
-            logger.info('No rules found to for checking frequency. ..skiping..')
+            logger.info("No rules found to for checking frequency. ..skipping..")
             return
         table_freq = _frequency_from_approx_interval(
             rule.data_request_variable.table.approx_interval
         )
         # is_subperiod from pandas does not support YE or ME notation
-        table_freq = table_freq.rstrip('E')
+        table_freq = table_freq.rstrip("E")
         first_filenames = []
         for input_collection in rule.inputs:
             try:
                 first_filenames.append(input_collection.files[0])
             except IndexError:
-                logger.info('No input files found. ..skiping..')
+                logger.info("No input files found. ..skipping..")
                 return
         if len(first_filenames) == 1:
             filename = first_filenames[0]
@@ -254,9 +253,10 @@ class CMORizer:
             data_freq = data_freqs[0]
         is_subperiod = pd.tseries.frequencies.is_subperiod(data_freq, table_freq)
         if not is_subperiod:
-            raise ValueError(f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}.")
-        logger.info(f'Frequency of data {data_freq}. Frequency in tables {table_freq}')
-
+            raise ValueError(
+                f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+            )
+        logger.info(f"Frequency of data {data_freq}. Frequency in tables {table_freq}")
 
     @classmethod
     def from_dict(cls, data):
