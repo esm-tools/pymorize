@@ -237,7 +237,11 @@ class CMORizer:
         table_freq = table_freq.rstrip('E')
         first_filenames = []
         for input_collection in rule.inputs:
-            first_filenames.append(input_collection.files[0])
+            try:
+                first_filenames.append(input_collection.files[0])
+            except IndexError:
+                logger.info('No input files found. ..skiping..')
+                return
         if len(first_filenames) == 1:
             filename = first_filenames[0]
             data_freq = fc.get(filename).freq
