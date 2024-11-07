@@ -48,4 +48,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v --cov
-          pytest -v --doctest-modules src/
+      - name: Test with doctest
+        run: |
+          PYTHONPATH=src pytest -v --doctest-modules src/
