@@ -28,7 +28,7 @@ jobs:
           cat tests/data/test_experiments/piControl_on_PI/mesh/pi/elem2d.out
           cat tests/data/test_experiments/piControl_on_PI/mesh/pi/nod2d.out
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
