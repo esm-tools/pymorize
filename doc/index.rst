@@ -15,6 +15,7 @@ Contents
    installation
    pymorize_building_blocks
    pymorize_config_file
+   pymorize_fesom
    including_subcommand_plugins
    developer_guide
    API
