@@ -55,7 +55,7 @@ You can access the metadata of a file in the cache using the `get` method:
     filename                                              volo.nc
     checksum             imohash:c8047bbd7e292dbe54a6387611f500c4
     filesize                                                  584
-    mtime                                       1730990838.355325
+    mtime                                       1730995292.193093
     start                                     1951-01-02 00:00:00
     end                                       1951-01-13 00:00:00
     timespan                                     11 days, 0:00:00
