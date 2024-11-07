@@ -18,7 +18,7 @@ jobs:
         with:
           submodules: recursive
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install dependencies
@@ -38,4 +38,6 @@ jobs:
       - name: Test with pytest
         run: |
           pytest -v --cov
-          pytest -v --doctest-modules src/
+      - name: Test with doctest
+        run: |
+          PYTHONPATH=src pytest -v --doctest-modules src/

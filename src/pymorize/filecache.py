@@ -39,12 +39,31 @@ Collect metadata about the file(s) by adding it to the cache with the following 
 
 .. code-block:: python
 
-    >>> filepath = "/pool/data/CO2f_fesom_1850-01-01_1900-01-01.nc"
+    >>> filepath = "tests/data/test_experiments/my_expid/outdata/fesom/volo.nc"
     >>> cache.add_file(filepath)
     >>> # adding multiple files at once
-    >>> cache.add_files(["/path/to/file1.nc", "/path/to/file2.nc"])
+    >>> cache.add_files(["tests/data/dummy_data/random1.nc", "tests/data/dummy_data/random2.nc"])
+
+You can access the metadata of a file in the cache using the `get` method:
+
+.. code-block:: python
+
+    >>> filepath = "tests/data/test_experiments/my_expid/outdata/fesom/volo.nc"
     >>> # alternative way of adding file to cache and getting the metadata is by usuig the `get` method
-    >>> cache.get("filepath")
+    >>> cache.get(filepath)
+    filepath    tests/data/test_experiments/my_expid/outdata/f...
+    filename                                              volo.nc
+    checksum             imohash:c8047bbd7e292dbe54a6387611f500c4
+    filesize                                                  584
+    mtime                                                     ...
+    start                                     1951-01-02 00:00:00
+    end                                       1951-01-13 00:00:00
+    timespan                                     11 days, 0:00:00
+    freq                                                        D
+    steps                                                      12
+    variable                                                 volo
+    units                                                      m3
+    Name: 0, dtype: object
 
 
 For an overview of the cached data, use `summary` method: This method returns a
@@ -55,6 +74,14 @@ number of files in the collection for this variable.
 .. code-block:: python
 
     >>> cache.summary()
+    variable                  seq                 volo
+    freq                        D                    D
+    start     0001-01-01 00:00:00  1951-01-02 00:00:00
+    end       0001-01-11 00:00:00  1951-01-13 00:00:00
+    timespan     10 days 00:00:00     11 days 00:00:00
+    nfiles                      2                    1
+    steps                      11                   12
+    size                     2120                  584
 
 To use a subset of the collection for a given variable, use `select_range`
 method. This will limit the files in the cache to those that are within the
@@ -537,7 +564,3 @@ def register_cache(ds):
     filename = ds.encoding["source"]
     fc.add_file(filename)
     return ds
-
-
-datapath = "/work/ba1103/a270073/out/awicm-1.0-recom/awi-esm-1-1-lr_kh800/piControl/outdata/fesom"
-# filepat = "CO2f_fesom_*nc"
