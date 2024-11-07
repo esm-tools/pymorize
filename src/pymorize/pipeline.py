@@ -190,9 +190,9 @@ class FrozenPipeline(Pipeline):
     def steps(self, value):
         raise AttributeError("Cannot set steps on a FrozenPipeline")
 
-    def __init__(self, name=NAME):
+    def __init__(self, name=NAME, **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class DefaultPipeline(FrozenPipeline):
@@ -216,9 +216,8 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.generic.trigger_compute",
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
-    )    
+    )
     NAME = "pymorize.pipeline.DefaultPipeline"
-
 
 
 class TestingPipeline(FrozenPipeline):
@@ -245,4 +244,3 @@ class TestingPipeline(FrozenPipeline):
         "pymorize.generic.dummy_save_data",
     )
     NAME = "pymorize.pipeline.TestingPipeline"
-
