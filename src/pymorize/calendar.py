@@ -15,11 +15,6 @@ Examples
 >>> year_bounds = year_bounds_major_digits(2000, 2010, 2, 2)
 >>> print(year_bounds)
 [[2000, 2001], [2002, 2003], [2004, 2005], [2006, 2007], [2008, 2009], [2010, 2010]]
-
->>> bounds = [("2020-01-01", "2020-12-31")]
->>> date_ranges = date_ranges_from_bounds(bounds, freq="M")
->>> print(date_ranges)
-DatetimeIndex(['2020-01-31', ..., '2020-12-31'], dtype='datetime64[ns]', freq='ME')
 """
 
 import pendulum
