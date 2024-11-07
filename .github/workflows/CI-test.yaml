@@ -40,4 +40,4 @@ jobs:
           pytest -v --cov
       - name: Test with doctest
         run: |
-          PYTHONPATH=src pytest -v --doctest-modules --doctest-options=+NORMALIZE_WHITESPACE src/
+          PYTHONPATH=src pytest -v --doctest-modules src/
