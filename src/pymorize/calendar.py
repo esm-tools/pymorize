@@ -151,7 +151,7 @@ def date_ranges_from_bounds(bounds, freq: str = "M", **kwargs):
     --------
     >>> bounds = [("2020-01-01", "2020-12-31")]
     >>> date_ranges_from_bounds(bounds, freq="M")
-    (DatetimeIndex(['2020-01-31', '2020-02-29', ..., '2020-12-31'], dtype='datetime64[ns]', freq='M'),)
+    DatetimeIndex(['2020-01-31', '2020-02-29', ..., '2020-12-31'], dtype='datetime64[ns]', freq='ME')
     """
     objs = []
     for start, end in bounds:
