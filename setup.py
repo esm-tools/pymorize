@@ -32,8 +32,8 @@ setup(
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
         "cerberus",
-        "cftime",
         "cf_xarray",
+        "cftime",
         "chemicals",
         "click-loguru",
         "dask",
@@ -41,6 +41,9 @@ setup(
         "deprecation",
         "distributed",
         "dpath",
+        "flox",
+        "imohash",
+        "numbagg",
         "pendulum",
         "pint-xarray",
         "prefect[dask]",
@@ -48,11 +51,10 @@ setup(
         "questionary",
         "randomname",
         "rich-click",
+        "streamlit",
+        "tqdm",
         "versioneer",
         "xarray",
-        "streamlit",
-        "flox",
-        "numbagg",
     ],
     extras_require={
         "dev": [
