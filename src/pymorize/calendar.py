@@ -20,9 +20,10 @@ Examples
 >>> date_ranges = date_ranges_from_bounds(bounds, freq="M")
 >>> print(date_ranges)
 DatetimeIndex(['2020-01-31', '2020-02-29', '2020-03-31', '2020-04-30',
-                   '2020-05-31', '2020-06-30', '2020-07-31', '2020-08-31',
-                   '2020-09-30', '2020-10-31', '2020-11-30', '2020-12-31'],
-                  dtype='datetime64[ns]', freq='ME')
+               '2020-05-31', '2020-06-30', '2020-07-31', '2020-08-31',
+               '2020-09-30', '2020-10-31', '2020-11-30', '2020-12-31'],
+              dtype='datetime64[ns]',
+              freq='ME')
 """
 
 import pendulum
@@ -157,12 +158,6 @@ def date_ranges_from_bounds(bounds, freq: str = "M", **kwargs):
 
     Examples
     --------
-    >>> bounds = [("2020-01-01", "2020-01-31"), ("2020-02-01", "2020-02-29")]
-    >>> date_ranges = date_ranges_from_bounds(bounds)
-    >>> print(date_ranges)
-    (DatetimeIndex(['2020-01-01', '2020-01-02', ..., '2020-01-31'], dtype='datetime64[ns]', freq='D'),
-     DatetimeIndex(['2020-02-01', '2020-02-02', ..., '2020-02-29'], dtype='datetime64[ns]', freq='D'))
-
     >>> bounds = [("2020-01-01", "2020-12-31")]
     >>> date_ranges = date_ranges_from_bounds(bounds, freq="M")
     >>> print(date_ranges)

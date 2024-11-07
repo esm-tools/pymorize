@@ -155,8 +155,9 @@ def _resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     --------
     >>> from pathlib import Path
     >>> files = [Path('/path/to/file1'), Path('/path/to/file2')]
-    >>> _resolve_symlinks(files)
-    [Path('/path/to/file1'), Path('/path/to/file2')]
+    >>> paths = _resolve_symlinks(files)
+    >>> [str(p) for p in paths]  # Convert to strings for doctest
+    ['/path/to/file1', '/path/to/file2']
     """
     if not all(isinstance(f, pathlib.Path) for f in files):
         logger.error("All files must be pathlib.Path objects. Got the following:")
