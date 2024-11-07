@@ -15,6 +15,7 @@ Contents
    installation
    pymorize_building_blocks
    pymorize_config_file
+   pymorize_saving_output
    including_subcommand_plugins
    developer_guide
    API

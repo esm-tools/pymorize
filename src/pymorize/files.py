@@ -6,6 +6,7 @@ saving the resulting datasets to the generated filepaths.
 
 import xarray as xr
 
+from .logging import logger
 from .timeaverage import _frequency_from_approx_interval
 
 
@@ -31,7 +32,7 @@ def _filename_time_range(ds, rule) -> str:
     end_year = end.strftime("%Y")
     frequency_str = rule.get("frequency_str")
     time_method = rule.get("time_method")
-    # NOTE: the commented out return statments: Although they report the actual
+    # NOTE: the commented out return statements: Although they report the actual
     # time limits in the file, the hard-coded version is chosen 2 reason,
     # a) to replicate code in seamore tool
     # b) to have consistent time range scheme in filename (Hmmm.... ?)
@@ -94,6 +95,12 @@ def create_filepath(ds, rule):
     return filepath
 
 
+def to_dataset(da, rule):
+    """Converter task for DataArray --> Dataset"""
+    ds = da.to_dataset()
+    return ds
+
+
 def save_dataset(da: xr.DataArray, rule):
     """
     save datasets to multiple files
@@ -106,8 +113,9 @@ def save_dataset(da: xr.DataArray, rule):
         filepath = create_filepath(da, rule)
         return da.to_netcdf(filepath, mode="w", format="NETCDF4")
     if isinstance(da, xr.DataArray):
-        da = da.to_dataset()
-    frequency_str = _frequency_from_approx_interval(file_timespan)
+        da = to_dataset(da, rule)
+    user_frequency_str = rule.get("output_frequency")
+    frequency_str = user_frequency_str or _frequency_from_approx_interval(file_timespan)
     groups = da.resample(time=frequency_str)
     paths = []
     datasets = []
