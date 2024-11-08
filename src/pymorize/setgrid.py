@@ -5,7 +5,7 @@ from typing import Union
 
 
 def setgrid(
-    da: xr.Dataset | xr.DataArray, rule: Rule
+    da: Union[xr.Dataset, xr.DataArray], rule: Rule
 ) -> Union[xr.Dataset, xr.DataArray]:
     """
     Appends grid information to data file if necessary coordinate dimensions exits in data file.
