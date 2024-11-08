@@ -64,7 +64,7 @@ class Pipeline:
             prefect_tasks.append(
                 Task(
                     fn=step,
-                    cache_key_fn=generate_cache_key,
+                    # cache_key_fn=generate_cache_key,
                     cache_expiration=self._cache_expiration,
                     cache_policy=TASK_SOURCE + INPUTS,
                 )
