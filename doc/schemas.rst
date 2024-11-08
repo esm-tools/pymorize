@@ -1,3 +1,4 @@
+.. _schemas:
 ==========================
 User Configuration Schemas
 ==========================

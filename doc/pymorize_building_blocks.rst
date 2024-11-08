@@ -2,7 +2,7 @@
 Usage: ``pymorize``'s Building Blocks
 =====================================
 
-The ``pymorize`` CLI and it's main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
+The ``pymorize`` command line interface (CLI) and its main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
 will give you a brief overview of these concepts. 
 
 Configuration
