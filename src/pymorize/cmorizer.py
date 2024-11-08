@@ -49,6 +49,7 @@ class CMORizer:
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_data_request_variables()
+        self._post_init_read_dimensionless_unit_mappings()
 
     def _post_init_configure_dask(self):
         """
@@ -144,6 +145,18 @@ class CMORizer:
         # FIXME: This needs a better name...
         self._rules_expand_drvs()
         self._rules_depluralize_drvs()
+
+    def _post_init_read_dimensionless_unit_mappings(self):
+        pymorize_cfg = self._pymorize_cfg
+        unit_map_file = pymorize_cfg.get("dimensionless_mapping_table", None)
+        if unit_map_file is None:
+            dimensionless_unit_mappings = {}
+        else:
+            with open(unit_map_file, "r") as f:
+                dimensionless_unit_mappings = yaml.safe_load(f)
+        # Add to rules:
+        for rule in self.rules:
+            rule.dimensionless_unit_mappings = dimensionless_unit_mappings
 
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
@@ -285,6 +298,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
+        instance._post_init_read_dimensionless_unit_mappings()
         instance._post_init_checks()
         return instance
 
