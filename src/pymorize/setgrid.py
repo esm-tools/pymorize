@@ -1,9 +1,12 @@
 import xarray as xr
 import re
 from .rule import Rule
+from typing import Union
 
 
-def setgrid(da: xr.Dataset | xr.DataArray, rule: Rule) -> xr.Dataset | xr.DataArray:
+def setgrid(
+    da: xr.Dataset | xr.DataArray, rule: Rule
+) -> Union[xr.Dataset, xr.DataArray]:
     """
     Appends grid information to data file if necessary coordinate dimensions exits in data file.
     Renames dimensions in data file to match the dimension names in grid file if necessary.
