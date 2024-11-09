@@ -99,7 +99,7 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     from_unit = da.attrs.get("units")
     if model_unit is not None:
         logger.info(
-            f"using user defined unit ({model_unit}) instead of ({from_unit}) from DataArray "
+            f"using user defined unit ({model_unit}) instead of ({from_unit}) from the original file"
         )
         from_unit = model_unit
     handle_chemicals(from_unit)
