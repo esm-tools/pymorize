@@ -3,5 +3,3 @@
 #   cmor_unit_string: pint_friendly_SI_units
 so:
   "0.001": g/kg
-so:
-  "0.001": g/kg
