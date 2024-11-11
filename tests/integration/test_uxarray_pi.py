@@ -1,3 +1,6 @@
+import yaml
+
+
 def test_process(test_uxarray_config, pi_uxarray_data):
     from pymorize.cmorizer import CMORizer
     from pymorize.logging import logger
