@@ -32,8 +32,7 @@ class Pipeline:
         self._prefect_cache_kwargs = {}
         if cache_policy is None:
             self._cache_policy = TASK_SOURCE + INPUTS
-            self._prefect_cache_kwargs["cache_policy"] = self._cache_policy 
-
+            self._prefect_cache_kwargs["cache_policy"] = self._cache_policy
 
         if cache_expiration is None:
             self._cache_expiration = timedelta(days=1)
@@ -42,7 +41,7 @@ class Pipeline:
                 self._cache_expiration = cache_expiration
             else:
                 raise TypeError("Cache expiration must be a timedelta!")
-       self._prefect_cache_kwargs["cache_expiration"]=self._cache_expiration,
+        self._prefect_cache_kwargs["cache_expiration"] = self._cache_expiration
 
         if self._workflow_backend == "prefect":
             self._prefectize_steps()

@@ -42,7 +42,8 @@ class CMORizer:
         self.pipelines = pipelines_cfg or []
 
         self._post_init_configure_dask()
-        self._post_init_create_dask_cluster()
+        if pymorize_cfg.get("parallel", True):
+            self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
