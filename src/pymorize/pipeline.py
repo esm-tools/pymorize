@@ -100,6 +100,11 @@ class Pipeline:
         )
         cmor_name = rule_spec.get("cmor_name")
         rule_name = rule_spec.get("name", cmor_name)
+        if self._cluster is None:
+            logger.warning(
+                "No cluster assigned to this pipeline. Using local Dask cluster."
+            )
+            self._cluster = DaskTaskRunner.get_default_cluster()
 
         @flow(
             flow_run_name=f"{self.name} - {rule_name}",
