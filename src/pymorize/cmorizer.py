@@ -147,9 +147,27 @@ class CMORizer:
         self._rules_depluralize_drvs()
 
     def _post_init_read_dimensionless_unit_mappings(self):
+        """
+        Reads the dimensionless unit mappings from a configuration file and
+        updates the rules with these mappings.
+
+        This method reads the dimensionless unit mappings from a file specified
+        in the configuration. If the file is not specified or does not exist,
+        an empty dictionary is used. The mappings are then added to each rule
+        in the `rules` attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
         pymorize_cfg = self._pymorize_cfg
         unit_map_file = pymorize_cfg.get("dimensionless_mapping_table", None)
         if unit_map_file is None:
+            logger.warning("No dimensionless unit mappings file specified!")
             dimensionless_unit_mappings = {}
         else:
             with open(unit_map_file, "r") as f:
