@@ -221,7 +221,8 @@ class CMORizer:
         # :PS: @PG the following functions are not defined yet
         # self._check_rules_for_table()
         # self._check_rules_for_output_dir()
-        self._check_is_subperiod()
+        # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
+        # self._check_is_subperiod()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
