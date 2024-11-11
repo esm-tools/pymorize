@@ -41,7 +41,7 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
-        if self._pymorize_cfg.get("parallel", True)
+        if self._pymorize_cfg.get("parallel", True):
             if pymorize_cfg.get("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
