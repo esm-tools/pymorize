@@ -9,5 +9,5 @@ def test_config():
 
 
 @pytest.fixture
-def test_config_pi_uxarray():
+def pi_uxarray_config():
     return TEST_ROOT / "configs" / "test_config_pi_uxarray.yaml"
