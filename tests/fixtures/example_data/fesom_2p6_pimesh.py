@@ -10,8 +10,8 @@ URL = "https://nextcloud.awi.de/s/7gtFn38ZGifMAfw/download/fesom_2p6_pimesh.tar.
 """str : URL to download the example data from."""
 
 
-@pytest.fixture
-def download_data(tmp_path_factory):
+@pytest.fixture(scope="session")
+def fesom_2p6_esm_tools_download_data(tmp_path_factory):
     cache_dir = tmp_path_factory.getbasetemp() / "cached_data"
     cache_dir.mkdir(exist_ok=True)
     data_path = cache_dir / "fesom_2p6_pimesh.tar.gz"
@@ -29,12 +29,14 @@ def download_data(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def fesom_2p6_esm_tools_data(download_data):
-    data_dir = Path(download_data).parent / "fesom_2p6_pimesh_esm_tools"
+def fesom_2p6_esm_tools_data(fesom_2p6_esm_tools_download_data):
+    data_dir = (
+        Path(fesom_2p6_esm_tools_download_data).parent / "fesom_2p6_pimesh_esm_tools"
+    )
 
     # Extract only if the directory doesn't already exist
     if not data_dir.exists():
-        with tarfile.open(download_data, "r:gz") as tar:
+        with tarfile.open(fesom_2p6_esm_tools_download_data, "r:gz") as tar:
             tar.extractall(data_dir.parent)
         print(f"Data extracted to: {data_dir}.")
     else:
