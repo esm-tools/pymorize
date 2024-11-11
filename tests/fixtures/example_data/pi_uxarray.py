@@ -21,9 +21,9 @@ def download_data(tmp_path_factory):
         response.raise_for_status()
         with open(data_path, "wb") as f:
             f.write(response.content)
-        print("Data downloaded.")
+        print(f"Data downloaded: {data_path}.")
     else:
-        print("Using cached data.")
+        print(f"Using cached data: {data_path}.")
 
     return data_path
 

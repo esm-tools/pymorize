@@ -41,8 +41,11 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
-        self._post_init_configure_dask()
-        self._post_init_create_dask_cluster()
+        self._cluster = None  # Dask Cluster, might be set up later
+        if self._pymorize_cfg.get("parallel", True):
+            if pymorize_cfg.get("parallel_backend") == "dask":
+                self._post_init_configure_dask()
+                self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
@@ -200,7 +203,8 @@ class CMORizer:
                 pipelines.append(p)
             elif isinstance(p, dict):
                 pl = Pipeline.from_dict(p)
-                pl.assign_cluster(self._cluster)
+                if self._cluster is not None:
+                    pl.assign_cluster(self._cluster)
                 pipelines.append(Pipeline.from_dict(p))
             else:
                 raise ValueError(f"Invalid pipeline configuration for {p}")
@@ -216,11 +220,13 @@ class CMORizer:
                 rule.set(rule_attr, rule_value)
 
     def _post_init_checks(self):
+        """Checks run at the end of initialization"""
         # Sanity Checks:
         # :PS: @PG the following functions are not defined yet
         # self._check_rules_for_table()
         # self._check_rules_for_output_dir()
-        self._check_is_subperiod()
+        # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
+        # self._check_is_subperiod()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
@@ -296,8 +302,9 @@ class CMORizer:
     def add_pipeline(self, pipeline):
         if not isinstance(pipeline, Pipeline):
             raise TypeError("pipeline must be an instance of Pipeline")
-        # Assign the cluster to this pipeline:
-        pipeline.assign_cluster(self._cluster)
+        if self._cluster is not None:
+            # Assign the cluster to this pipeline:
+            pipeline.assign_cluster(self._cluster)
         self.pipelines.append(pipeline)
 
     def _rule_for_filepath(self, filepath):
@@ -354,7 +361,8 @@ class CMORizer:
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
-            return self.parallel_process()
+            parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
+            return self.parallel_process(backend=parallel_backend)
         else:
             return self.serial_process()
 

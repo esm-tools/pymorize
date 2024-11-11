@@ -7,7 +7,7 @@ from datetime import timedelta
 import randomname
 from prefect import flow
 from prefect.cache_policies import INPUTS, TASK_SOURCE
-from prefect.tasks import Task, task_input_hash
+from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
 from .caching import generate_cache_key
@@ -21,6 +21,7 @@ class Pipeline:
         *args,
         name=None,
         workflow_backend="prefect",
+        cache_policy=None,
         dask_cluster=None,
         cache_expiration=None,
     ):
@@ -28,6 +29,10 @@ class Pipeline:
         self.name = name or randomname.get_name()
         self._workflow_backend = workflow_backend
         self._cluster = dask_cluster
+        self._prefect_cache_kwargs = {}
+        if cache_policy is None:
+            self._cache_policy = TASK_SOURCE + INPUTS
+            self._prefect_cache_kwargs["cache_policy"] = self._cache_policy
 
         if cache_expiration is None:
             self._cache_expiration = timedelta(days=1)
@@ -36,6 +41,7 @@ class Pipeline:
                 self._cache_expiration = cache_expiration
             else:
                 raise TypeError("Cache expiration must be a timedelta!")
+        self._prefect_cache_kwargs["cache_expiration"] = self._cache_expiration
 
         if self._workflow_backend == "prefect":
             self._prefectize_steps()
@@ -51,7 +57,7 @@ class Pipeline:
         return "\n".join(r_val)
 
     def assign_cluster(self, cluster):
-        logger.debug("Assinging cluster to this pipeline")
+        logger.debug("Assigning cluster to this pipeline")
         self._cluster = cluster
 
     def _prefectize_steps(self):
@@ -64,9 +70,8 @@ class Pipeline:
             prefect_tasks.append(
                 Task(
                     fn=step,
+                    **self._prefect_cache_kwargs,
                     # cache_key_fn=generate_cache_key,
-                    cache_expiration=self._cache_expiration,
-                    cache_policy=TASK_SOURCE + INPUTS,
                 )
             )
 
@@ -95,11 +100,18 @@ class Pipeline:
         )
         cmor_name = rule_spec.get("cmor_name")
         rule_name = rule_spec.get("name", cmor_name)
+        if self._cluster is None:
+            logger.warning(
+                "No cluster assigned to this pipeline. Using local Dask cluster."
+            )
+            dask_scheduler_address = None
+        else:
+            dask_scheduler_address = self._cluster.scheduler
 
         @flow(
             flow_run_name=f"{self.name} - {rule_name}",
             description=f"{rule_spec.get('description', '')}",
-            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            task_runner=DaskTaskRunner(address=dask_scheduler_address),
             on_completion=[self.on_completion],
             on_failure=[self.on_failure],
         )

@@ -244,4 +244,7 @@ def multiyear_monthly_mean(data, rule_spec, *args, **kwargs):
 
 
 def trigger_compute(data, rule_spec, *args, **kwargs):
-    return data.compute()
+    if hasattr(data, "compute"):
+        return data.compute()
+    # Data doesn't have a compute method, do nothing
+    return data
