@@ -20,3 +20,4 @@ rules:
       - path: "REPLACE_ME"
         pattern: "temp.fesom..*.nc"
     cmor_variable: "thetao"
+    model_variable: "temp"
