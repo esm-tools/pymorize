@@ -6,7 +6,7 @@ from pathlib import Path
 import pytest
 import requests
 
-URL = "https://nextcloud.awi.de/s/swqyFgbL2jjgjRo/download/pi_uxarray.tar"
+URL = "https://nextcloud.awi.de/s/7gtFn38ZGifMAfw/download/fesom_2p6_pimesh.tar.gz"
 """str : URL to download the example data from."""
 
 
@@ -14,7 +14,7 @@ URL = "https://nextcloud.awi.de/s/swqyFgbL2jjgjRo/download/pi_uxarray.tar"
 def download_data(tmp_path_factory):
     cache_dir = tmp_path_factory.getbasetemp() / "cached_data"
     cache_dir.mkdir(exist_ok=True)
-    data_path = cache_dir / "pi_uxarray.tar"
+    data_path = cache_dir / "fesom_2p6_pimesh.tar.gz"
 
     if not data_path.exists():
         response = requests.get(URL)
@@ -29,10 +29,15 @@ def download_data(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def pi_uxarray_data(download_data):
+def fesom_2p6_esm_tools_data(download_data):
+    data_dir = Path(download_data).parent / "fesom_2p6_pimesh_esm_tools"
 
-    data_dir = Path(download_data).parent
-    with tarfile.open(download_data, "r") as tar:
-        tar.extractall(data_dir)
+    # Extract only if the directory doesn't already exist
+    if not data_dir.exists():
+        with tarfile.open(download_data, "r:gz") as tar:
+            tar.extractall(data_dir.parent)
+        print(f"Data extracted to: {data_dir}.")
+    else:
+        print(f"Using cached extraction: {data_dir}.")
 
-    return data_dir / "pi_uxarray"
+    return data_dir
