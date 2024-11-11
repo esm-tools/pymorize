@@ -41,9 +41,10 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
-        self._post_init_configure_dask()
-        if pymorize_cfg.get("parallel", True):
-            self._post_init_create_dask_cluster()
+        if self._pymorize_cfg.get("parallel", True)
+            if pymorize_cfg.get("parallel_backend") == "dask":
+                self._post_init_configure_dask()
+                self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
@@ -217,6 +218,7 @@ class CMORizer:
                 rule.set(rule_attr, rule_value)
 
     def _post_init_checks(self):
+        """Checks run at the end of initialization"""
         # Sanity Checks:
         # :PS: @PG the following functions are not defined yet
         # self._check_rules_for_table()
@@ -356,7 +358,8 @@ class CMORizer:
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
-            return self.parallel_process()
+            parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
+            return self.parallel_process(backend=parallel_backend)
         else:
             return self.serial_process()
 
