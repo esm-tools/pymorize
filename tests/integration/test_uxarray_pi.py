@@ -1,7 +1,11 @@
-def test_process(test_uxarray_config, pi_uxarray_data):
-    from pymorize.cmorizer import CMORizer
-    from pymorize.logging import logger
+# import pytest
+import yaml
 
+from pymorize.cmorizer import CMORizer
+from pymorize.logging import logger
+
+
+def test_process(test_uxarray_config, pi_uxarray_data):
     logger.info(f"Processing {test_uxarray_config}")
     with open(test_uxarray_config, "r") as f:
         cfg = yaml.safe_load(f)

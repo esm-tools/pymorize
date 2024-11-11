@@ -1,9 +1,5 @@
 pymorize:
-  version: "unreleased"
-  use_xarray_backend: true
-  warn_on_no_rule: False
-  minimum_jobs: 8
-  maximum_jobs: 10
+  parallel: False
 general:
   name: "pi_uxarray"
   description: "This is a test configuration using the UXArray test data on PI Mesh"
