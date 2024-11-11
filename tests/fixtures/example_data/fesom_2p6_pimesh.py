@@ -29,7 +29,7 @@ def fesom_2p6_esm_tools_download_data(tmp_path_factory):
 
 
 @pytest.fixture(scope="session")
-def fesom_2p6_esm_tools_data(fesom_2p6_esm_tools_download_data):
+def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
     data_dir = (
         Path(fesom_2p6_esm_tools_download_data).parent / "fesom_2p6_pimesh_esm_tools"
     )
