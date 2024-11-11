@@ -14,6 +14,7 @@ pytest_plugins = [
     "tests.fixtures.config_files",
     "tests.fixtures.CV_Dir",
     "tests.fixtures.CMIP_Tables_Dir",
+    "tests.fixtures.example_data.fesom_2p6_pimesh",
     "tests.fixtures.example_data.pi_uxarray",
 ]
 

@@ -17,7 +17,7 @@ rules:
     source_id: "FESOM"
     variant_label: "r1i1p1f1"
     inputs:
-      - path: "REPLACE_ME"
+      - path: "REPLACE_ME/outdata/fesom"
         pattern: "temp.fesom..*.nc"
     cmor_variable: "thetao"
     model_variable: "temp"
