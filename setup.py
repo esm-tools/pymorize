@@ -44,6 +44,7 @@ setup(
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
         "imohash",
+        "netcdf4",
         "numbagg",
         "pendulum",
         "pint-xarray",
