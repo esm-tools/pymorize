@@ -29,6 +29,8 @@ from .rule import Rule
 
 ureg = pint_xarray.unit_registry
 
+ureg.define("practical_salinity_unit = g/kg = psu = PSU")
+
 
 def handle_chemicals(
     s: Union[str, None] = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
@@ -114,9 +116,13 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     else:
         _to_unit = to_unit
     if _to_unit == to_unit:
-        logger.info(f"Converting units: ({da.name} -> {cmor_variable}) {from_unit} -> {to_unit}")
+        logger.info(
+            f"Converting units: ({da.name} -> {cmor_variable}) {from_unit} -> {to_unit}"
+        )
     else:
-        logger.info(f"Converting units: ({da.name} -> {cmor_variable}) {from_unit} -> {_to_unit} ({to_unit})")
+        logger.info(
+            f"Converting units: ({da.name} -> {cmor_variable}) {from_unit} -> {_to_unit} ({to_unit})"
+        )
     new_da = new_da.pint.to(_to_unit).pint.dequantify()
     if new_da.attrs.get("units") != to_unit:
         logger.debug(
