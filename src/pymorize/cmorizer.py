@@ -298,6 +298,15 @@ class CMORizer:
             raise errors[0]
 
     def _check_units(self):
+        def is_unit_scalar(value):
+            if value is None:
+                return True
+            try:
+                x = float(value)
+            except ValueError:
+                return False
+            return (x - 1) == 0
+
         errors = []
         for rule in self.rules:
             for input_collection in rule.inputs:
@@ -305,14 +314,26 @@ class CMORizer:
                     filename = input_collection.files[0]
                 except IndexError:
                     break
-                da = xr.open_dataarray(filename, use_cftime=True)
-                try:
-                    handle_unit_conversion(da, rule)
-                except ValueError as e:
-                    msg = f"Error while converting units for {filename}: {e}"
-                    logger.error(msg)
-                    errors.append(e)
+                model_units = rule.get("model_unit") or fc.get(filename).units
+                cmor_units = rule.data_request_variable.units
+                cmor_variable = rule.data_request_variables.get("cmor_variable")
+                if model_units is None:
+                    if not (is_unit_scalar(cmor_units) or cmor_units == "%"):
+                        errors.append(
+                            ValueError(
+                                f"dimensionless variables must have dimensionless units ({model_units}  {cmor_units})"
+                            )
+                        )
+                if is_unit_scalar(cmor_units):
+                    if not is_unit_scalar(data_units):
+                        dimless = rule.get("dimensionless_unit_mappings", {})
+                        if not cmor_units in dimless.get(cmor_variable, {}):
+                            errors.append(
+                                f"Missing mapping for dimensionless variable {cmor_variable}"
+                            )
         if errors:
+            for err in errors:
+                logger.error(err)
             raise errors[0]
 
     @classmethod
