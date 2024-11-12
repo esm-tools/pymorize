@@ -2,7 +2,6 @@ from pathlib import Path
 
 import dask
 import pandas as pd
-import xarray as xr
 import questionary
 import yaml
 from dask.distributed import Client
@@ -325,7 +324,7 @@ class CMORizer:
                             )
                         )
                 if is_unit_scalar(cmor_units):
-                    if not is_unit_scalar(data_units):
+                    if not is_unit_scalar(model_units):
                         dimless = rule.get("dimensionless_unit_mappings", {})
                         if not cmor_units in dimless.get(cmor_variable, {}):
                             errors.append(
