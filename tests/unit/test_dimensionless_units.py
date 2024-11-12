@@ -10,7 +10,7 @@ def test_units_with_psu():
     da = xr.DataArray(10, name="sos", attrs={"units": "psu"})
     rule = Rule(
         cmor_variable="sos",
-        dimensionless_unit_mappings={"sos": {"0.001": "g/kg"}},
+        dimensionless_unit_mappings={"sos": {"0.001": "kg/kg"}},
     )
     drv = DataRequestVariable(
         variable_id="sos",
@@ -28,6 +28,9 @@ def test_units_with_psu():
     new_da = handle_unit_conversion(da, rule)
     assert new_da.attrs.get("units") == "0.001"
     # Check the magnitude of the data
-    # 1 g/kg is approximately 1 psu, so the values should be 10
+    # 1 g/kg is approximately 1 psu, but taget units is 0.001 which means
+    # 1 g/(1000 g) => 0.001 g/g or 0.001 kg/kg
+    # In source data is expressed as psu (g/kg) but in CMOR table it is expressed as kg/kg => 0.001
+    # so the values should be 10 * 0.001 => 0.01
     # after conversion:
-    assert np.allclose(new_da.values, 10)
+    assert np.allclose(new_da.values, 10 * 0.001)
