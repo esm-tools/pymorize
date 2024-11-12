@@ -2,14 +2,14 @@
 Usage: ``pymorize``'s Building Blocks
 =====================================
 
-The ``pymorize`` CLI has a few basic concepts you should be familiar with before you start using it. This guide
-will give you a brief overview of these concepts. Suggestions for improvements are always welcome!
+The ``pymorize`` command line interface (CLI) and its main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
+will give you a brief overview of these concepts. 
 
 Configuration
 -------------
 
 The configuration is the central piece of the ``pymorize`` CLI. It is a YAML file that specifies the behavior of
-the CLI. The configuration file is divided into four sections:
+the CLI. The configuration file is divided into several sections:
 
 1. ``pymorize``: This section contains the configuration for the CLI itself. It specifies the program version, log verbosity, the location of the user configuration file, and the location of the log file.
 2. ``general``: This section contains information that will be passed to all pipelines. You will specify the location of the data directory (your model output files),
@@ -21,6 +21,27 @@ the CLI. The configuration file is divided into four sections:
    patterns to use to find the files, and the pipeline(s) to apply to the files.
 5. ``inherit``: This section contains key-value pairs that will be added to all rules, unless the rules already have an attribute
    of this name attached to them.
+
+The handbook section on :ref:`schemas` provides more information about the data
+types and structures that are expected in the configuration file.
+
+Steps
+-----
+The true heart of ``pymorize`` are so-called ``steps``, which are nothing more than Python functions
+that take a data as input and return a possible modified dataset as output:
+
+  .. code-block:: python
+  
+      def dummy_step(data, rule):
+          # Do something with data
+          data = ...
+          return data
+
+Steps will **always** have the call signature ``def step(data: Any, rule: Rule) -> Any``. The ``data``
+parameter is the data that this step will operate on, and could be *anything*, but is typically either
+a :py:class:`~xarray.Dataset` or a :py:class:`~numpy.ndarray`. The ``rule`` parameter is a special ``pymorize``
+object that contains information about the current data being processed, including it's CMOR name,
+the files it comes from, and other valuable information described in the CMIP data requests.
 
 Pipelines
 ---------
@@ -54,7 +75,10 @@ custom pipeline:
 Rules
 -----
 
-Rules are the heart of the ``pymorize`` CLI. They specify the files needed to produce a CMOR output variable. Each rule has a name, a CMOR variable, and a list of input patterns. The input patterns are used to find the files needed to produce the CMOR output variable. Here is an example of a rule:
+Rules describe which files the program is aware of and how it should process them. Each rule
+specifies the files needed to produce **one single** particular CMOR output variable, and minimally has a name, 
+a CMOR variable, and a list of input patterns. The Rule is also connected to one or more pipelines.
+Here's an example of a rule:
 
   .. code-block:: yaml
   
@@ -62,8 +86,9 @@ Rules are the heart of the ``pymorize`` CLI. They specify the files needed to pr
       rules:
         - name: my_rule
           cmor_variable: tas
-          patterns:
-            - 'tas_*.nc'
+          inputs:
+            - path: /some/path/to/files/
+              pattern: 'tas_*.nc'
           pipelines:
             - my_pipeline
       # ... other configuration
@@ -87,11 +112,13 @@ Rules can inherit global values. To do so, you should include them in the ``inhe
       rules:
         - name: my_rule
           cmor_variable: tas
-          patterns:
-            - 'tas_*.nc'
+          inputs:
+            - path: /some/path/to/files/
+              pattern: 'tas_*.nc'
           pipelines:
             - my_pipeline
 
 The rule ``my_rule`` will inherit the frequency ``mon`` from the global configuration, and can be accessed in
-Python code as ``rule_spec.frequency``.
+Python code as ``rule_spec.frequency``. This would be useful when you want global attributes applied to all the rules,
+such as institution ID, realization of the simulation, and so on.
 
