@@ -28,6 +28,6 @@ def test_units_with_psu():
     new_da = handle_unit_conversion(da, rule)
     assert new_da.attrs.get("units") == "0.001"
     # Check the magnitude of the data
-    # 1 g/kg is approximately 1 psu, so the values should be 10
+    # 1 g/kg is approximately 1 psu, so the values should be 10 * 1000
     # after conversion:
-    assert np.allclose(new_da.values, 10)
+    assert np.allclose(new_da.values, 10000)

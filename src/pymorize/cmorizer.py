@@ -12,9 +12,14 @@ from prefect.logging import get_run_logger
 from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
-from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
-                           IgnoreTableFiles)
+from .data_request import (
+    DataRequest,
+    DataRequestTable,
+    DataRequestVariable,
+    IgnoreTableFiles,
+)
 from .filecache import fc
+from .units import handle_unit_conversion
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
@@ -256,6 +261,7 @@ class CMORizer:
         # self._check_rules_for_table()
         # self._check_rules_for_output_dir()
         self._check_is_subperiod()
+        self._check_units()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
@@ -288,6 +294,25 @@ class CMORizer:
         if errors:
             for err in errors:
                 logger.error(err)
+            raise errors[0]
+
+    def _check_units(self):
+        errors = []
+        for rule in self.rules:
+            for input_collection in rule.inputs:
+                try:
+                    filename = input_collection.files[0]
+                except IndexError:
+                    break
+                da = xr.open_dataarray(filename, use_cftime=True)
+                try:
+                    handle_unit_conversion(da, rule)
+                except ValueError as e:
+                    msg = f"Error while converting units for {filename}: {e}"
+                    logger.error(msg)
+                    errors.append(e)
+        if errors:
+            raise errors[0]
 
     @classmethod
     def from_dict(cls, data):
