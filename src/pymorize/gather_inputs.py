@@ -25,9 +25,11 @@ _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 
 
 class InputFileCollection:
-    def __init__(self, path, pattern):
+    def __init__(self, path, pattern, frequency=None, time_dim_name=None):
         self.path = pathlib.Path(path)
         self.pattern = re.compile(pattern)  # Compile the regex pattern
+        self.frequency = frequency
+        self.time_dim_name = time_dim_name
 
     # def __iter__(self):
     @property
@@ -42,7 +44,7 @@ class InputFileCollection:
 
     @classmethod
     def from_dict(cls, d):
-        return cls(d["path"], d["pattern"])
+        return cls(d["path"], d["pattern"], d.get("frequency"), d.get("time_dim_name"))
 
 
 def _input_pattern_from_env(config: dict) -> re.Pattern:
