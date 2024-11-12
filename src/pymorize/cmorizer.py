@@ -281,7 +281,6 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
-        instance._post_init_read_dimensionless_unit_mappings()
         return instance
 
     def add_rule(self, rule):
