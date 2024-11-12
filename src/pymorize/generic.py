@@ -1,4 +1,6 @@
 """
+Generic
+=======
 This module, `generic.py`, provides functionalities for transforming and standardizing NetCDF files
 according to CMOR.
 

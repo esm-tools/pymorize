@@ -2,8 +2,6 @@
 ``pymorize``: A Python package to simplify CMOR
 ===============================================
 
------
-
   ``pymorize`` is a Python package to simplify the standardization of output into the Climate Model Output Rewriter (CMOR) standard.
 
 .. image:: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml/badge.svg
@@ -40,7 +38,13 @@ Then you can run the main command line interface. Start out by getting some help
   
     pymorize --help
 
-More detailed install instructions can be found in the :ref:`installation` section.
+
+The most basic command you will run is::
+
+    pymorize process <CONFIG_FILE>
+
+More detailed install instructions can be found in the :ref:`installation` section, and usage
+is summarized in the usage sections.
 
 
 Licence
