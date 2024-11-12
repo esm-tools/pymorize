@@ -88,8 +88,9 @@ def cli(verbose, quiet, logfile, profile_mem):
 
 @cli.command()
 @click_loguru.init_logger()
+@click.option("-n", "--dry-run", default=False)
 @click.argument("config_file", type=click.Path(exists=True))
-def process(config_file):
+def process(config_file, dry_run=False):
     # NOTE(PG): The ``init_logger`` decorator above removes *ALL* previously configured loggers,
     #           so we need to re-create the report logger here. Paul does not like this at all.
     add_report_logger()
@@ -97,8 +98,10 @@ def process(config_file):
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
+    # TODO(PG): Figure out if we need the client or not...?
     client = Client(cmorizer._cluster)
-    cmorizer.process()
+    cmorizer.process(dry_run=True)
+    cmorizer.process(dry_run=dry_run)
 
 
 @cli.command()

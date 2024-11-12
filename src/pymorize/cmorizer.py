@@ -382,24 +382,24 @@ class CMORizer:
                 for filepath in all_files_in_output_dir:
                     logger.warning(filepath)
 
-    def process(self, parallel=None):
+    def process(self, dry_run=False, parallel=None):
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
             parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
-            return self.parallel_process(backend=parallel_backend)
+            return self.parallel_process(backend=parallel_backend, dry_run=dry_run)
         else:
-            return self.serial_process()
+            return self.serial_process(dry_run=dry_run)
 
-    def parallel_process(self, backend="prefect"):
+    def parallel_process(self, dry_run=False backend="prefect"):
         if backend == "prefect":
-            return self._parallel_process_prefect()
+            return self._parallel_process_prefect(dry_run=dry_run)
         elif backend == "dask":
-            return self._parallel_process_dask()
+            return self._parallel_process_dask(dry_run=dry_run)
         else:
             raise ValueError("Unknown backend for parallel processing")
 
-    def _parallel_process_prefect(self):
+    def _parallel_process_prefect(self, dry_run=False):
         # prefect_logger = get_run_logger()
         # logger = prefect_logger
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
@@ -407,18 +407,20 @@ class CMORizer:
         def dynamic_flow():
             rule_results = []
             for rule in self.rules:
-                rule_results.append(self._process_rule_prefect.submit(rule))
+                rule_results.append(self._process_rule_prefect.submit(rule, dry_run=dry_run))
             wait(rule_results)
             return rule_results
 
         return dynamic_flow()
 
-    def _parallel_process_dask(self, external_client=None):
+    def _parallel_process_dask(self, external_client=None, dry_run=False):
         if external_client:
             client = external_client
         else:
             client = Client(cluster=self._cluster)  # start a local Dask client
         if wait_for_workers(client, 1):
+            # FIXME(PG): Don't forget to pass dry_run here!
+            # FIXME(PG): ...How?
             futures = [client.submit(self._process_rule, rule) for rule in self.rules]
 
             results = client.gather(futures)
@@ -428,14 +430,14 @@ class CMORizer:
         else:
             logger.error("Timeout reached waiting for dask cluster, sorry...")
 
-    def serial_process(self):
+    def serial_process(self, dry_run=False):
         data = {}
         for rule in track(self.rules, description="Processing rules"):
-            data[rule] = self._process_rule(rule)
+            data[rule] = self._process_rule(rule, dry_run=dry_run)
         logger.success("Processing completed.")
         return data
 
-    def _process_rule(self, rule):
+    def _process_rule(self, rule, dry_run=False):
         logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
         rule.match_pipelines(self.pipelines)
@@ -444,9 +446,9 @@ class CMORizer:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, rule)
+            data = pipeline.run(data, rule, dry_run=dry_run)
         return data
 
     @task
-    def _process_rule_prefect(self, rule):
-        return self._process_rule(rule)
+    def _process_rule_prefect(self, rule, dry_run=False):
+        return self._process_rule(rule, dry_run=dry_run)

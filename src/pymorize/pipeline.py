@@ -76,20 +76,20 @@ class Pipeline:
     def steps(self):
         return self._steps
 
-    def run(self, data, rule_spec):
+    def run(self, data, rule_spec, dry_run=False):
         if self._workflow_backend == "native":
-            return self._run_native(data, rule_spec)
+            return self._run_native(data, rule_spec, dry_run=dry_run)
         elif self._workflow_backend == "prefect":
-            return self._run_prefect(data, rule_spec)
+            return self._run_prefect(data, rule_spec, dry_run=dry_run)
         else:
             raise ValueError("Invalid workflow backend!")
 
-    def _run_native(self, data, rule_spec):
+    def _run_native(self, data, rule_spec, dry_run=False):
         for step in self.steps:
-            data = step(data, rule_spec)
+            data = step(data, rule_spec, dry_run=dry_run)
         return data
 
-    def _run_prefect(self, data, rule_spec):
+    def _run_prefect(self, data, rule_spec, dry_run=False):
         logger.debug(
             f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
         )
@@ -110,10 +110,10 @@ class Pipeline:
             on_completion=[self.on_completion],
             on_failure=[self.on_failure],
         )
-        def dynamic_flow(data, rule_spec):
-            return self._run_native(data, rule_spec)
+        def dynamic_flow(data, rule_spec, dry_run=dry_run):
+            return self._run_native(data, rule_spec, dry_run=dry_run)
 
-        return dynamic_flow(data, rule_spec)
+        return dynamic_flow(data, rule_spec, dry_run=dry_run)
 
     @staticmethod
     @add_to_report_log
