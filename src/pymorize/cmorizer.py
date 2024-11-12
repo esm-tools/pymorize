@@ -317,8 +317,6 @@ class CMORizer:
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
         instance._post_init_read_dimensionless_unit_mappings()
-        # instance._post_init_checks()
-        instance.validate()
         return instance
 
     def add_rule(self, rule):
