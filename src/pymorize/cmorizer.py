@@ -220,6 +220,7 @@ class CMORizer:
                 rule.set(rule_attr, rule_value)
 
     def validate(self):
+        """Performs validation on files if they are suitable for use with the pipeline requirements"""
         # Sanity Checks:
         # :PS: @PG the following functions are not defined yet
         # self._check_rules_for_table()
