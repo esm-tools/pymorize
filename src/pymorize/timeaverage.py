@@ -36,7 +36,8 @@ import itertools
 
 import pandas as pd
 import xarray as xr
-
+import numpy as np
+import functools
 from .logging import logger
 
 
@@ -135,23 +136,19 @@ def _frequency_from_approx_interval(interval: str):
         ("year", lambda x: f"{x}YE", 365),
         ("month", lambda x: f"{x}ME", 30),
         ("day", lambda x: f"{x}D", 1),
-        ("hour", lambda x: f"{x}H", 24),
-        ("minute", lambda x: f"{x}min", 24 * 60),
-        ("second", lambda x: f"{x}s", 24 * 60 * 60),
-        ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
+        ("hour", lambda x: f"{x}H", 1 / 24),
+        ("minute", lambda x: f"{x}min", 1.0 / (24 * 60)),
+        ("second", lambda x: f"{x}s", 1.0 / (24 * 60 * 60)),
+        ("millisecond", lambda x: f"{x}ms", 1.0 / (24 * 60 * 60 * 1000)),
     ]
     try:
         interval = float(interval)
     except ValueError:
         return interval
-    to_divide = {"decade", "year", "month", "day"}
+    isclose = functools.partial(np.isclose, rtol=1e-3)
     for name, func, val in notation:
-        if name in to_divide:
-            value = interval // val
-        else:
-            value = interval * val
-        if value >= 1:
-            value = round(value)
+        if (interval >= val) or isclose(interval, val):
+            value = round(interval / val)
             value = "" if value == 1 else value
             return func(value)
 
@@ -313,7 +310,5 @@ longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: m
 time: mean
 time: mean grid_longitude: mean
 time: point
-""".strip().split(
-    "\n"
-)
+""".strip().split("\n")
 """list: cell_methods to ignore when calculating time averages"""
