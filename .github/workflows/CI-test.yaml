@@ -37,13 +37,14 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test if data will work (Meta-Test)
         run: |
-          pytest -v --cov tests/meta/*.py
+          # -s turns on printing to screen, even for passing tests
+          pytest -vvv --cov -s tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
-          pytest -v --cov tests/unit/*.py
+          pytest -vvv --cov tests/unit/*.py
       - name: Test with pytest (Integration)
         run: |
-          pytest -v --cov tests/integration/*.py
+          pytest -vvv --cov tests/integration/*.py
       - name: Test with doctest
         run: |
           PYTHONPATH=src pytest -v --doctest-modules src/
