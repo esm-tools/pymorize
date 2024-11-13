@@ -2,6 +2,7 @@ from pathlib import Path
 
 import dask
 import pandas as pd
+import xarray as xr
 import questionary
 import yaml
 from dask.distributed import Client

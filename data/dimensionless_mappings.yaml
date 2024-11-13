@@ -2,4 +2,4 @@
 # model_variable_name:
 #   cmor_unit_string: pint_friendly_SI_units
 so:
-  "0.001": kg/kg
+  "0.001": g/kg
