@@ -132,3 +132,81 @@ def test__split_by_chunks_fesom_example_data(fesom_2p6_pimesh_esm_tools_data):
         "nz1": slice(0, 47, None),
         "nod2": slice(0, 3140, None),
     }
+
+
+def test__frequency_from_approx_interval_decade():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("3650") == "10YE"
+    )  # Decade conversion
+
+
+def test__frequency_from_approx_interval_year():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("365") == "YE"
+    )  # One year
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("1095") == "3YE"
+    )  # Three years
+
+
+def test__frequency_from_approx_interval_month():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("30") == "ME"
+    )  # One month
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("60") == "2ME"
+    )  # Two months
+
+
+def test__frequency_from_approx_interval_day():
+    assert pymorize.timeaverage._frequency_from_approx_interval("1") == "D"  # One day
+
+
+def test__frequency_from_approx_interval_hour():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.04167") == "H"
+    )  # Approximately one hour in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.08334") == "2H"
+    )  # Approximately two hours in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.5") == "12H"
+    )  # Half a day in hours
+
+
+def test__frequency_from_approx_interval_minute():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.000694") == "min"
+    )  # Approximately one minute in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.001388") == "2min"
+    )  # Approximately two minutes in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.020833") == "30min"
+    )  # Approximately half an hour in minutes
+
+
+def test__frequency_from_approx_interval_second():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.00001157") == "s"
+    )  # Approximately one second in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("0.00002314") == "2s"
+    )  # Approximately two seconds in days
+    assert not (
+        pymorize.timeaverage._frequency_from_approx_interval("0.000694") == "60s"
+    )  # Approximately one minute in seconds, should give back min, since it can round up.
+
+
+def test__frequency_from_approx_interval_millisecond():
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("1.1574e-8") == "ms"
+    )  # Approximately one millisecond in days
+    assert (
+        pymorize.timeaverage._frequency_from_approx_interval("2.3148e-8") == "2ms"
+    )  # Approximately two milliseconds in days
+
+
+def test__invalid_interval():
+    with pytest.raises(ValueError):
+        pymorize.timeaverage._frequency_from_approx_interval("not_a_number")
