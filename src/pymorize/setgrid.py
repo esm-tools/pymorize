@@ -44,7 +44,7 @@ def setgrid(
                     to_rename[name] = dim
     if can_merge:
         if to_rename:
-            da = da.rename_dims(to_rename)
+            da = da.rename(to_rename)
         coord_names = "|".join(grid.coords.keys())
         pattern = re.compile(f"({coord_names}).+")
         required_vars = [name for name in grid.variables.keys() if pattern.match(name)]
