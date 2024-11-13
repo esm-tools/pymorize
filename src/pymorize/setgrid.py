@@ -1,3 +1,25 @@
+"""
+Set grid information on the data file.
+
+xarray does not have a built-in `setgrid` operator unlike `cdo`.  Using
+`xarray.merge` directly to merge grid with data may or may not produce the
+desired result all the time.
+
+Some guiding rules to set the grid information:
+
+1. At least one dimension size in both data file and grid file should match.
+2. If the dimension size match but not the dimension name, then the dimension
+   name in data file is renamed to match the dimension name in grid file.
+3. The matching dimension size must be one of the coordinate variables in both data
+   file and grid file.
+4. If all above conditions are met, then the data file is merged with the grid file.
+5. The data variables which are prefixed with coordinate variables in the grid file
+   are kept and the rest of the data variables in grid file are dropped.
+6. The result of the merge is always a xarray.Dataset
+
+Note: Rule 5 is not strict and may go away if it is not desired.
+"""
+
 import xarray as xr
 import re
 from .rule import Rule
@@ -13,13 +35,13 @@ def setgrid(
 
     Parameters
     ----------
-    da : xr.DataSet or xr.DataArray
+    da : xr.Dataset or xr.DataArray
         The input dataarray or dataset.
     rule: Rule object containing gridfile attribute
 
     Returns
     -------
-    xr.DataSet
+    xr.Dataset
         The output dataarray or dataset with the grid information.
     """
     gridfile = rule.get("grid_file")
