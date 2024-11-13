@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 import pytest
 import xarray as xr
 
@@ -210,3 +211,53 @@ def test__frequency_from_approx_interval_millisecond():
 def test__invalid_interval():
     with pytest.raises(ValueError):
         pymorize.timeaverage._frequency_from_approx_interval("not_a_number")
+
+
+def test__compute_file_timespan_single_chunk():
+    # Create a DataArray with a single chunk
+    time = pd.date_range("2000-01-01", periods=10, freq="D")
+    data = xr.DataArray(np.random.rand(10), dims="time", coords={"time": time})
+    data = data.chunk({"time": 5})  # Single chunk
+
+    assert pymorize.timeaverage._compute_file_timespan(data) == 9
+
+
+def test__compute_file_timespan_multiple_chunks():
+    # Create a DataArray with multiple chunks
+    time = pd.date_range("2000-01-01", periods=30, freq="D")
+    data = xr.DataArray(np.random.rand(30), dims="time", coords={"time": time})
+    data = data.chunk({"time": 10})
+
+    assert pymorize.timeaverage._compute_file_timespan(data) == 9
+
+
+def test__compute_file_timespan_empty_time_dimension():
+    # DataArray with an empty time dimension
+    data = xr.DataArray(np.array([]), dims="time", coords={"time": []})
+    with pytest.raises(ValueError, match="no time values in this chunk"):
+        pymorize.timeaverage._compute_file_timespan(data)
+
+
+def test__compute_file_timespan_missing_time_dimension():
+    # DataArray without a time dimension
+    data = xr.DataArray(np.random.rand(10), dims="x")
+    with pytest.raises(ValueError, match="missing the 'time' dimension"):
+        pymorize.timeaverage._compute_file_timespan(data)
+
+
+def test__compute_file_timespan_non_sequential_time():
+    # DataArray with non-sequential time points
+    time = pd.to_datetime(["2000-01-01", "2000-01-05", "2000-01-20", "2000-01-30"])
+    data = xr.DataArray(np.random.rand(4), dims="time", coords={"time": time})
+    data = data.chunk({"time": 2})
+
+    assert pymorize.timeaverage._compute_file_timespan(data) == 29
+
+
+def test__compute_file_timespan_large_dataarray():
+    # DataArray with a larger number of chunks
+    time = pd.date_range("2000-01-01", periods=100, freq="D")
+    data = xr.DataArray(np.random.rand(100), dims="time", coords={"time": time})
+    data = data.chunk({"time": 20})
+
+    assert pymorize.timeaverage._compute_file_timespan(data) == 19
