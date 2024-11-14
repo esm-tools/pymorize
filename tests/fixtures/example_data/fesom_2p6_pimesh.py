@@ -30,7 +30,7 @@ def fesom_2p6_esm_tools_download_data(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
-    data_dir = Path(fesom_2p6_esm_tools_download_data).parent
+    data_dir = Path(fesom_2p6_esm_tools_download_data).parent / "fesom_2p6_pimesh"
     if not data_dir.exists():
         with tarfile.open(fesom_2p6_esm_tools_download_data, "r") as tar:
             tar.extractall(data_dir)
@@ -38,4 +38,4 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
     else:
         print(f"Using cached extraction: {data_dir}.")
 
-    return data_dir / "fesom_2p6_pimesh"
+    return data_dir
