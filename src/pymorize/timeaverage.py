@@ -64,6 +64,8 @@ def _split_by_chunks(dataset: xr.DataArray):
     """
     chunk_slices = {}
     logger.info(f"{dataset.chunks=}")
+    if not dataset.chunks:
+        raise TypeError("Dataset has no chunks")
     if isinstance(dataset, xr.Dataset):
         chunker = dataset.chunks
     elif isinstance(dataset, xr.DataArray):
@@ -144,7 +146,7 @@ def _frequency_from_approx_interval(interval: str):
     try:
         interval = float(interval)
     except ValueError:
-        return interval
+        raise ValueError(f"Invalid interval: {interval}")
     isclose = functools.partial(np.isclose, rtol=1e-3)
     for name, func, val in notation:
         if (interval >= val) or isclose(interval, val):
@@ -172,13 +174,15 @@ def _compute_file_timespan(da: xr.DataArray):
         The maximum timespan among all chunks of the data array.
 
     """
+    if "time" not in da.dims:
+        raise ValueError("missing the 'time' dimension")
     chunks = _split_by_chunks(da)
     tmp_file_timespan = []
     for i in range(3):
         try:
             subset_name, subset = next(chunks)
         except StopIteration:
-            pass
+            break
         else:
             logger.info(f"{subset_name=}")
             logger.info(f"{subset.time.data[-1]=}")
@@ -186,6 +190,8 @@ def _compute_file_timespan(da: xr.DataArray):
             tmp_file_timespan.append(
                 pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
             )
+    if not tmp_file_timespan:
+        raise ValueError("No chunks found")
     file_timespan = max(tmp_file_timespan)
     return file_timespan
 
@@ -310,5 +316,7 @@ longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: m
 time: mean
 time: mean grid_longitude: mean
 time: point
-""".strip().split("\n")
+""".strip().split(
+    "\n"
+)
 """list: cell_methods to ignore when calculating time averages"""
