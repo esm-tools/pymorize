@@ -1,11 +1,9 @@
-from pymorize.setgrid import setgrid
-
-import pytest
-
-import xarray as xr
-import numpy as np
-import pandas as pd
 import cftime
+import numpy as np
+import pytest
+import xarray as xr
+
+from pymorize.setgrid import setgrid
 
 
 def make_fake_grid():
