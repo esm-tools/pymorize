@@ -17,6 +17,8 @@ def test_process_progressive_pipeline(
     logger.info(f"Processing {fesom_2p6_pimesh_esm_tools_config} with {steps}")
     with open(fesom_2p6_pimesh_esm_tools_config, "r") as f:
         cfg = yaml.safe_load(f)
+    if "pipelines" not in cfg:
+        cfg["pipelines"] = {}
     for rule in cfg["rules"]:
         for input in rule["inputs"]:
             input["path"] = input["path"].replace(
