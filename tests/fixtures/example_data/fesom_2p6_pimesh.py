@@ -1,5 +1,6 @@
 """Example data for the FESOM model."""
 
+import os
 import tarfile
 from pathlib import Path
 
@@ -37,5 +38,10 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
         print(f"Data extracted to: {data_dir}.")
     else:
         print(f"Using cached extraction: {data_dir}.")
+
+    for root, dirs, files in os.walk(data_dir):
+        print(f"Root: {root}")
+        for file in files:
+            print(f"File: {os.path.join(root, file)}")
 
     return data_dir
