@@ -44,5 +44,5 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
         for file in files:
             print(f"File: {os.path.join(root, file)}")
 
-    print(f">>> RETURNING: {data_dir}")
-    return data_dir
+    print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
+    return data_dir / "fesom_2p6_pimesh"
