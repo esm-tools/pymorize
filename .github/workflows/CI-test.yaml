@@ -37,7 +37,7 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test if data will work (Meta-Test)
         run: |
-          pytest -v --cover tests/meta/*.py
+          pytest -v --cov tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
           pytest -v --cov tests/unit/*.py
