@@ -13,8 +13,9 @@ Functions
 _split_by_chunks(dataset: xr.DataArray) -> Tuple[Dict, xr.DataArray]:
     Split a large dataset into sub-datasets for each chunk.
 
-_get_time_method(table_id: str) -> str:
-    Determine the time method based on the table_id string.
+_get_time_method(frequency: str) -> str:
+    Determine the time method based on the frequency string from
+    rule.data_request_variable.frequency.
 
 _frequency_from_approx_interval(interval: str) -> str:
     Convert an interval expressed in days to a frequency string.
@@ -83,28 +84,26 @@ def _split_by_chunks(dataset: xr.DataArray):
         yield (selection, dataset[selection])
 
 
-def _get_time_method(table_id: str) -> str:
+def _get_time_method(frequency: str) -> str:
     """
-    Determine the time method based on the table_id string.
+    Determine the time method based on the frequency string from CMIP6 table for
+    a specific variable (rule.data_request_variable.frequency).
 
-    This function checks the ending of the table_id string and returns a corresponding time method.
-    If the table_id ends with 'Pt', it returns 'INSTANTANEOUS'.
-    If the table_id ends with 'C' or 'CM', it returns 'CLIMATOLOGY'.
-    In all other cases, it returns 'MEAN'.
+    The type of time method influences how the data is processed for time averaging.
 
     Parameters
     ----------
-    table_id : str
-        The table_id string to check.
+    frequency : str
+        The frequency string from CMIP6 tables (example: "mon").
 
     Returns
     -------
     str
         The corresponding time method ('INSTANTANEOUS', 'CLIMATOLOGY', or 'MEAN').
     """
-    if table_id.endswith("Pt"):
+    if frequency.endswith("Pt"):
         return "INSTANTANEOUS"
-    if table_id.endswith("C") or table_id.endswith("CM"):
+    if frequency.endswith("C") or frequency.endswith("CM"):
         return "CLIMATOLOGY"
     return "MEAN"
 
@@ -225,7 +224,7 @@ def compute_average(da: xr.DataArray, rule):
     logger.debug(f"{approx_interval=} {frequency_str=}")
     # attach the frequency_str to rule, it is referenced when creating file name
     rule.frequency_str = frequency_str
-    time_method = _get_time_method(drv.table.table_id)
+    time_method = _get_time_method(drv.frequency)
     rule.time_method = time_method
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
@@ -316,7 +315,5 @@ longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: m
 time: mean
 time: mean grid_longitude: mean
 time: point
-""".strip().split(
-    "\n"
-)
+""".strip().split("\n")
 """list: cell_methods to ignore when calculating time averages"""
