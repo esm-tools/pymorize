@@ -41,8 +41,11 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
 
-        self._post_init_configure_dask()
-        self._post_init_create_dask_cluster()
+        self._cluster = None  # Dask Cluster, might be set up later
+        if self._pymorize_cfg.get("parallel", True):
+            if pymorize_cfg.get("parallel_backend") == "dask":
+                self._post_init_configure_dask()
+                self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
@@ -200,7 +203,8 @@ class CMORizer:
                 pipelines.append(p)
             elif isinstance(p, dict):
                 pl = Pipeline.from_dict(p)
-                pl.assign_cluster(self._cluster)
+                if self._cluster is not None:
+                    pl.assign_cluster(self._cluster)
                 pipelines.append(Pipeline.from_dict(p))
             else:
                 raise ValueError(f"Invalid pipeline configuration for {p}")
@@ -215,48 +219,46 @@ class CMORizer:
             for rule in self.rules:
                 rule.set(rule_attr, rule_value)
 
-    def _post_init_checks(self):
+    def validate(self):
+        """Performs validation on files if they are suitable for use with the pipeline requirements"""
         # Sanity Checks:
         # :PS: @PG the following functions are not defined yet
         # self._check_rules_for_table()
         # self._check_rules_for_output_dir()
-        self._check_is_subperiod()
+        # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
+        # self._check_is_subperiod()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
-        try:
-            rule = self.rules[0]
-        except IndexError:
-            logger.info("No rules found to for checking frequency. ..skipping..")
-            return
-        table_freq = _frequency_from_approx_interval(
-            rule.data_request_variable.table.approx_interval
-        )
-        # is_subperiod from pandas does not support YE or ME notation
-        table_freq = table_freq.rstrip("E")
-        first_filenames = []
-        for input_collection in rule.inputs:
-            try:
-                first_filenames.append(input_collection.files[0])
-            except IndexError:
-                logger.info("No input files found. ..skipping..")
-                return
-        if len(first_filenames) == 1:
-            filename = first_filenames[0]
-            data_freq = fc.get(filename).freq
-        else:  # Multi-variable Rule, handle differently
-            data_freqs = set([fc.get(filename).freq for filename in first_filenames])
-            if len(data_freqs) != 1:
-                raise ValueError(
-                    f"You have a compound variable and have multiple internal frequencies! This is not allowed: {data_freqs}"
-                )
-            data_freq = data_freqs[0]
-        is_subperiod = pd.tseries.frequencies.is_subperiod(data_freq, table_freq)
-        if not is_subperiod:
-            raise ValueError(
-                f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+        errors = []
+        for rule in self.rules:
+            table_freq = _frequency_from_approx_interval(
+                rule.data_request_variable.table.approx_interval
             )
-        logger.info(f"Frequency of data {data_freq}. Frequency in tables {table_freq}")
+            # is_subperiod from pandas does not support YE or ME notation
+            table_freq = table_freq.rstrip("E")
+            for input_collection in rule.inputs:
+                data_freq = input_collection.frequency
+                if data_freq is None:
+                    if not input_collection.files:
+                        logger.info("No. input files found. Skipping frequency check.")
+                        break
+                    data_freq = fc.get(input_collection.files[0]).freq
+                is_subperiod = pd.tseries.frequencies.is_subperiod(
+                    data_freq, table_freq
+                )
+                if not is_subperiod:
+                    errors.append(
+                        ValueError(
+                            f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+                        ),
+                    )
+                logger.info(
+                    f"Frequency of data {data_freq}. Frequency in tables {table_freq}"
+                )
+        if errors:
+            for err in errors:
+                logger.error(err)
 
     @classmethod
     def from_dict(cls, data):
@@ -285,7 +287,6 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
-        instance._post_init_checks()
         return instance
 
     def add_rule(self, rule):
@@ -296,8 +297,9 @@ class CMORizer:
     def add_pipeline(self, pipeline):
         if not isinstance(pipeline, Pipeline):
             raise TypeError("pipeline must be an instance of Pipeline")
-        # Assign the cluster to this pipeline:
-        pipeline.assign_cluster(self._cluster)
+        if self._cluster is not None:
+            # Assign the cluster to this pipeline:
+            pipeline.assign_cluster(self._cluster)
         self.pipelines.append(pipeline)
 
     def _rule_for_filepath(self, filepath):
@@ -354,7 +356,8 @@ class CMORizer:
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
-            return self.parallel_process()
+            parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
+            return self.parallel_process(backend=parallel_backend)
         else:
             return self.serial_process()
 

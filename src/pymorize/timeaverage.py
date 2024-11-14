@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 """
+Time Averaging
+==============
 This module contains functions for time averaging of data arrays.
 
 The approximate interval for time averaging is prescribed in the CMOR tables,
