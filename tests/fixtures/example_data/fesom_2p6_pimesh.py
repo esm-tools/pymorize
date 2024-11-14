@@ -31,7 +31,7 @@ def fesom_2p6_esm_tools_download_data(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
-    data_dir = Path(fesom_2p6_esm_tools_download_data).parent / "fesom_2p6_pimesh"
+    data_dir = Path(fesom_2p6_esm_tools_download_data).parent
     if not data_dir.exists():
         with tarfile.open(fesom_2p6_esm_tools_download_data, "r") as tar:
             tar.extractall(data_dir)
@@ -44,4 +44,5 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
         for file in files:
             print(f"File: {os.path.join(root, file)}")
 
-    return data_dir
+    print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh'}")
+    return data_dir / "fesom_2p6_pimesh"
