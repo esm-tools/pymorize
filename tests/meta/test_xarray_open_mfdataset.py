@@ -7,7 +7,7 @@ import xarray as xr
 @pytest.mark.parametrize(
     "engine",
     [
-        "netcdf4",
+        "h5netcdf",
     ],
 )
 def test_open_fesom_2p6_pimesh_esm_tools(fesom_2p6_pimesh_esm_tools_data, engine):
