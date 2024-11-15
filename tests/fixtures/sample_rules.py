@@ -21,6 +21,7 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
+            "_pymorize_config": {}
         }
     )
 
@@ -30,6 +31,7 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
     return Rule.from_dict(
         {
             "name": "temp",
+            "_pymorize_config": {}
             "experiment_id": "piControl",
             "output_directory": "./output",
             "source_id": "FESOM",
