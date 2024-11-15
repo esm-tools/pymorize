@@ -88,3 +88,10 @@ def rule_with_units():
     )
     r.data_request_variable = r.data_request_variables[0]
     return r
+
+
+@pytest.fixture
+def rule_sos():
+    return Rule(
+        cmor_variable="sos",
+    )

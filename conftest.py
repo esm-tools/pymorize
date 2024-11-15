@@ -14,6 +14,7 @@ pytest_plugins = [
     "tests.fixtures.config_files",
     "tests.fixtures.CV_Dir",
     "tests.fixtures.CMIP_Tables_Dir",
+    "tests.fixtures.data_requests",
 ]
 
 

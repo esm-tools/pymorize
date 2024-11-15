@@ -2,8 +2,8 @@ from pathlib import Path
 
 import dask
 import pandas as pd
-import xarray as xr
 import questionary
+import xarray as xr
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
@@ -20,13 +20,17 @@ from .data_request import (
     IgnoreTableFiles,
 )
 from .filecache import fc
-from .units import handle_unit_conversion
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
+from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+
+DIMENSIONLESS_MAPPING_TABLE = (
+    Path(__file__).parent.parent.parent / "data" / "dimensionless_mappings.yaml"
+)
 
 
 class CMORizer:
@@ -174,7 +178,9 @@ class CMORizer:
         None
         """
         pymorize_cfg = self._pymorize_cfg
-        unit_map_file = pymorize_cfg.get("dimensionless_mapping_table", None)
+        unit_map_file = pymorize_cfg.get(
+            "dimensionless_mapping_table", DIMENSIONLESS_MAPPING_TABLE
+        )
         if unit_map_file is None:
             logger.warning("No dimensionless unit mappings file specified!")
             dimensionless_unit_mappings = {}
@@ -248,7 +254,15 @@ class CMORizer:
         self.pipelines = pipelines
 
     def _post_init_create_rules(self):
-        self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
+        _rules = []
+        for p in self.rules:
+            if isinstance(p, Rule):
+                _rules.append(p)
+            elif isinstance(p, dict):
+                _rules.append(Rule.from_dict(p))
+            else:
+                raise TypeError("rule must be an instance of Rule or dict")
+        self.rules = _rules
         self._post_init_inherit_rules()
 
     def _post_init_inherit_rules(self):
