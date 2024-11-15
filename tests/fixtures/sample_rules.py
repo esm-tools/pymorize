@@ -31,7 +31,7 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
     return Rule.from_dict(
         {
             "name": "temp",
-            "_pymorize_config": {}
+            "_pymorize_config": {},
             "experiment_id": "piControl",
             "output_directory": "./output",
             "source_id": "FESOM",
