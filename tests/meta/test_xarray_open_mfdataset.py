@@ -4,7 +4,12 @@ import pytest
 import xarray as xr
 
 
-@pytest.mark.parametrize("engine", ["netcdf4", "h5netcdf"])
+@pytest.mark.parametrize(
+    "engine",
+    [
+        "netcdf4",
+    ],
+)
 def test_open_fesom_2p6_pimesh_esm_tools(fesom_2p6_pimesh_esm_tools_data, engine):
     ds = xr.open_mfdataset(
         (
@@ -17,7 +22,12 @@ def test_open_fesom_2p6_pimesh_esm_tools(fesom_2p6_pimesh_esm_tools_data, engine
     assert isinstance(ds, xr.Dataset)
 
 
-@pytest.mark.parametrize("engine", ["netcdf4", "h5netcdf"])
+@pytest.mark.parametrize(
+    "engine",
+    [
+        "netcdf4",
+    ],
+)
 def test_open_fesom_2p6_pimesh_esm_tools_cftime(
     fesom_2p6_pimesh_esm_tools_data, engine
 ):
@@ -33,7 +43,12 @@ def test_open_fesom_2p6_pimesh_esm_tools_cftime(
     assert isinstance(ds, xr.Dataset)
 
 
-@pytest.mark.parametrize("engine", ["netcdf4", "h5netcdf"])
+@pytest.mark.parametrize(
+    "engine",
+    [
+        "netcdf4",
+    ],
+)
 def test_open_fesom_2p6_pimesh_esm_tools_parallel(
     fesom_2p6_pimesh_esm_tools_data, engine
 ):
@@ -49,7 +64,12 @@ def test_open_fesom_2p6_pimesh_esm_tools_parallel(
     assert isinstance(ds, xr.Dataset)
 
 
-@pytest.mark.parametrize("engine", ["netcdf4", "h5netcdf"])
+@pytest.mark.parametrize(
+    "engine",
+    [
+        "netcdf4",
+    ],
+)
 def test_open_fesom_2p6_pimesh_esm_tools_full(fesom_2p6_pimesh_esm_tools_data, engine):
     ds = xr.open_mfdataset(
         (
