@@ -5,6 +5,27 @@ from pymorize.rule import Rule
 
 
 @pytest.fixture
+def pi_uxarray_temp_rule(pi_uxarray_data):
+    return Rule.from_dict(
+        {
+            "name": "temp",
+            "experiment_id": "piControl",
+            "output_directory": "./output",
+            "source_id": "FESOM",
+            "variant_label": "r1i1p1f1",
+            "inputs": [
+                {
+                    "path": pi_uxarray_data,
+                    "pattern": "temp.fesom..*.nc",
+                },
+            ],
+            "cmor_variable": "thetao",
+            "model_variable": "temp",
+        }
+    )
+
+
+@pytest.fixture
 def simple_rule():
     return Rule(
         inputs=[
