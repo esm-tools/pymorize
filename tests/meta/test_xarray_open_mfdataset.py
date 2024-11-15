@@ -1,3 +1,5 @@
+# Just import dask for parallelisms...
+import dask  # noqa
 import pytest
 import xarray as xr
 
