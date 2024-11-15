@@ -276,9 +276,7 @@ def load_mfdataset(data, rule_spec):
     logger.debug(f"Loading {len(all_files)} files...")
     for f in all_files:
         logger.debug(f"  * {f}")
-    mf_ds = xr.open_mfdataset(
-        all_files, parallel=True, use_cftime=True, preprocess=register_cache
-    )
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
     return mf_ds
 
 
