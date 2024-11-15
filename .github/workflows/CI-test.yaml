@@ -41,6 +41,8 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test if data will work (Meta-Test)
         run: |
+          export HDF5_DEBUG=1
+          export NETCDF_DEBUG=1
           pytest -vvv -s --cov tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
