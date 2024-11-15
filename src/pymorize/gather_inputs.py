@@ -273,9 +273,9 @@ def load_mfdataset(data, rule_spec):
         for f in file_collection.files:
             all_files.append(f)
     all_files = _resolve_symlinks(all_files)
-    logger.debug(f"Loading {len(all_files)} files...")
+    logger.critical(f"Loading {len(all_files)} files...")
     for f in all_files:
-        logger.debug(f"  * {f}")
+        logger.critical(f"  * {f}")
     mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
     return mf_ds
 
