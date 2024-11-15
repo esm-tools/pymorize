@@ -44,7 +44,7 @@ setup(
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
         "imohash",
-        # "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
+        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
         "numbagg",
         "pendulum",
         "pint-xarray",
