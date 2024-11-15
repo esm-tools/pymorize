@@ -12,6 +12,7 @@ from prefect.logging import get_run_logger
 from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
+from .config import PymorizeConfigManager
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
 from .filecache import fc
@@ -35,7 +36,7 @@ class CMORizer:
         **kwargs,
     ):
         self._general_cfg = general_cfg or {}
-        self._pymorize_cfg = pymorize_cfg or {}
+        self._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg(pymorize_cfg or {})
         self._dask_cfg = dask_cfg or {}
         self._inherit_cfg = inherit_cfg or {}
         self.rules = rules_cfg or []
@@ -43,7 +44,7 @@ class CMORizer:
 
         self._cluster = None  # Dask Cluster, might be set up later
         if self._pymorize_cfg.get("parallel", True):
-            if pymorize_cfg.get("parallel_backend") == "dask":
+            if self._pymorize_cfg.get("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
@@ -213,6 +214,11 @@ class CMORizer:
     def _post_init_create_rules(self):
         self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
         self._post_init_inherit_rules()
+        self._post_init_attach_pymorize_config_rules()
+
+    def _post_init_attach_pymorize_config_rules(self):
+        for rule in self.rules:
+            rule._pymorize_cfg = self._pymorize_cfg
 
     def _post_init_inherit_rules(self):
         for rule_attr, rule_value in self._inherit_cfg.items():

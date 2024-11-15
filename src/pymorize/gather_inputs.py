@@ -268,6 +268,7 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
+    engine = rule_spec._pymorize_config.get("xarray_netcdf_backend", "netcdf4")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:
@@ -276,7 +277,7 @@ def load_mfdataset(data, rule_spec):
     logger.critical(f"Loading {len(all_files)} files...")
     for f in all_files:
         logger.critical(f"  * {f}")
-    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True, engine=engine)
     return mf_ds
 
 

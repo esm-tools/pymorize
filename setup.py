@@ -41,6 +41,7 @@ setup(
         "deprecation",
         "distributed",
         "dpath",
+        "everett[yaml]",
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
         "h5netcdf",
