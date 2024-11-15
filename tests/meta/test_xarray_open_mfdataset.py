@@ -7,4 +7,4 @@ def test_open_fesom_2p6_pimesh_esm_tools(fesom_2p6_pimesh_esm_tools_data):
         for f in (fesom_2p6_pimesh_esm_tools_data / "outdata/fesom/").iterdir()
         if f.name.startswith("temp")
     )
-    print(ds)
+    assert isinstance(ds, xr.Dataset)
