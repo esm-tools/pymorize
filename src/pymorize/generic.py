@@ -250,3 +250,18 @@ def trigger_compute(data, rule_spec, *args, **kwargs):
         return data.compute()
     # Data doesn't have a compute method, do nothing
     return data
+
+
+def sort_dimensions(data, rule_spec):
+    """Sorts the dimensions of a DataArray based on the array_order in the rule_spec."""
+    dryrun = rule_spec.get("dryrun", False)
+
+    missing_dims = rule_spec.get("sort_dimensions_missing_dims", "raise")
+
+    logger.info(
+        f"Transposing dimensions of data from {data.dims} to {rule_spec.array_order}"
+    )
+    if not dryrun:
+        data = data.transpose(*rule_spec.array_order, missing_dims=missing_dims)
+
+    return data
