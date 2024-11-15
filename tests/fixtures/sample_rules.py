@@ -21,7 +21,7 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
-            "_pymorize_config": {}
+            "_pymorize_config": {},
         }
     )
 
