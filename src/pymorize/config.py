@@ -1,5 +1,5 @@
 from everett.ext.yamlfile import ConfigYamlEnv
-from everett.manager import ConfigDict, ConfigManager, ConfigOSEnv
+from everett.manager import ConfigDictEnv, ConfigManager, ConfigOSEnv
 
 DEFAULTS = {
     "parallel": True,
@@ -31,7 +31,7 @@ class PymorizeConfigManager(ConfigManager):
             run_specific_cfg (dict): Optional. Overrides specific values for this run.
         """
         # 1. Hardcoded defaults
-        hard_defaults = ConfigDict(
+        hard_defaults = ConfigDictEnv(
             DEFAULTS,
             description="Hardcoded defaults for Pymorize",
         )
@@ -40,10 +40,10 @@ class PymorizeConfigManager(ConfigManager):
         user_file = ConfigYamlEnv(filename="~/.config/pymorize.yaml")
 
         # 3. Run-specific configuration
-        run_specific = ConfigDict(run_specific_cfg or {})
+        run_specific = ConfigDictEnv(run_specific_cfg or {})
 
         # 4. Environment variables
-        env_vars = ConfigOSEnv(prefix="PYMORIZE")
+        env_vars = ConfigOSEnv(namespace="PYMORIZE")
 
         # Combine everything into a new PymorizeConfigManager instance
         return cls(environments=[hard_defaults, user_file, run_specific, env_vars])
