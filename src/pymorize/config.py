@@ -80,6 +80,9 @@ from everett.manager import (ChoiceOf, ConfigDictEnv, ConfigManager,
 
 class PymorizeConfig:
     class Config:
+        quiet = Option(
+            default="no", doc="Whether to suppress output.", parser=parse_bool
+        )
         xarray_backend = Option(
             default="netcdf4",
             doc="Which backend to use for xarray.",
@@ -182,7 +185,7 @@ class PymorizeConfigManager(ConfigManager):
         else:
             return f"<PymorizeConfigManager: namespace:{self.get_namespace()}>"
 
-    def get(self, key, default=None):
+    def get(self, key, default=None, parser=None):
         """
         Get a configuration value by key, with a default value.
 
@@ -199,6 +202,6 @@ class PymorizeConfigManager(ConfigManager):
             The configuration value.
         """
         try:
-            return self(key)
+            return self(key, parser=parser)
         except InvalidKeyError:
             return default

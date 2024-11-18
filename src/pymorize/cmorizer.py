@@ -43,7 +43,7 @@ class CMORizer:
         self.pipelines = pipelines_cfg or []
 
         self._cluster = None  # ask Cluster, might be set up later
-        if self._pymorize_cfg.get("parallel", True):
+        if self._pymorize_cfg.get("parallel", "True"):  # Yes, this is a string!
             if self._pymorize_cfg.get("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
@@ -93,7 +93,7 @@ class CMORizer:
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
-        if self._pymorize_cfg.get("use_flox", True):
+        if self._pymorize_cfg.get("use_flox", "True"):  # Yes, this is a string!
             dask_extras += 1
             logger.info("...flox...")
             import flox  # noqa: F401
@@ -162,14 +162,14 @@ class CMORizer:
                 matches.append(rule)
         if len(matches) == 0:
             msg = f"No rule found for {data_request_variable}"
-            if self._pymorize_cfg.get("raise_on_no_rule", False):
+            if self._pymorize_cfg.get("raise_on_no_rule", "no"):
                 raise ValueError(msg)
-            elif self._pymorize_cfg.get("warn_on_no_rule", True):
+            elif self._pymorize_cfg.get("warn_on_no_rule", "yes"):
                 logger.warning(msg)
             return None
         if len(matches) > 1:
             msg = f"Need only one rule to match to {data_request_variable}. Found {len(matches)}."
-            if self._pymorize_cfg.get("raise_on_multiple_rules", True):
+            if self._pymorize_cfg.get("raise_on_multiple_rules", "yes"):
                 raise ValueError(msg)
             else:
                 logger.critical(msg)
@@ -331,9 +331,9 @@ class CMORizer:
             if self._rule_for_cmor_variable(cmor_variable) == []:
                 if self._pymorize_cfg.get("raise_on_no_rule", False):
                     raise ValueError(f"No rule found for {cmor_variable}")
-                elif self._pymorize_cfg.get("warn_on_no_rule", True):
+                elif self._pymorize_cfg.get("warn_on_no_rule", "yes"):
                     # FIXME(PG): This should be handled by the logger automatically
-                    if not self._pymorize_cfg.get("quiet", True):
+                    if not self._pymorize_cfg.get("quiet", "yes"):
                         logger.warning(f"No rule found for {cmor_variable}")
                 missing_variables.append(cmor_variable)
         if missing_variables:
@@ -360,7 +360,7 @@ class CMORizer:
 
     def process(self, parallel=None):
         if parallel is None:
-            parallel = self._pymorize_cfg.get("parallel", True)
+            parallel = self._pymorize_cfg.get("parallel", "True")
         if parallel:
             parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
             return self.parallel_process(backend=parallel_backend)
