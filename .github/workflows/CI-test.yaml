@@ -43,15 +43,15 @@ jobs:
         run: |
           export HDF5_DEBUG=1
           export NETCDF_DEBUG=1
-          export PYMORIZE_XARRAY_NETCDF_BACKEND=h5netcdf
+          export XARRAY_BACKEND=h5netcdf
           pytest -vvv -s --cov tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
-          export PYMORIZE_XARRAY_NETCDF_BACKEND=h5netcdf
+          export XARRAY_BACKEND=h5netcdf
           pytest -vvv -s --cov tests/unit/*.py
       - name: Test with pytest (Integration)
         run: |
-          export PYMORIZE_XARRAY_NETCDF_BACKEND=h5netcdf
+          export XARRAY_BACKEND=h5netcdf
           pytest -vvv -s --cov tests/integration/*.py
       - name: Test with doctest
         run: |
