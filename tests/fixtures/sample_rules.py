@@ -1,11 +1,13 @@
 import pytest
 
+from pymorize.config import PymorizeConfigManager
 from pymorize.data_request import DataRequestVariable
 from pymorize.rule import Rule
 
 
 @pytest.fixture
 def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
+    pymorize_config = PymorizeConfigManager.from_pymorize_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -21,7 +23,7 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
-            "_pymorize_config": {},
+            "_pymorize_config": pymorize_config,
         }
     )
 
