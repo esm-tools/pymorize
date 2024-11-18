@@ -268,7 +268,7 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
-    engine = rule_spec._pymorize_config("xarray_backend", "netcdf4")
+    engine = rule_spec._pymorize_config("xarray_backend")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:
