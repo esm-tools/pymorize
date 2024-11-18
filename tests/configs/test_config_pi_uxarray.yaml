@@ -1,6 +1,6 @@
 pymorize:
-  warn_on_no_rule: False
-  parallel: False
+  warn_on_no_rule: "False"
+  parallel: "False"
 general:
   name: "pi_uxarray"
   description: "This is a test configuration using the UXArray test data on PI Mesh"

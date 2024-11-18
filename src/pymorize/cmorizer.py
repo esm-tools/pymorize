@@ -12,7 +12,7 @@ from prefect.logging import get_run_logger
 from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
-from .config import PymorizeConfigManager
+from .config import PymorizeConfigManager, parse_bool
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
 from .filecache import fc
@@ -43,8 +43,8 @@ class CMORizer:
         self.pipelines = pipelines_cfg or []
 
         self._cluster = None  # ask Cluster, might be set up later
-        if self._pymorize_cfg.get("parallel", "True"):  # Yes, this is a string!
-            if self._pymorize_cfg.get("parallel_backend") == "dask":
+        if self._pymorize_cfg("parallel"):
+            if self._pymorize_cfg("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
@@ -162,14 +162,14 @@ class CMORizer:
                 matches.append(rule)
         if len(matches) == 0:
             msg = f"No rule found for {data_request_variable}"
-            if self._pymorize_cfg.get("raise_on_no_rule", "no"):
+            if self._pymorize_cfg.get("raise_on_no_rule", False, parse_bool):
                 raise ValueError(msg)
-            elif self._pymorize_cfg.get("warn_on_no_rule", "yes"):
+            elif self._pymorize_cfg.get("warn_on_no_rule", True, parse_bool):
                 logger.warning(msg)
             return None
         if len(matches) > 1:
             msg = f"Need only one rule to match to {data_request_variable}. Found {len(matches)}."
-            if self._pymorize_cfg.get("raise_on_multiple_rules", "yes"):
+            if self._pymorize_cfg.get("raise_on_multiple_rules", True, parse_bool):
                 raise ValueError(msg)
             else:
                 logger.critical(msg)

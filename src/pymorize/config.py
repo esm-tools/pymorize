@@ -89,7 +89,7 @@ class PymorizeConfig:
             parser=ChoiceOf(str, choices=["netcdf4", "h5netcdf", "zarr"]),
         )
         parallel = Option(
-            parser=parse_bool, default="True", doc="Whether to run in parallel."
+            parser=parse_bool, default="yes", doc="Whether to run in parallel."
         )
         parallel_backend = Option(default="dask", doc="Which parallel backend to use.")
         cluster_mode = Option(default="adapt", doc="Flexible dask cluster scaling")
@@ -195,6 +195,8 @@ class PymorizeConfigManager(ConfigManager):
             The configuration key to get.
         default : Any
             The default value to return if the key is not found.
+        parser : Callable
+            Optional. A callable to parse the configuration value.
 
         Returns
         -------
