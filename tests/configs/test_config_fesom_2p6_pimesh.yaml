@@ -1,6 +1,6 @@
 pymorize:
-  warn_on_no_rule: "False"
-  parallel: "False"
+  warn_on_no_rule: False
+  parallel: False
 general:
   name: "fesom_2p6_pimesh"
   description: "This is a test configuration using esm-tools generated test data on PI Mesh"

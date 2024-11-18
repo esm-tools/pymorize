@@ -78,10 +78,16 @@ from everett.manager import (ChoiceOf, ConfigDictEnv, ConfigManager,
                              parse_bool)
 
 
+def _parse_bool(value):
+    if isinstance(value, bool):
+        return value
+    return parse_bool(value)
+
+
 class PymorizeConfig:
     class Config:
         quiet = Option(
-            default="no", doc="Whether to suppress output.", parser=parse_bool
+            default="no", doc="Whether to suppress output.", parser=_parse_bool
         )
         xarray_backend = Option(
             default="netcdf4",
@@ -89,7 +95,7 @@ class PymorizeConfig:
             parser=ChoiceOf(str, choices=["netcdf4", "h5netcdf", "zarr"]),
         )
         parallel = Option(
-            parser=parse_bool, default="yes", doc="Whether to run in parallel."
+            parser=_parse_bool, default="yes", doc="Whether to run in parallel."
         )
         parallel_backend = Option(default="dask", doc="Which parallel backend to use.")
         cluster_mode = Option(default="adapt", doc="Flexible dask cluster scaling")
