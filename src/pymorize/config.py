@@ -10,8 +10,8 @@ priority):
 
 The configuration hierarchy is defined in the ``from_pymorize_cfg`` class method, and
 cannot be modified outside the class. You should initialize a ``PymorizeConfigManager``
-object (probably in your ``CMORizer``) and grab config values from it either by calling
-it or by using the ``get`` method.
+object (probably in your ``CMORizer``) and grab config values from it by calling with the
+config key as an argument.
 
 User Configuration File
 -----------------------
@@ -153,6 +153,3 @@ class PymorizeConfigManager(ConfigManager):
             environments=[user_file, run_specific, env_vars],
         )
         return manager.with_options(PymorizeConfig())
-
-
-if __name__ == "__main__":
