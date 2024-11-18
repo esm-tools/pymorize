@@ -71,9 +71,11 @@ See Also
 import os
 import pathlib
 
+from everett import InvalidKeyError
 from everett.ext.yamlfile import ConfigYamlEnv
 from everett.manager import (ChoiceOf, ConfigDictEnv, ConfigManager,
-                             ConfigOSEnv, Option, parse_bool)
+                             ConfigOSEnv, Option, _get_component_name,
+                             parse_bool)
 
 
 class PymorizeConfig:
@@ -152,4 +154,51 @@ class PymorizeConfigManager(ConfigManager):
         manager = cls(
             environments=[user_file, run_specific, env_vars],
         )
-        return manager.with_options(PymorizeConfig())
+        manager = manager.with_options(PymorizeConfig)
+        return manager
+
+    # NOTE(PG): Need to override this method, the original implementation in the parent class
+    # explicitly uses ConfigManager (not cls) to create the clone instance.
+    def clone(self):
+        my_clone = PymorizeConfigManager(
+            environments=list(self.envs),
+            doc=self.doc,
+            msg_builder=self.msg_builder,
+            with_override=self.with_override,
+        )
+        my_clone.namespace = list(self.namespace)
+        my_clone.bound_component = self.bound_component
+        my_clone.bound_component_prefix = []
+        my_clone.bound_component_options = self.bound_component_options
+
+        my_clone.original_manager = self.original_manager
+
+        return my_clone
+
+    def __repr__(self) -> str:
+        if self.bound_component:
+            name = _get_component_name(self.bound_component)
+            return f"<PymorizeConfigManager({name}): namespace:{self.get_namespace()}>"
+        else:
+            return f"<PymorizeConfigManager: namespace:{self.get_namespace()}>"
+
+    def get(self, key, default=None):
+        """
+        Get a configuration value by key, with a default value.
+
+        Parameters
+        ----------
+        key : str
+            The configuration key to get.
+        default : Any
+            The default value to return if the key is not found.
+
+        Returns
+        -------
+        Any
+            The configuration value.
+        """
+        try:
+            return self(key)
+        except InvalidKeyError:
+            return default
