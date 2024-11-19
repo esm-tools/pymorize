@@ -38,6 +38,8 @@ Table 2: Precision of time labels used in file names
 
 """
 
+from collections import deque
+
 import cftime
 import numpy as np
 import pandas as pd
@@ -113,15 +115,18 @@ def get_time_label(ds):
         The name of the coordinate that is a datetime type and can serve as a time label,
         or None if no such coordinate is found.
     """
+    label = deque()
     for name, coord in ds.coords.items():
-        if is_datetime_type(coord):
-            # potential time label; exclude time_bnds
-            if not coord.dims and is_scalar(coord):
-                return name
-            if name in coord.dims:
-                return name
-    else:
-        return None
+        if not is_datetime_type(coord):
+            continue
+        if not coord.dims:
+            continue
+        if name in coord.dims:
+            label.appendleft(name)
+        else:
+            label.append(name)
+    label.append(None)
+    return label.popleft()
 
 
 def needs_resampling(ds, timespan):
