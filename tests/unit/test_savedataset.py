@@ -63,9 +63,15 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from pymorize.files import (_filename_time_range, create_filepath,
-                            has_time_axis, is_datetime_type, needs_resampling,
-                            save_dataset)
+from pymorize.files import (
+    _filename_time_range,
+    create_filepath,
+    has_time_axis,
+    is_datetime_type,
+    needs_resampling,
+    save_dataset,
+    get_time_label,
+)
 from pymorize.timeaverage import _get_time_method
 
 # Tests for time-span in filename
@@ -212,7 +218,20 @@ def test_has_time_axis_not_true_when_no_valid_time_dim_exists():
 
 
 def test_has_time_axis_is_true_with_time_as_scalar_coordinate():
-    da = xr.DataArray(10, coords={"time": pd.Timestamp.now()}, name="t")
+    da = xr.DataArray(
+        [10],
+        coords={
+            "time": (
+                [
+                    "time",
+                ],
+                [
+                    pd.Timestamp.now(),
+                ],
+            )
+        },
+        name="t",
+    )
     assert has_time_axis(da) is True
 
 
@@ -227,3 +246,88 @@ def test_has_time_axis_recognizes_T_as_time_dimension():
         name="foo",
     )
     assert has_time_axis(da) is True
+
+
+def test_get_time_label_can_recognize_time_dimension_named_time():
+    np.random.seed(0)
+    temperature = 15 + 8 * np.random.randn(2, 2, 3)
+    lon = [[-99.83, -99.32], [-99.79, -99.23]]
+    lat = [[42.25, 42.21], [42.63, 42.59]]
+    time = pd.date_range("2014-09-06", periods=3)
+    reference_time = pd.Timestamp("2014-09-05")
+    da = xr.DataArray(
+        data=temperature,
+        dims=["x", "y", "time"],
+        coords=dict(
+            lon=(["x", "y"], lon),
+            lat=(["x", "y"], lat),
+            reference_time=reference_time,
+            time=time,
+        ),
+        attrs=dict(
+            description="Ambient temperature.",
+            units="degC",
+        ),
+    )
+    assert get_time_label(da) == "time"
+
+
+def test_get_time_label_can_recognize_scalar_time_dimension():
+    s = xr.DataArray(
+        1,
+        coords=dict(
+            T=(
+                [
+                    "time",
+                ],
+                [pd.Timestamp.now()],
+            )
+        ),
+        dims=[
+            "time",
+        ],
+    )
+    assert get_time_label(s) == "T"
+
+
+def test_get_time_label_is_None_for_missing_time_dimension():
+    np.random.seed(0)
+    temperature = 15 + 8 * np.random.randn(2, 2, 3)
+    lon = [[-99.83, -99.32], [-99.79, -99.23]]
+    lat = [[42.25, 42.21], [42.63, 42.59]]
+    time = pd.date_range("2014-09-06", periods=3)
+    reference_time = pd.Timestamp("2014-09-05")
+    da = xr.DataArray(
+        data=temperature,
+        dims=["x", "y", "time"],
+        coords=dict(
+            lon=(["x", "y"], lon),
+            lat=(["x", "y"], lat),
+            reference_time=reference_time,
+            # Removing time dimension on purpose. get_time_label should not consider reference_time.
+            # time=time,
+        ),
+        attrs=dict(
+            description="Ambient temperature.",
+            units="degC",
+        ),
+    )
+    assert get_time_label(da) == None
+
+
+def test_get_time_label_can_recognize_time_label_even_if_dimension_is_named_differently():
+    b = xr.DataArray(
+        [1, 2, 3],
+        coords={
+            "time": (
+                [
+                    "ncells",
+                ],
+                pd.date_range(pd.Timestamp.now(), periods=3, freq="h"),
+            )
+        },
+        dims=[
+            "ncells",
+        ],
+    )
+    assert get_time_label(b) == "time"
