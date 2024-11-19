@@ -4,6 +4,7 @@ import pytest
 import xarray as xr
 from chemicals import periodic_table
 
+from pymorize.cmorizer import CMORizer
 from pymorize.units import handle_chemicals, handle_unit_conversion, ureg
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
@@ -193,3 +194,47 @@ def test_data_request_not_defined_unit(rule_with_data_request):
 
     with pytest.raises(ValueError, match="Unit not defined"):
         new_da = handle_unit_conversion(da, rule_spec)
+
+
+def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+    """Test the conversion of dimensionless units"""
+    cmorizer = CMORizer(
+        pymorize_cfg={
+            "parallel": False,
+        },
+        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir},
+        rules_cfg=[rule_sos],
+    )
+    da = xr.DataArray(10, name="sos", attrs={"units": "g/kg"})
+
+    new_da = handle_unit_conversion(da, cmorizer.rules[0])
+    assert new_da.attrs.get("units") == "0.001"
+    # Check the magnitude of the data after conversion:
+    assert np.equal(new_da.values, 10)
+
+
+def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+    """Test the conversion of dimensionless units"""
+    cmorizer = CMORizer(
+        pymorize_cfg={
+            "parallel": False,
+        },
+        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir},
+        rules_cfg=[rule_sos],
+    )
+    da = xr.DataArray(10, name="sos", attrs={"units": "g/g"})
+
+    new_da = handle_unit_conversion(da, cmorizer.rules[0])
+    assert new_da.attrs.get("units") == "0.001"
+    # Check the magnitude of the data after conversion:
+    assert np.equal(new_da.values, 10000)
+
+
+def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request):
+    """Test the checker for missing dimensionless unit in the unit mappings"""
+    rule_spec = rule_with_data_request
+    rule_spec.data_request_variable.unit = "a_fake_unit"
+    da = xr.DataArray(10, name="sos", attrs={"units": "g/kg"})
+
+    with pytest.raises(KeyError):
+        handle_unit_conversion(da, rule_spec)
