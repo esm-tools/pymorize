@@ -174,7 +174,7 @@ def test_not_defined_unit_checker(rule_with_data_request):
 
 
 def test_data_request_missing_unit(rule_with_data_request):
-    """Test the checker for missing unit attribute in the data request"""
+    """Test for missing unit attribute in the data request"""
     rule_spec = rule_with_data_request
     del rule_spec.data_request_variable.unit
     da = xr.DataArray(10, name="var1", attrs={"units": None})
@@ -186,7 +186,7 @@ def test_data_request_missing_unit(rule_with_data_request):
 
 
 def test_data_request_not_defined_unit(rule_with_data_request):
-    """Test the checker for missing unit attribute in the data request"""
+    """Test the checker for unit not defined in the data request"""
     rule_spec = rule_with_data_request
     rule_spec.data_request_variable.unit = None
     da = xr.DataArray(10, name="var1", attrs={"units": "kg m-2 s-1"})
