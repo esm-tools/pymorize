@@ -99,6 +99,11 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     # data_request_variable needs to be defined at this point
     drv = rule.data_request_variable
     to_unit = drv.unit
+    if not to_unit:
+        logger.error(
+            f"Unit of CMOR variable '{rule.cmor_variable}' not defined in the data request table/s {rule.tables}"
+        )
+        raise ValueError("Unit not defined")
     model_unit = rule.get("model_unit")
     from_unit = da.attrs.get("units")
     if model_unit is not None:

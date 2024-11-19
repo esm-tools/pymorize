@@ -57,7 +57,7 @@ def rule_with_mass_units():
 
 
 @pytest.fixture
-def rule_with_units():
+def rule_with_data_request():
     r = Rule(
         inputs=[
             {
