@@ -118,22 +118,22 @@ def test_recognizes_previous_defined_chemical_elements():
     assert "mmolC/m^2/d" in ureg
 
 
-def test_works_when_both_units_are_None(rule_with_units):
-    rule_spec = rule_with_units
-    rule_spec.data_request_variable.unit = None
-    rule_spec.model_unit = None
-    da = xr.DataArray(10, attrs={"units": None})
-    new_da = handle_unit_conversion(da, rule_spec)
-    assert new_da.attrs["units"] == None
-
-
-def test_works_when_both_units_are_empty_string(rule_with_units):
-    rule_spec = rule_with_units
-    rule_spec.data_request_variable.unit = ""
-    to_unit = ""
-    da = xr.DataArray(10, attrs={"units": ""})
-    new_da = handle_unit_conversion(da, rule_spec)
-    assert new_da.attrs["units"] == to_unit
+# def test_works_when_both_units_are_None(rule_with_units):
+#    rule_spec = rule_with_units
+#    rule_spec.data_request_variable.unit = None
+#    rule_spec.model_unit = None
+#    da = xr.DataArray(10, attrs={"units": None})
+#    new_da = handle_unit_conversion(da, rule_spec)
+#    assert new_da.attrs["units"] == None
+#
+#
+# def test_works_when_both_units_are_empty_string(rule_with_units):
+#    rule_spec = rule_with_units
+#    rule_spec.data_request_variable.unit = ""
+#    to_unit = ""
+#    da = xr.DataArray(10, attrs={"units": ""})
+#    new_da = handle_unit_conversion(da, rule_spec)
+#    assert new_da.attrs["units"] == to_unit
 
 
 @pytest.mark.skip(reason="No use case for this test (??)")
@@ -156,3 +156,12 @@ def test_when_tartget_unit_is_empty_string_raises_error(rule_with_units, from_un
     da = xr.DataArray(10, attrs={"units": from_unit})
     with pytest.raises(ValueError):
         handle_unit_conversion(da, rule_spec)
+
+
+def test_missing_units_checker(rule_with_units):
+    """Test the checker for missing units from the output"""
+    rule_spec = rule_with_units
+    da = xr.DataArray(10, name="var1", attrs={"units": None})
+
+    with pytest.raises(ValueError, match="Unit not defined"):
+        new_da = handle_unit_conversion(da, rule_spec)

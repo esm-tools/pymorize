@@ -106,6 +106,14 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
             f"using user defined unit ({model_unit}) instead of ({from_unit}) from the original file"
         )
         from_unit = model_unit
+    # Raise error if unit is not defined anywhere
+    if not from_unit:
+        logger.error(
+            "Unit not defined neither in the original file nor in the yaml "
+            "configuration file. Please, define the unit for your data under "
+            f"rules.{rule.name}.model_unit"
+        )
+        raise ValueError("Unit not defined")
     handle_chemicals(from_unit)
     handle_chemicals(to_unit)
     new_da = da.pint.quantify(from_unit)
