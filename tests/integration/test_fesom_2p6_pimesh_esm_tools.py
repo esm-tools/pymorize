@@ -18,14 +18,15 @@ def test_process_progressive_pipeline(
     with open(fesom_2p6_pimesh_esm_tools_config, "r") as f:
         cfg = yaml.safe_load(f)
     if "pipelines" not in cfg:
-        cfg["pipelines"] = {}
+        cfg["pipelines"] = []
     for rule in cfg["rules"]:
         for input in rule["inputs"]:
             input["path"] = input["path"].replace(
                 "REPLACE_ME", str(fesom_2p6_pimesh_esm_tools_data)
             )
         rule["pipelines"] = ["default"]
-    pipeline = cfg["pipelines"]["default"] = {"name": "default", "steps": []}
+    cfg["pipelines"].append("name": "default", "steps": []})
+    pipeline = cfg["pipelines"][0]
     pipeline["steps"] = steps
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
