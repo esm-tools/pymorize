@@ -133,7 +133,7 @@ class CMORizer:
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
-        if self._pymorize_cfg.get("use_flox", "True"):  # Yes, this is a string!
+        if self._pymorize_cfg.get("use_flox", True):
             dask_extras += 1
             logger.info("...flox...")
             import flox  # noqa: F401
