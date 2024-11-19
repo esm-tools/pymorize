@@ -36,9 +36,6 @@ Table 2: Precision of time labels used in file names
 |               |                   | independent of time (“fixed”).                |
 |---------------+-------------------+-----------------------------------------------|
 
-
-
-
 """
 
 import cftime
@@ -50,12 +47,44 @@ from .timeaverage import _frequency_from_approx_interval
 
 
 def has_time_axis(ds):
+    """
+    Checks if the given dataset has a time axis.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset or xarray.DataArray
+        The dataset to check.
+
+    Returns
+    -------
+    bool
+        True if the dataset has a time axis, False otherwise.
+    """
     if get_time_label(ds) is not None:
         return True
     return False
 
 
 def is_datetime_type(arr):
+    """
+    Checks if the given numpy array or xarray DataArray is of datetime type.
+
+    Parameters
+    ----------
+    arr : numpy.array or xarray.DataArray
+        The input array to check.
+
+    Returns
+    -------
+    bool
+        ``True`` if `arr` is of datetime type, ``False`` otherwise.
+
+    Notes
+    -----
+    This function checks if the input array is of numpy datetime64 type or
+    if it is of cftime datetime type. If the array is of neither type, it
+    returns ``False``.
+    """
     try:
         if np.issubdtype(arr, np.datetime64):
             return True
@@ -70,6 +99,20 @@ def is_scalar(da):
 
 
 def get_time_label(ds):
+    """
+    Determines the name of the coordinate in the dataset that can serve as a time label.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset containing coordinates to check for a time label.
+
+    Returns
+    -------
+    str or None
+        The name of the coordinate that is a datetime type and can serve as a time label,
+        or None if no such coordinate is found.
+    """
     for name, coord in ds.coords.items():
         if is_datetime_type(coord):
             # potential time label; exclude time_bnds
@@ -82,6 +125,22 @@ def get_time_label(ds):
 
 
 def needs_resampling(ds, timespan):
+    """
+    Checks if a given dataset needs resampling based on its time axis.
+
+    Parameters
+    ----------
+    ds : xr.Dataset or xr.DataArray
+        The dataset to check.
+    timespan : str
+        The time span for which the dataset is to be resampled.
+        10YS, 1YS, 6MS, etc.
+
+    Returns
+    -------
+    bool
+        True if the dataset needs resampling, False otherwise.
+    """
     if timespan is None:
         return False
     if not timespan:
@@ -212,7 +271,36 @@ def create_filepath(ds, rule):
 
 def save_dataset(da: xr.DataArray, rule):
     """
-    save datasets to multiple files
+    Save dataset to one or more files.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The dataset to be saved.
+    rule : Rule
+        The rule object containing information for generating the
+        filepath.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    If the dataset does not have a time axis, or if the time axis is a scalar,
+    this function will save the dataset to a single file.  Otherwise, it will
+    split the dataset into chunks based on the time axis and save each chunk
+    to a separate file.
+
+    The filepath will be generated based on the rule object and the time range
+    of the dataset.  The filepath will include the name, table_id, institution,
+    source_id, experiment_id, label, grid, and optionally the start and end time.
+
+    If the dataset needs resampling (i.e., the time axis does not align with the
+    time frequency specified in the rule object), this function will split the
+    dataset into chunks based on the time axis and resample each chunk to the
+    specified frequency.  The resampled chunks will then be saved to separate
+    files.
 
     NOTE: prior to calling this function, call dask.compute() method,
     otherwise tasks will progress very slow.
