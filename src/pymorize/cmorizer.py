@@ -282,6 +282,7 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+            instance._post_init_attach_pymorize_config_rules()
         instance._post_init_inherit_rules()
         if "pipelines" in data:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
