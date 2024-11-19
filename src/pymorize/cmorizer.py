@@ -314,7 +314,7 @@ class CMORizer:
     def _check_units(self):
         def is_unit_scalar(value):
             if value is None:
-                return True
+                return False
             try:
                 x = float(value)
             except ValueError:
