@@ -181,25 +181,24 @@ def _filename_time_range(ds, rule) -> str:
     start = pd.Timestamp(ds[time_label].data[0])
     end = pd.Timestamp(ds[time_label].data[-1])
     frequency_str = rule.get("frequency_str")
-    match frequency_str:
-        case "yr" | "yrPt" | "dec":
-            return f"{start:%Y}-{end:%Y}"
-        case "mon" | "monC" | "monPt":
-            return f"{start:%Y%m}-{end:%Y%m}"
-        case "day":
-            return f"{start:%Y%m%d}-{end:%Y%m%d}"
-        case "6hr" | "3hr" | "1hr" | "6hrPt" | "3hrPt" | "1hrPt" | "1hrCM":
-            _start = start.round("1min")
-            _end = end.round("1min")
-            return f"{_start:%Y%m%d%H%M}-{_end:%Y%m%d%H%M}"
-        case "subhrPt":
-            _start = start.round("1s")
-            _end = end.round("1s")
-            return f"{_start:%Y%m%d%H%M%S}-{_end:%Y%m%d%H%M%S}"
-        case "fx":
-            return ""
-        case _:
-            raise NotImplementedError(f"No implementation for {frequency_str} yet.")
+    if frequency_str in ("yr", "yrPt", "dec"):
+        return f"{start:%Y}-{end:%Y}"
+    if frequency_str in ("mon", "monC", "monPt"):
+        return f"{start:%Y%m}-{end:%Y%m}"
+    if frequency_str == "day":
+        return f"{start:%Y%m%d}-{end:%Y%m%d}"
+    if frequency_str in ("6hr", "3hr", "1hr", "6hrPt", "3hrPt", "1hrPt", "1hrCM"):
+        _start = start.round("1min")
+        _end = end.round("1min")
+        return f"{_start:%Y%m%d%H%M}-{_end:%Y%m%d%H%M}"
+    if frequency_str == "subhrPt":
+        _start = start.round("1s")
+        _end = end.round("1s")
+        return f"{_start:%Y%m%d%H%M%S}-{_end:%Y%m%d%H%M%S}"
+    if frequency_str == "fx":
+        return ""
+    else:
+        raise NotImplementedError(f"No implementation for {frequency_str} yet.")
 
     # # NOTE: the commented out return statments: Although they report the actual
     # # time limits in the file, the hard-coded version is chosen 2 reason,
