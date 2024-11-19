@@ -39,10 +39,10 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
     else:
         print(f"Using cached extraction: {data_dir}.")
 
-    for root, dirs, files in os.walk(data_dir):
-        print(f"Root: {root}")
-        for file in files:
-            print(f"File: {os.path.join(root, file)}")
+    # for root, dirs, files in os.walk(data_dir):
+    #     print(f"Root: {root}")
+    #     for file in files:
+    #         print(f"File: {os.path.join(root, file)}")
 
-    print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
+    # print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
     return data_dir / "fesom_2p6_pimesh"
