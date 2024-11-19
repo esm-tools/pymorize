@@ -1,6 +1,6 @@
 from pathlib import Path
 
-import dask
+import dask  # noqa: F401
 import pandas as pd
 import questionary
 import yaml
@@ -9,8 +9,8 @@ from dask_jobqueue import SLURMCluster
 from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
-from prefect.logging import get_run_logger
-from prefect_dask import DaskTaskRunner
+# from prefect.logging import get_run_logger
+# from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
 from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
@@ -36,6 +36,7 @@ class CMORizer:
         inherit_cfg=None,
         **kwargs,
     ):
+        ################################################################################
         self._general_cfg = general_cfg or {}
         self._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg(pymorize_cfg or {})
         self._dask_cfg = dask_cfg or {}
@@ -43,9 +44,11 @@ class CMORizer:
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
         self._cluster = None  # ask Cluster, might be set up later
+        ################################################################################
 
+        ################################################################################
+        # Print Out Configuration:
         # FIXME(PG): Probably logger.debug instead...?
-        ## Print Out Configuration:
         logger.info(80 * "#")
         logger.info("---------------------")
         logger.info("General Configuration")
@@ -55,17 +58,29 @@ class CMORizer:
         logger.info("Pymorize Configuration:")
         logger.info("-----------------------")
         # This isn't actually the config, it's the "App" object. Everett is weird about this...
-        pymorize_config = PymorizeConfig(self._pymorize_cfg)
+        pymorize_config = PymorizeConfig()
+        # NOTE(PG): This variable is for demonstration purposes:
+        _pymorize_config_dict = {}
         for namespace, key, value, option in get_runtime_config(
             self._pymorize_cfg, pymorize_config
         ):
             full_key = generate_uppercase_key(key, namespace)
             logger.info(f"    {full_key.upper()}: {value or ''}")
+            _pymorize_config_dict[full_key] = value
         # Avoid confusion:
         del pymorize_config
         logger.info(80 * "#")
+        ################################################################################
 
-        ## Post_Init:
+        ################################################################################
+        # NOTE(PG): Curious about the configuration? Add a breakpoint here and print
+        #           out the variable _pymorize_config_dict to see EVERYTHING that is
+        #           available to you in the configuration.
+        # breakpoint()
+        ################################################################################
+
+        ################################################################################
+        # Post_Init:
         if self._pymorize_cfg("parallel"):
             if self._pymorize_cfg("parallel_backend") == "dask":
                 self._post_init_configure_dask()
@@ -76,6 +91,7 @@ class CMORizer:
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_data_request_variables()
+        ################################################################################
 
     def _post_init_configure_dask(self):
         """
@@ -85,8 +101,9 @@ class CMORizer:
         --------
         https://docs.dask.org/en/stable/configuration.html?highlight=config#directly-within-python
         """
-        import dask.distributed  # Needed to pre-populate config, noqa: F401
-        import dask_jobqueue  # Needed to pre-populate config, noqa: F401
+        # Needed to pre-populate config
+        import dask.distributed  # noqa: F401
+        import dask_jobqueue  # noqa: F401
 
         logger.info("Updating Dask configuration. Changed values will be:")
         logger.info(yaml.dump(self._dask_cfg))
@@ -197,7 +214,11 @@ class CMORizer:
             else:
                 logger.critical(msg)
                 logger.critical(
-                    "This should lead to a program crash! Exception due to >> pymorize_cfg['raise_on_multiple_rules'] = False <<"
+                    """
+                    This should lead to a program crash! Exception due to:
+
+                    >> pymorize_cfg['raise_on_multiple_rules'] = False <<
+                    """
                 )
                 logger.warning("Returning the first match.")
         return matches[0]
@@ -279,7 +300,7 @@ class CMORizer:
                 if not is_subperiod:
                     errors.append(
                         ValueError(
-                            f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+                            f"Freq in source file {data_freq} is not a subperiod of freq in table {table_freq}."
                         ),
                     )
                 logger.info(
