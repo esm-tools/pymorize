@@ -29,7 +29,6 @@ from .rule import Rule
 
 ureg = pint_xarray.unit_registry
 
-ureg.define("practical_salinity_unit = g/kg = psu = PSU")
 
 
 def handle_chemicals(
