@@ -28,7 +28,7 @@ Note that the ``${XDG_CONFIG_HOME}`` environment variable defaults to ``~/.confi
 Configuration Options
 ---------------------
 
-You can configuration the following:
+You can configure the following:
 
 .. autocomponentconfig:: pymorize.config.PymorizeConfig
    :case: upper
