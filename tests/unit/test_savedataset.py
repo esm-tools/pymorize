@@ -58,14 +58,15 @@ Table 2: Precision of time labels used in file names
 
 """
 
-import pytest
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
-from pymorize.files import _filename_time_range, create_filepath, save_dataset, needs_resampling, is_datetime_type, has_time_axis
+from pymorize.files import (_filename_time_range, create_filepath,
+                            has_time_axis, is_datetime_type, needs_resampling,
+                            save_dataset)
 from pymorize.timeaverage import _get_time_method
-
 
 # Tests for time-span in filename
 
@@ -108,8 +109,7 @@ frequency_str = (
 def test__filename_time_range_allows_single_timestep(frequency):
     ds = xr.DataArray(
         np.random.random((1, 10)),
-        coords={"time": pd.Timestamp("2020-01-02 10:10:10"),
-                "ncells": list(range(10))},
+        coords={"time": pd.Timestamp("2020-01-02 10:10:10"), "ncells": list(range(10))},
         name="singleTS",
     )
     rule = {
@@ -161,57 +161,69 @@ def test__filename_time_range_multiple_timesteps(frequency):
 
 
 def test_no_resampling_required_when_data_timespan_is_less_than_target_timespan():
-    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq='D')
-    da = xr.DataArray(
-        np.ones(t.size),
-        coords = {"time": t}
-    )
+    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq="D")
+    da = xr.DataArray(np.ones(t.size), coords={"time": t})
     timespan = "6ME"
-    assert needs_resampling(da, timespan) == False
+    assert needs_resampling(da, timespan) is False
+
 
 def test_needs_resampling_when_target_timespan_is_lower_than_data_timespan():
-    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq='D')
-    da = xr.DataArray(
-        np.ones(t.size),
-        coords = {"time": t}
-    )
+    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq="D")
+    da = xr.DataArray(np.ones(t.size), coords={"time": t})
     timespan = "ME"
-    assert needs_resampling(da, timespan) == True
+    assert needs_resampling(da, timespan) is True
 
 
 def test_no_resampling_required_with_single_timestamp_data():
-    da = xr.DataArray(10, coords={"time": pd.Timestamp.now()}, name='t')
+    da = xr.DataArray(10, coords={"time": pd.Timestamp.now()}, name="t")
     timespan = "1MS"
-    assert needs_resampling(da, timespan) == False
+    assert needs_resampling(da, timespan) is False
 
 
 def test_no_resampling_required_when_target_timespan_is_None():
-    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq='D')
-    da = xr.DataArray(
-        np.ones(t.size),
-        coords = {"time": t}
-    )
+    t = pd.date_range("2020-01-01 1:00:00", "2020-02-28 1:00:00", freq="D")
+    da = xr.DataArray(np.ones(t.size), coords={"time": t})
     timespan = None
-    assert needs_resampling(da, timespan) == False
+    assert needs_resampling(da, timespan) is False
 
 
 def test_is_datetime_type_is_true_for_cftime():
     dates = xr.cftime_range(start="2001", periods=24, freq="MS", calendar="noleap")
     da_nl = xr.DataArray(np.arange(24), coords=[dates], dims=["time"], name="foo")
-    assert is_datetime_type(da_nl.time.data) == True
+    assert is_datetime_type(da_nl.time.data) is True
 
 
 def test_is_datetime_type_is_true_for_numpy_datetime64():
     t = pd.date_range("2020-01-01 1:00:00", periods=50, freq="6h")
     da = xr.DataArray(np.ones(t.size), coords={"time": t}, name="foo")
-    assert is_datetime_type(da.time) == True
+    assert is_datetime_type(da.time) is True
 
 
-def has_time_axis_not_true_when_no_valid_time_dim_exists():
-    da = xr.DataArray(10, coords={"time": 1}, dims=["time",],  name="notime")
-    assert has_time_axis(da) == False
+def test_has_time_axis_not_true_when_no_valid_time_dim_exists():
+    da = xr.DataArray(
+        10,
+        coords={"time": 1},
+        dims=[
+            "time",
+        ],
+        name="notime",
+    )
+    assert has_time_axis(da) is False
 
 
-def has_time_axis_is_true_with_time_as_scalar_coordinate():
-    da = xr.DataArray(10, coords={"time": pd.Timestamp.now()}, name='t')
-    assert has_time_axis(da) == True
+def test_has_time_axis_is_true_with_time_as_scalar_coordinate():
+    da = xr.DataArray(10, coords={"time": pd.Timestamp.now()}, name="t")
+    assert has_time_axis(da) is True
+
+
+def test_has_time_axis_recognizes_T_as_time_dimension():
+    t = pd.date_range("2020-01-01 1:00:00", periods=50, freq="6h")
+    da = xr.DataArray(
+        np.ones(t.size),
+        coords={"T": t},
+        dims=[
+            "T",
+        ],
+        name="foo",
+    )
+    assert has_time_axis(da) is True
