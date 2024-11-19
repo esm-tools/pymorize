@@ -114,6 +114,16 @@ class PymorizeConfig:
             default="local",
             doc="Which runner to use for Prefect flows.",
         )
+        raise_on_no_rule = Option(
+            parser=_parse_bool,
+            default="no",
+            doc="Whether or not to raise an error if no rule is found for every single DataRequestVariable",
+        )
+        warn_on_no_rule = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether or not to issue a warning if no rule is found for every single DataRequestVariable",
+        )
 
 
 class PymorizeConfigManager(ConfigManager):
