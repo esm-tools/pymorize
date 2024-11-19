@@ -40,10 +40,11 @@ Table 2: Precision of time labels used in file names
 
 
 """
+
 import cftime
-import xarray as xr
-import pandas as pd
 import numpy as np
+import pandas as pd
+import xarray as xr
 
 from .timeaverage import _frequency_from_approx_interval
 
@@ -105,7 +106,8 @@ def _filename_time_range(ds, rule) -> str:
     ds : xarray.Dataset
         The input dataset.
     rule : Rule
-        The rule object containing information for generating the filepath.
+        The rule object containing information for generating the
+        filepath.
 
     Returns
     -------
@@ -171,15 +173,18 @@ def create_filepath(ds, rule):
     """
     Generate a filepath when given an xarray dataset and a rule.
 
-    This function generates a filepath for the output file based on the given dataset and rule.
-    The filepath includes the name, table_id, institution, source_id, experiment_id, label, grid, and optionally the start and end time.
+    This function generates a filepath for the output file based on
+    the given dataset and rule.  The filepath includes the name,
+    table_id, institution, source_id, experiment_id, label, grid, and
+    optionally the start and end time.
 
     Parameters
     ----------
     ds : xarray.Dataset
         The input dataset.
     rule : Rule
-        The rule object containing information for generating the filepath.
+        The rule object containing information for generating the
+        filepath.
 
     Returns
     -------
@@ -188,7 +193,9 @@ def create_filepath(ds, rule):
 
     Notes
     -----
-    The rule object should have the following attributes: cmor_variable, data_request_variable, variant_label, source_id, experiment_id, output_directory, and optionally institution.
+    The rule object should have the following attributes:
+    cmor_variable, data_request_variable, variant_label, source_id,
+    experiment_id, output_directory, and optionally institution.
     """
     name = rule.cmor_variable
     table_id = rule.data_request_variable.table.table_id  # Omon
