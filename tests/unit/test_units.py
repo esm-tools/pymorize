@@ -121,24 +121,6 @@ def test_recognizes_previous_defined_chemical_elements():
     assert "mmolC/m^2/d" in ureg
 
 
-# def test_works_when_both_units_are_None(rule_with_data_request):
-#    rule_spec = rule_with_data_request
-#    rule_spec.data_request_variable.unit = None
-#    rule_spec.model_unit = None
-#    da = xr.DataArray(10, attrs={"units": None})
-#    new_da = handle_unit_conversion(da, rule_spec)
-#    assert new_da.attrs["units"] == None
-#
-#
-# def test_works_when_both_units_are_empty_string(rule_with_data_request):
-#    rule_spec = rule_with_data_request
-#    rule_spec.data_request_variable.unit = ""
-#    to_unit = ""
-#    da = xr.DataArray(10, attrs={"units": ""})
-#    new_da = handle_unit_conversion(da, rule_spec)
-#    assert new_da.attrs["units"] == to_unit
-
-
 @pytest.mark.skip(reason="No use case for this test (??)")
 @pytest.mark.parametrize("from_unit", ["m/s", None, ""])
 def test_when_target_units_is_None_overrides_existing_units(

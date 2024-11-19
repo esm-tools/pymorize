@@ -312,6 +312,9 @@ class CMORizer:
             raise errors[0]
 
     def _check_units(self):
+        # TODO (MA): This function needs to be cleaned up if it needs to stay
+        # but it will probably be removed soon if we do the validation checks
+        # via dryruns of the steps.
         def is_unit_scalar(value):
             if value is None:
                 return True
