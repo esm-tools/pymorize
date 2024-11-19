@@ -6,13 +6,14 @@ import questionary
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
+from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
 from prefect.logging import get_run_logger
 from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
-from .config import PymorizeConfigManager, parse_bool
+from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
 from .filecache import fc
@@ -41,8 +42,30 @@ class CMORizer:
         self._inherit_cfg = inherit_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
-
         self._cluster = None  # ask Cluster, might be set up later
+
+        # FIXME(PG): Probably logger.debug instead...?
+        ## Print Out Configuration:
+        logger.info(80 * "#")
+        logger.info("---------------------")
+        logger.info("General Configuration")
+        logger.info("---------------------")
+        logger.info(yaml.dump(self._general_cfg))
+        logger.info("-----------------------")
+        logger.info("Pymorize Configuration:")
+        logger.info("-----------------------")
+        # This isn't actually the config, it's the "App" object. Everett is weird about this...
+        pymorize_config = PymorizeConfig(self._pymorize_cfg)
+        for namespace, key, value, option in get_runtime_config(
+            self._pymorize_cfg, pymorize_config
+        ):
+            full_key = generate_uppercase_key(key, namespace)
+            logger.info(f"    {full_key.upper()}: {value or ''}")
+        # Avoid confusion:
+        del pymorize_config
+        logger.info(80 * "#")
+
+        ## Post_Init:
         if self._pymorize_cfg("parallel"):
             if self._pymorize_cfg("parallel_backend") == "dask":
                 self._post_init_configure_dask()
@@ -162,9 +185,9 @@ class CMORizer:
                 matches.append(rule)
         if len(matches) == 0:
             msg = f"No rule found for {data_request_variable}"
-            if self._pymorize_cfg.get("raise_on_no_rule", False, parse_bool):
+            if self._pymorize_cfg.get("raise_on_no_rule", False):
                 raise ValueError(msg)
-            elif self._pymorize_cfg.get("warn_on_no_rule", True, parse_bool):
+            elif self._pymorize_cfg.get("warn_on_no_rule", True):
                 logger.warning(msg)
             return None
         if len(matches) > 1:
