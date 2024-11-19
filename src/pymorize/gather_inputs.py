@@ -268,6 +268,11 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
+    logger.critical("Help...CI is being weird")
+    for attr in dir(rule_spec):
+        logger.critical(attr)
+    logger.critical("....end help....")
+    raise Exception("HELP!!!!")
     engine = rule_spec._pymorize_cfg("xarray_backend")
     all_files = []
     for file_collection in rule_spec.inputs:
