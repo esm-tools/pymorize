@@ -85,9 +85,7 @@ setup(
             "externals=pymorize.externals:externals",
         ],
     },
-    package_data={
-        "data.dimensionless_mappings": ["data/dimensionless_mappings.yaml"]
-    },
+    package_data={},
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",

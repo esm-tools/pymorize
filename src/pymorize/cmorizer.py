@@ -7,6 +7,7 @@ import xarray as xr
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
+from importlib.resources import files
 from prefect import flow, task
 from prefect.futures import wait
 from prefect.logging import get_run_logger
@@ -28,9 +29,7 @@ from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
-DIMENSIONLESS_MAPPING_TABLE = (
-    Path(__file__).parent.parent.parent / "data" / "dimensionless_mappings.yaml"
-)
+DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath("dimensionless_mappings.yaml")
 
 
 class CMORizer:
