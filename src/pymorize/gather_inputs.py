@@ -272,7 +272,6 @@ def load_mfdataset(data, rule_spec):
     for attr in dir(rule_spec):
         logger.critical(attr)
     logger.critical("....end help....")
-    raise Exception("HELP!!!!")
     engine = rule_spec._pymorize_cfg("xarray_backend")
     all_files = []
     for file_collection in rule_spec.inputs:
