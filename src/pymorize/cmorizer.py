@@ -48,15 +48,14 @@ class CMORizer:
 
         ################################################################################
         # Print Out Configuration:
-        # FIXME(PG): Probably logger.debug instead...?
-        logger.info(80 * "#")
-        logger.info("---------------------")
-        logger.info("General Configuration")
-        logger.info("---------------------")
-        logger.info(yaml.dump(self._general_cfg))
-        logger.info("-----------------------")
-        logger.info("Pymorize Configuration:")
-        logger.info("-----------------------")
+        logger.debug(80 * "#")
+        logger.debug("---------------------")
+        logger.debug("General Configuration")
+        logger.debug("---------------------")
+        logger.debug(yaml.dump(self._general_cfg))
+        logger.debug("-----------------------")
+        logger.debug("Pymorize Configuration:")
+        logger.debug("-----------------------")
         # This isn't actually the config, it's the "App" object. Everett is weird about this...
         pymorize_config = PymorizeConfig()
         # NOTE(PG): This variable is for demonstration purposes:
