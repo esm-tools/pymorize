@@ -221,3 +221,13 @@ def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
     assert new_da.attrs.get("units") == "0.001"
     # Check the magnitude of the data after conversion:
     assert np.equal(new_da.values, 10000)
+
+
+def test_catch_unit_conversion_problem(rule_with_data_request):
+    """Test the checker for unit conversion problem"""
+    rule_spec = rule_with_data_request
+    rule_spec.data_request_variable.unit = "broken_kg m-2 s-1"
+    da = xr.DataArray(10, name="var1", attrs={"units": "broken_kg m-2 s-1"})
+
+    with pytest.raises(ValueError, match="Unit conversion failed: Cannot parse units:"):
+        handle_unit_conversion(da, rule_spec)

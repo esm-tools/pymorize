@@ -162,15 +162,25 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
 
     # Unit conversion
     # ---------------
-    new_da = da.pint.quantify(from_unit)
-    new_da = new_da.pint.to(_to_unit).pint.dequantify()
+    try:
+        new_da = da.pint.quantify(from_unit)
+        new_da = new_da.pint.to(_to_unit).pint.dequantify()
+    except ValueError as e:
+        logger.error(
+            f"Unit conversion of '{cmor_variable_id}' from {from_unit} to {to_unit} "
+            f"({_to_unit}) failed: {e}"
+        )
+        raise ValueError(f"Unit conversion failed: {e}")
+
+    # Reset final unit to the original value as defined in the cmor table
     if new_da.attrs.get("units") != to_unit:
         logger.debug(
             "Pint auto-unit attribute setter different from requested unit string "
             f"({new_da.attrs.get('units')} vs {to_unit}). Setting manually."
         )
         new_da.attrs["units"] = to_unit
-    # Ensure a units attribute is present, default to None (this should never happen)
+
+    # Ensure a units attribute is present
     if "units" not in new_da.attrs:
         logger.error("Units attribute not present in DataArray after conversion!")
         raise AttributeError(
