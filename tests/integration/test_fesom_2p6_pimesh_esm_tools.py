@@ -25,7 +25,7 @@ def test_process_progressive_pipeline(
                 "REPLACE_ME", str(fesom_2p6_pimesh_esm_tools_data)
             )
         rule["pipelines"] = ["default"]
-    cfg["pipelines"].append("name": "default", "steps": []})
+    cfg["pipelines"].append({"name": "default", "steps": []})
     pipeline = cfg["pipelines"][0]
     pipeline["steps"] = steps
     cmorizer = CMORizer.from_dict(cfg)
