@@ -65,8 +65,8 @@ class CMORizer:
             self._pymorize_cfg, pymorize_config
         ):
             full_key = generate_uppercase_key(key, namespace)
-            logger.info(f"    {full_key.upper()}: {value or ''}")
             _pymorize_config_dict[full_key] = value
+        logger.info(yaml.dump(_pymorize_config_dict))
         # Avoid confusion:
         del pymorize_config
         logger.info(80 * "#")
