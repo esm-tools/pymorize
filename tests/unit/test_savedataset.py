@@ -62,6 +62,7 @@ import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
+from unittest.mock import Mock
 
 from pymorize.files import (
     _filename_time_range,
@@ -331,3 +332,18 @@ def test_get_time_label_can_recognize_time_label_even_if_dimension_is_named_diff
         ],
     )
     assert get_time_label(b) == "time"
+
+
+def test_save_dataset_saves_to_single_file_when_no_time_axis(tmp_path):
+    t = tmp_path / "output"
+    da = xr.DataArray([1, 2, 3], coords={"ncells": [1, 2, 3]}, dims=["ncells"])
+    rule = Mock()
+    rule.data_request_variable.table.table_id = "Omon"
+    rule.cmor_variable = "CO2"
+    rule.variant_label = "r1i1p1f1"
+    rule.source_id = "GFDL-ESM2M"
+    rule.experiment_id = "historical"
+    rule.output_directory = t
+    # rule["institution"] = "AWI"
+    # rule = {"frequency_str": "", "time_method": "INSTANTANEOUS"}
+    save_dataset(da, rule)
