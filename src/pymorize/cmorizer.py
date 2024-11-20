@@ -9,8 +9,6 @@ from dask_jobqueue import SLURMCluster
 from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
-# from prefect.logging import get_run_logger
-# from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
 from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
