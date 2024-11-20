@@ -39,6 +39,7 @@ Table 2: Precision of time labels used in file names
 """
 
 from collections import deque
+from pathlib import Path
 
 import cftime
 import numpy as np
@@ -270,6 +271,7 @@ def create_filepath(ds, rule):
     grid = "gn"  # grid_type
     time_range = _filename_time_range(ds, rule)
     filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{time_range}.nc"
+    Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     return filepath
 
 
