@@ -44,8 +44,10 @@ setup(
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
         "imohash",
+        "joblib",
         "netcdf4",
         "numbagg",
+        "numpy",
         "pendulum",
         "pint-xarray",
         "prefect[dask]",
