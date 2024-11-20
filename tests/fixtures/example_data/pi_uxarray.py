@@ -10,9 +10,9 @@ URL = "https://nextcloud.awi.de/s/swqyFgbL2jjgjRo/download/pi_uxarray.tar"
 """str : URL to download the example data from."""
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def pi_uxarray_download_data(tmp_path_factory):
-    cache_dir = tmp_path_factory.getbasetemp() / "cached_data_pi"
+    cache_dir = tmp_path_factory.getbasetemp() / "cached_data"
     cache_dir.mkdir(exist_ok=True)
     data_path = cache_dir / "pi_uxarray.tar"
 
@@ -28,7 +28,7 @@ def pi_uxarray_download_data(tmp_path_factory):
     return data_path
 
 
-@pytest.fixture(scope="session", autouse=True)
+@pytest.fixture(scope="session")
 def pi_uxarray_data(pi_uxarray_download_data):
 
     data_dir = Path(pi_uxarray_download_data).parent
