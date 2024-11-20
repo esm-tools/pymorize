@@ -87,7 +87,7 @@ def _parse_bool(value):
 class PymorizeConfig:
     class Config:
         quiet = Option(
-            default="no", doc="Whether to suppress output.", parser=_parse_bool
+            default=False, doc="Whether to suppress output.", parser=_parse_bool
         )
         xarray_backend = Option(
             default="netcdf4",
