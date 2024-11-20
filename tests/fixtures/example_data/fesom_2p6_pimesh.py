@@ -13,7 +13,7 @@ URL = "https://nextcloud.awi.de/s/AL2cFQx5xGE473S/download/fesom_2p6_pimesh.tar"
 
 @pytest.fixture(scope="session", autouse=True)
 def fesom_2p6_esm_tools_download_data(tmp_path_factory):
-    cache_dir = tmp_path_factory.getbasetemp() / "cached_data"
+    cache_dir = tmp_path_factory.getbasetemp() / "cached_data_fesom"
     cache_dir.mkdir(exist_ok=True)
     data_path = cache_dir / "fesom_2p6_pimesh.tar"
 
