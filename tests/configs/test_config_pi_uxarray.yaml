@@ -13,7 +13,7 @@ general:
 rules:
   - name: "temp"
     experiment_id: "piControl"
-    output_directory: "./output"
+    output_directory: "./output/pi_uxarray"
     source_id: "FESOM"
     variant_label: "r1i1p1f1"
     inputs:
