@@ -59,13 +59,18 @@ def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
     # print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
     if I_need_to_make_a_local_copy:
         local_cache_path.mkdir(parents=True, exist_ok=True)
-        shutil.copytree(
-            data_dir / "fesom_2p6_pimesh",
-            local_cache_path,
-            dirs_exist_ok=True,
-            ignore_dangling_symlinks=True,
-        )
-        # (data_dir / "fesom_2p6_pimesh").copy(local_cache_path, follow_symlinks=True)
-        print(f"Local cache created: {local_cache_path}")
+        try:
+            shutil.copytree(
+                data_dir / "fesom_2p6_pimesh",
+                local_cache_path,
+                dirs_exist_ok=True,
+                ignore_dangling_symlinks=True,
+            )
+            # (data_dir / "fesom_2p6_pimesh").copy(local_cache_path, follow_symlinks=True)
+            print(f"Local cache created: {local_cache_path}")
+        except Exception as e:
+            print(f"Failed to create local cache: {e}")
+            # Remove the local cache
+            shutil.rmtree(local_cache_path)
     print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
     return data_dir / "fesom_2p6_pimesh"
