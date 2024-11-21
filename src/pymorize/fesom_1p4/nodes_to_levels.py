@@ -5,7 +5,7 @@ the dimensions (nodes, time) to the dimensions (nodes, levels, time).
 
 You can include it in your Pipeline by using the step::
 
-    pymorize.fesom1.nodes_to_levels
+    pymorize.fesom_1p4.nodes_to_levels
 
 This script can also be used stand-alone::
 
