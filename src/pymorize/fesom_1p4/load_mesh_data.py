@@ -11,6 +11,7 @@
 #
 #   Paul Gierz, 2024
 #          - extracted relevant functions from original code only for pymorize
+#          - general cleanup of booleans (usepickle, usejoblib)
 #
 ################################################################################
 
@@ -118,7 +119,7 @@ def load_mesh(path, abg=[50, 15, -90], get3d=True, usepickle=True, usejoblib=Fal
     """
     python_version = "3"
     path = os.path.abspath(path)
-    if (usepickle == True) and (usejoblib == True):
+    if usepickle and usejoblib:
         raise ValueError(
             "Both `usepickle` and `usejoblib` set to True, select only one"
         )
@@ -139,7 +140,7 @@ def load_mesh(path, abg=[50, 15, -90], get3d=True, usepickle=True, usejoblib=Fal
         ifile.close()
         return mesh
 
-    elif (usepickle == True) and (os.path.isfile(pickle_file) == False):
+    elif usepickle and not os.path.isfile(pickle_file):
         print("The usepickle == True")
         print("The pickle file for python 3 DO NOT exists")
         print("The mesh will be saved to {}".format(pickle_file))
@@ -152,11 +153,11 @@ def load_mesh(path, abg=[50, 15, -90], get3d=True, usepickle=True, usejoblib=Fal
         outfile.close()
         return mesh
 
-    elif (usepickle == False) and (usejoblib == False):
+    elif not usepickle and not usejoblib:
         mesh = fesom_mesh(path=path, abg=abg, get3d=get3d)
         return mesh
 
-    if (usejoblib == True) and (os.path.isfile(joblib_file)):
+    if usejoblib and os.path.isfile(joblib_file):
         print("The usejoblib == True)")
         print("The joblib file for python {} exists.".format(str(python_version)))
         print("The mesh will be loaded from {}".format(joblib_file))
@@ -164,7 +165,7 @@ def load_mesh(path, abg=[50, 15, -90], get3d=True, usepickle=True, usejoblib=Fal
         mesh = joblib.load(joblib_file)
         return mesh
 
-    elif (usejoblib == True) and (os.path.isfile(joblib_file) == False):
+    elif usejoblib and not os.path.isfile(joblib_file):
         print("The usejoblib == True")
         print("The joblib file for python {} DO NOT exists".format(str(python_version)))
         print("The mesh will be saved to {}".format(joblib_file))
@@ -328,7 +329,7 @@ class fesom_mesh(object):
         self.voltri = abs(np.linalg.det(np.rollaxis(jacobian2D, 2))) / 2.0
 
         # compute the 2D lump operator
-        cnt = np.array((0,) * self.n2d)
+        # cnt = np.array((0,) * self.n2d)
         self.lump2 = np.array((0.0,) * self.n2d)
         for i in range(3):
             for j in range(self.e2d):
@@ -394,7 +395,7 @@ number of 3d nodes    = {}
         return meshinfo
 
     def __str__(self):
-        return __repr__(self)
+        return self.__repr__()
 
 
 def ind_for_depth(depth, mesh):
