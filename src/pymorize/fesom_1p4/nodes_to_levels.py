@@ -5,7 +5,7 @@ the dimensions (nodes, time) to the dimensions (nodes, levels, time).
 
 You can include it in your Pipeline by using the step::
 
-    pymorize.fesom_1p4.nodes_to_levels
+    pymorize.fesom1.nodes_to_levels
 
 This script can also be used stand-alone::
 
@@ -25,7 +25,7 @@ from .load_mesh_data import ind_for_depth, load_mesh
 
 def open_dataset(filepath):
     """Open a dataset with Xarray."""
-    return xr.open_mfdataset(filepath, engine="netcdf4", decode_times=False)
+    return xr.open_dataset(filepath, engine="netcdf4", decode_times=False)
 
 
 def save_dataset(ds, filepath, compute=True):
@@ -67,8 +67,6 @@ def interpolate_to_levels(data, mesh, indices):
     Returns:
         np.ndarray: Interpolated data (depth, ncells).
     """
-    # At this point you should have an 1d array for each timestep.
-    data = data.squeeze()
     level_data = np.full((len(mesh.zlevs), mesh.n2d), np.nan)
     for i, (ind_depth, ind_noempty, ind_empty) in enumerate(
         zip(
@@ -79,17 +77,15 @@ def interpolate_to_levels(data, mesh, indices):
     ):
         level_data[i, ind_noempty] = data[ind_depth[ind_noempty]]
         level_data[i, ind_empty] = np.nan  # Fill missing values
-    # Add in the time dimension again:
-    level_data = level_data[np.newaxis, ...]
     return level_data
 
 
 def interpolate_dataarray(ds_in, mesh, indices):
     """
-    Applies depth-level interpolation across an entire dataset, handling time separately.
+    Applies depth-level interpolation across an entire dataset.
 
     Parameters:
-        ds_in (xarray.Dataset): Input dataset.
+        ds_in (xarray.DataArray): Input dataset.
         mesh (object): FESOM mesh object.
         variable (str): Variable name to interpolate.
         indices (dict): Precomputed depth and mask indices.
@@ -97,53 +93,27 @@ def interpolate_dataarray(ds_in, mesh, indices):
     Returns:
         xarray.Dataset: Dataset with interpolated values.
     """
-    data_var = ds_in
+    data_var = ds_in.data
     variable = ds_in.name
 
-    # Ensure the input has the correct dimensions
-    if "nodes_3d" not in data_var.dims:
-        raise ValueError(
-            f"Variable {variable} is missing the expected 'nodes_3d' dimension. Found: {data_var.dims}"
-        )
+    # Apply interpolation per time step
+    level_data = xr.apply_ufunc(
+        interpolate_to_levels,
+        data_var,
+        input_core_dims=[["nodes_3d"]],
+        output_core_dims=[["depth", "ncells"]],
+        vectorize=True,
+        dask="parallelized",
+        kwargs={"mesh": mesh, "indices": indices},
+        output_dtypes=[np.float32],
+    )
 
-    output_sizes = {"depth": len(mesh.zlevs), "ncells": mesh.n2d}
-
-    if "time" in data_var.dims:
-        # Process each time step individually using groupby
-        interpolated = data_var.groupby("time").apply(
-            lambda x: xr.apply_ufunc(
-                interpolate_to_levels,
-                x,
-                input_core_dims=[["nodes_3d"]],
-                output_core_dims=[["depth", "ncells"]],
-                vectorize=False,
-                kwargs={"mesh": mesh, "indices": indices},
-                output_dtypes=[np.float32],
-                dask_gufunc_kwargs={"output_sizes": output_sizes},
-                dask="parallelized",
-            )
-        )
-    else:
-        # No time dimension, just apply directly
-        interpolated = xr.apply_ufunc(
-            interpolate_to_levels,
-            data_var,
-            input_core_dims=[["nodes_3d"]],
-            output_core_dims=[["depth", "ncells"]],
-            vectorize=False,
-            kwargs={"mesh": mesh, "indices": indices},
-            output_dtypes=[np.float32],
-            dask_gufunc_kwargs={"output_sizes": output_sizes},
-            dask="parallelized",
-        )
-
-    # Build output dataset
+    # Build the output dataset
     coords = {
-        "time": ds_in["time"] if "time" in ds_in.dims else None,
+        "time": ds_in["time"],
         "depth": ("depth", mesh.zlevs),
         "ncells": ("ncells", np.arange(mesh.n2d)),
     }
-
     attrs = data_var.attrs.copy()
     attrs.update(
         {
@@ -153,20 +123,18 @@ def interpolate_dataarray(ds_in, mesh, indices):
     )
 
     ds_out = xr.Dataset(
-        {variable: (["time", "depth", "ncells"], interpolated.data, attrs)},
-        coords={k: v for k, v in coords.items() if v is not None},
+        {variable: (["time", "depth", "ncells"], level_data, attrs)},
+        coords=coords,
     )
 
     # Add metadata for time and depth
-    if "time" in ds_out.dims:
-        ds_out["time"].attrs = ds_in["time"].attrs
+    ds_out["time"].attrs = ds_in["time"].attrs
     ds_out["depth"].attrs = {
         "units": "m",
         "long_name": "depth",
         "positive": "down",
         "axis": "Z",
     }
-
     return ds_out
 
 
@@ -176,7 +144,10 @@ def interpolate_dataset(ds_in, variable, mesh, indices):
     return interpolate_dataarray(da_in, mesh, indices)
 
 
-def _generate_indices(mesh):
+def _convert(meshpath, ipath, opath, variable, ncore, skip):
+    """Main CLI for FESOM unstructured-to-structured conversion."""
+    mesh = load_mesh(meshpath, usepickle=False, usejoblib=True)
+
     # Precompute depth indices
     indices = {
         "ind_depth_all": [],
@@ -188,13 +159,6 @@ def _generate_indices(mesh):
         indices["ind_depth_all"].append(ind_depth)
         indices["ind_noempty_all"].append(ind_noempty)
         indices["ind_empty_all"].append(ind_empty)
-    return indices
-
-
-def _convert(meshpath, ipath, opath, variable, ncore, skip):
-    """Main CLI for FESOM unstructured-to-structured conversion."""
-    mesh = load_mesh(meshpath, usepickle=False, usejoblib=True)
-    indices = _generate_indices(mesh)
 
     # Define a reusable processor function
     def processor(ds_in):
@@ -204,17 +168,6 @@ def _convert(meshpath, ipath, opath, variable, ncore, skip):
     for ifile in ipath:
         ofile = os.path.join(opath, f"{os.path.basename(ifile)[:-3]}_levels.nc")
         process_dataset(ifile, ofile, processor, skip=skip)
-    # All at once try:
-    process_dataset(ipath, "my_out.nc", processor, skip=skip)
-
-
-def nodes_to_levels(data, rule):
-    mesh_path = rule.mesh_path
-    mesh = load_mesh(mesh_path, usepickle=False, usejoblib=True)
-    indices = _generate_indices(mesh)
-    data = interpolate_datarray(data, mesh, indices)
-
-    return data
 
 
 @click.command()
