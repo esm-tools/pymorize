@@ -30,6 +30,13 @@ setup(
     long_description=read("README.rst"),
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
+    # NOTE: Please keep this list sorted! In vim, you can use
+    # visual-block mode (Ctrl-V) to select the lines and then `:sort`.
+    # or use the vim-ism (starting anywhere in the list)::
+    #
+    #   vi[:sort<CR>
+    #
+    # meaning: [v]isual [i]nside square brackets, command mode, sort, enter.
     install_requires=[
         "cerberus",
         "cf_xarray",
@@ -41,11 +48,14 @@ setup(
         "deprecation",
         "distributed",
         "dpath",
+        "everett[yaml]",
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
+        "h5netcdf",
         "imohash",
         "joblib",
         "netcdf4",
+        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
         "numbagg",
         "numpy",
         "pendulum",
