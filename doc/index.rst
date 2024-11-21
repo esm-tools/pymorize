@@ -21,6 +21,7 @@ Contents
    standard_library
    including_custom_steps
    including_subcommand_plugins
+   pymorize_configuration
    developer_guide
    API
 
