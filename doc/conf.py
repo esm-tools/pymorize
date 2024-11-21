@@ -66,6 +66,7 @@ extensions = [
     "sphinx_jinja",
     "sphinx.ext.intersphinx",
     "cerberus_sphinx_ext",
+    "everett.sphinxext",
     "sphinx_click",
 ]
 
@@ -85,6 +86,7 @@ intersphinx_mapping = {
     "xarray": ("http://xarray.pydata.org/en/stable/", None),
     "chemicals": ("https://chemicals.readthedocs.io/", None),
     "cerberus": ("https://docs.python-cerberus.org/", None),
+    "everett": ("https://everett.readthedocs.io/", None),
 }
 
 

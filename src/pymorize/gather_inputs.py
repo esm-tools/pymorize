@@ -268,17 +268,16 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
+    engine = rule_spec._pymorize_cfg("xarray_backend")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:
             all_files.append(f)
     all_files = _resolve_symlinks(all_files)
-    logger.debug(f"Loading {len(all_files)} files...")
+    logger.info(f"Loading {len(all_files)} files using {engine} backend on xarray...")
     for f in all_files:
-        logger.debug(f"  * {f}")
-    mf_ds = xr.open_mfdataset(
-        all_files, parallel=True, use_cftime=True, preprocess=register_cache
-    )
+        logger.info(f"  * {f}")
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True, engine=engine)
     return mf_ds
 
 

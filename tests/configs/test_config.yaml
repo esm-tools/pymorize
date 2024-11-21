@@ -1,6 +1,6 @@
 pymorize:
   version: "unreleased"
-  use_xarray_backend: true
+  use_xarray_backend: True
   warn_on_no_rule: False
   minimum_jobs: 8
   maximum_jobs: 10

@@ -1,25 +1,21 @@
+from importlib.resources import files
 from pathlib import Path
 
-import dask
+import dask  # noqa: F401
 import pandas as pd
 import questionary
-import xarray as xr
+import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
-from importlib.resources import files
+from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
-from prefect.logging import get_run_logger
-from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
-from .data_request import (
-    DataRequest,
-    DataRequestTable,
-    DataRequestVariable,
-    IgnoreTableFiles,
-)
+from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
+from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
+                           IgnoreTableFiles)
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -29,7 +25,9 @@ from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
-DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath("dimensionless_mappings.yaml")
+DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
+    "dimensionless_mappings.yaml"
+)
 
 
 class CMORizer:
@@ -43,16 +41,52 @@ class CMORizer:
         inherit_cfg=None,
         **kwargs,
     ):
+        ################################################################################
         self._general_cfg = general_cfg or {}
-        self._pymorize_cfg = pymorize_cfg or {}
+        self._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg(pymorize_cfg or {})
         self._dask_cfg = dask_cfg or {}
         self._inherit_cfg = inherit_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
+        self._cluster = None  # ask Cluster, might be set up later
+        ################################################################################
 
-        self._cluster = None  # Dask Cluster, might be set up later
-        if self._pymorize_cfg.get("parallel", True):
-            if pymorize_cfg.get("parallel_backend") == "dask":
+        ################################################################################
+        # Print Out Configuration:
+        logger.debug(80 * "#")
+        logger.debug("---------------------")
+        logger.debug("General Configuration")
+        logger.debug("---------------------")
+        logger.debug(yaml.dump(self._general_cfg))
+        logger.debug("-----------------------")
+        logger.debug("Pymorize Configuration:")
+        logger.debug("-----------------------")
+        # This isn't actually the config, it's the "App" object. Everett is weird about this...
+        pymorize_config = PymorizeConfig()
+        # NOTE(PG): This variable is for demonstration purposes:
+        _pymorize_config_dict = {}
+        for namespace, key, value, option in get_runtime_config(
+            self._pymorize_cfg, pymorize_config
+        ):
+            full_key = generate_uppercase_key(key, namespace)
+            _pymorize_config_dict[full_key] = value
+        logger.info(yaml.dump(_pymorize_config_dict))
+        # Avoid confusion:
+        del pymorize_config
+        logger.info(80 * "#")
+        ################################################################################
+
+        ################################################################################
+        # NOTE(PG): Curious about the configuration? Add a breakpoint here and print
+        #           out the variable _pymorize_config_dict to see EVERYTHING that is
+        #           available to you in the configuration.
+        # breakpoint()
+        ################################################################################
+
+        ################################################################################
+        # Post_Init:
+        if self._pymorize_cfg("parallel"):
+            if self._pymorize_cfg("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
@@ -60,8 +94,9 @@ class CMORizer:
         self._post_init_read_bare_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
-        self._post_init_data_request_variables()
         self._post_init_read_dimensionless_unit_mappings()
+        self._post_init_data_request_variables()
+        ################################################################################
 
     def _post_init_configure_dask(self):
         """
@@ -71,8 +106,9 @@ class CMORizer:
         --------
         https://docs.dask.org/en/stable/configuration.html?highlight=config#directly-within-python
         """
-        import dask.distributed  # Needed to pre-populate config, noqa: F401
-        import dask_jobqueue  # Needed to pre-populate config, noqa: F401
+        # Needed to pre-populate config
+        import dask.distributed  # noqa: F401
+        import dask_jobqueue  # noqa: F401
 
         logger.info("Updating Dask configuration. Changed values will be:")
         logger.info(yaml.dump(self._dask_cfg))
@@ -215,7 +251,11 @@ class CMORizer:
             else:
                 logger.critical(msg)
                 logger.critical(
-                    "This should lead to a program crash! Exception due to >> pymorize_cfg['raise_on_multiple_rules'] = False <<"
+                    """
+                    This should lead to a program crash! Exception due to:
+
+                    >> pymorize_cfg['raise_on_multiple_rules'] = False <<
+                    """
                 )
                 logger.warning("Returning the first match.")
         return matches[0]
@@ -263,6 +303,11 @@ class CMORizer:
                 raise TypeError("rule must be an instance of Rule or dict")
         self.rules = _rules
         self._post_init_inherit_rules()
+        self._post_init_attach_pymorize_config_rules()
+
+    def _post_init_attach_pymorize_config_rules(self):
+        for rule in self.rules:
+            rule._pymorize_cfg = self._pymorize_cfg
 
     def _post_init_inherit_rules(self):
         for rule_attr, rule_value in self._inherit_cfg.items():
@@ -301,7 +346,7 @@ class CMORizer:
                 if not is_subperiod:
                     errors.append(
                         ValueError(
-                            f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+                            f"Freq in source file {data_freq} is not a subperiod of freq in table {table_freq}."
                         ),
                     )
                 logger.info(
@@ -370,6 +415,7 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+            instance._post_init_attach_pymorize_config_rules()
         instance._post_init_inherit_rules()
         if "pipelines" in data:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
