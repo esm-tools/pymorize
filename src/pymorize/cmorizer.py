@@ -1,3 +1,4 @@
+import copy
 from pathlib import Path
 
 import dask  # noqa: F401
@@ -261,7 +262,8 @@ class CMORizer:
 
     def _post_init_attach_pymorize_config_rules(self):
         for rule in self.rules:
-            rule._pymorize_cfg = self._pymorize_cfg
+            # NOTE(PG): **COPY** (don't assign) the configuration to the rule
+            rule._pymorize_cfg = copy.deepcopy(self._pymorize_cfg)
 
     def _post_init_inherit_rules(self):
         for rule_attr, rule_value in self._inherit_cfg.items():
