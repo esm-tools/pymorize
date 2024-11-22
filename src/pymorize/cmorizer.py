@@ -451,7 +451,7 @@ class CMORizer:
     def serial_process(self):
         data = {}
         for rule in track(self.rules, description="Processing rules"):
-            data[rule] = self._process_rule(rule)
+            data[rule.name] = self._process_rule(rule)
         logger.success("Processing completed.")
         return data
 
@@ -460,11 +460,13 @@ class CMORizer:
         # Match up the pipelines:
         rule.match_pipelines(self.pipelines)
         data = None
+        # NOTE(PG): Send in a COPY of the rule, not the original rule
+        local_rule_copy = copy.deepcopy(rule)
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, rule)
+            data = pipeline.run(data, local_rule_copy)
         return data
 
     @task
