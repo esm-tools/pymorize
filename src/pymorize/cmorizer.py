@@ -458,6 +458,7 @@ class CMORizer:
     def _process_rule(self, rule):
         logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
+        # FIXME(PG): This might also be a place we need to consider copies...
         rule.match_pipelines(self.pipelines)
         data = None
         # NOTE(PG): Send in a COPY of the rule, not the original rule
