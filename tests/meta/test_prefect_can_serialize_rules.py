@@ -111,18 +111,18 @@ def test_prefect_can_serialize_as_pipeline_with_cache(simple_rule):
 
 def test_prefect_can_serialize_simplified():
 
+    @task
+    def my_step(data, rule):
+        return data
+
     class Pipeline:
-        @task
-        def my_step(self, data, rule):
-            return data
 
         STEPS = [my_step]
 
         @flow
         def run(self, data, rule_spec):
             for step in self.STEPS:
-                # WHAT?!
-                data = step(self, data, rule_spec)
+                data = step(data, rule_spec)
             return data
 
     class CMORizer:
