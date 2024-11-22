@@ -121,7 +121,8 @@ def test_prefect_can_serialize_simplified():
         @flow
         def run(self, data, rule_spec):
             for step in self.STEPS:
-                data = step(data, rule_spec)
+                # WHAT?!
+                data = step(self, data, rule_spec)
             return data
 
     class CMORizer:
