@@ -53,7 +53,7 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
 
 @pytest.fixture
 def simple_rule():
-    return Rule(
+    r = Rule(
         inputs=[
             {
                 "path": "/some/files/containing/",
@@ -67,6 +67,8 @@ def simple_rule():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
     )
+    r._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg({})
+    return r
 
 
 @pytest.fixture
