@@ -64,7 +64,7 @@ def test_prefect_can_serialize_as_pipeline(simple_rule):
             data_out = self.my_step(data_in, simple_rule)
             return data_out
 
-    def CMORizer():
+    class CMORizer:
         def __init__(self, pipelines):
             self.pipelines = pipelines
 
@@ -93,7 +93,7 @@ def test_prefect_can_serialize_as_pipeline_with_cache(simple_rule):
             data_out = self.my_step(data_in, simple_rule)
             return data_out
 
-    def CMORizer():
+    class CMORizer:
         def __init__(self, pipelines):
             self.pipelines = pipelines
 
