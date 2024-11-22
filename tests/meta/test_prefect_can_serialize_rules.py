@@ -30,3 +30,80 @@ def test_prefect_can_serialize_rules_with_cache(simple_rule):
         return data_out
 
     my_flow()
+
+
+def test_prefect_can_serialize_rules_with_cache_in_nested_flow(simple_rule):
+
+    @task(cache_policy=TASK_SOURCE + INPUTS)
+    def my_step(data, rule):
+        return data
+
+    @flow
+    def my_flow():
+        data_in = None
+        data_out = my_step(data_in, simple_rule)
+        return data_out
+
+    @flow
+    def my_flow_wrapper():
+        return my_flow()
+
+    my_flow_wrapper()
+
+
+def test_prefect_can_serialize_as_pipeline(simple_rule):
+
+    class Pipeline:
+        @task(cache_policy=TASK_SOURCE + INPUTS)
+        def my_step(self, data, rule):
+            return data
+
+        @flow
+        def run(self):
+            data_in = None
+            data_out = self.my_step(data_in, simple_rule)
+            return data_out
+
+    def CMORizer():
+        def __init__(self, pipelines):
+            self.pipelines = pipelines
+
+        @flow
+        def run(self):
+            results = []
+            for pipeline in self.pipelines:
+                results.append(pipeline.run())
+            return results
+
+    pl = Pipeline()
+    cmorizer = CMORizer([pl])
+    cmorizer.run()
+
+
+def test_prefect_can_serialize_as_pipeline_with_cache(simple_rule):
+
+    class Pipeline:
+        @task
+        def my_step(self, data, rule):
+            return data
+
+        @flow
+        def run(self):
+            data_in = None
+            data_out = self.my_step(data_in, simple_rule)
+            return data_out
+
+    def CMORizer():
+        def __init__(self, pipelines):
+            self.pipelines = pipelines
+
+        @flow
+        def run(self):
+            results = []
+            for pipeline in self.pipelines:
+                results.append(pipeline.run())
+            return results
+
+    pl = Pipeline()
+    cmorizer = CMORizer([pl])
+    cmorizer.run()
