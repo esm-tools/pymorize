@@ -45,121 +45,15 @@ import cftime
 import numpy as np
 import pandas as pd
 import xarray as xr
+from xarray.core.utils import is_scalar
 
 from .timeaverage import _frequency_from_approx_interval
-
-
-def has_time_axis(ds):
-    """
-    Checks if the given dataset has a time axis.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset or xarray.DataArray
-        The dataset to check.
-
-    Returns
-    -------
-    bool
-        True if the dataset has a time axis, False otherwise.
-    """
-    if get_time_label(ds) is not None:
-        return True
-    return False
-
-
-def is_datetime_type(arr):
-    """
-    Checks if the given numpy array or xarray DataArray is of datetime type.
-
-    Parameters
-    ----------
-    arr : numpy.array or xarray.DataArray
-        The input array to check.
-
-    Returns
-    -------
-    bool
-        ``True`` if `arr` is of datetime type, ``False`` otherwise.
-
-    Notes
-    -----
-    This function checks if the input array is of numpy datetime64 type or
-    if it is of cftime datetime type. If the array is of neither type, it
-    returns ``False``.
-    """
-    try:
-        if np.issubdtype(arr, np.datetime64):
-            return True
-    except TypeError:
-        if isinstance(arr.item(0), tuple(cftime._cftime.DATE_TYPES.values())):
-            return True
-    return False
-
-
-def is_scalar(da):
-    return xr.core.utils.is_scalar(da)
-
-
-def get_time_label(ds):
-    """
-    Determines the name of the coordinate in the dataset that can serve as a time label.
-
-    Parameters
-    ----------
-    ds : xarray.Dataset
-        The dataset containing coordinates to check for a time label.
-
-    Returns
-    -------
-    str or None
-        The name of the coordinate that is a datetime type and can serve as a time label,
-        or None if no such coordinate is found.
-    """
-    label = deque()
-    for name, coord in ds.coords.items():
-        if not is_datetime_type(coord):
-            continue
-        if not coord.dims:
-            continue
-        if name in coord.dims:
-            label.appendleft(name)
-        else:
-            label.append(name)
-    label.append(None)
-    return label.popleft()
-
-
-def needs_resampling(ds, timespan):
-    """
-    Checks if a given dataset needs resampling based on its time axis.
-
-    Parameters
-    ----------
-    ds : xr.Dataset or xr.DataArray
-        The dataset to check.
-    timespan : str
-        The time span for which the dataset is to be resampled.
-        10YS, 1YS, 6MS, etc.
-
-    Returns
-    -------
-    bool
-        True if the dataset needs resampling, False otherwise.
-    """
-    if timespan is None:
-        return False
-    if not timespan:
-        return False
-    time_label = get_time_label(ds)
-    if time_label is None:
-        return False
-    if is_scalar(ds[time_label]):
-        return False
-    start = pd.Timestamp(ds[time_label].data[0])
-    end = pd.Timestamp(ds[time_label].data[-1])
-    offset = pd.tseries.frequencies.to_offset(timespan)
-    return (start + offset) < end
+from .dataset_helpers import (
+    get_time_label,
+    has_time_axis,
+    is_datetime_type,
+    needs_resampling,
+)
 
 
 def _filename_time_range(ds, rule) -> str:
@@ -184,9 +78,10 @@ def _filename_time_range(ds, rule) -> str:
     time_label = get_time_label(ds)
     if is_scalar(ds[time_label]):
         return ""
-    start = pd.Timestamp(ds[time_label].data[0])
-    end = pd.Timestamp(ds[time_label].data[-1])
-    frequency_str = rule.get("frequency_str")
+    start = pd.Timestamp(str(ds[time_label].data[0]))
+    end = pd.Timestamp(str(ds[time_label].data[-1]))
+    # frequency_str = rule.get("frequency_str")
+    frequency_str = rule.data_request_variable.frequency
     if frequency_str in ("yr", "yrPt", "dec"):
         return f"{start:%Y}-{end:%Y}"
     if frequency_str in ("mon", "monC", "monPt"):
