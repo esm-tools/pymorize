@@ -9,7 +9,7 @@ def test_nodes_to_levels_with_awicm_1p0_recom_data(awicm_1p0_recom_data):
     # NOTE(PG): Just check the first file, for this test
     ds = xr.open_dataset(outdata_files[0])
     mesh = load_mesh_data.load_mesh(
-        awicm_1p0_recom_data / "awi-esm-1-1-lr-kh800/piControl/input/fesom/mesh/"
+        f"{awicm_1p0_recom_data}/awi-esm-1-1-lr-kh800/piControl/input/fesom/mesh/"
     )
     indices = load_mesh_data.ind_for_depth(mesh)
     ds_out = nodes_to_levels.interpolate_dataarray(ds, mesh, indices)
