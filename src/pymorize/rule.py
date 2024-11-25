@@ -16,6 +16,7 @@ class Rule:
     def __init__(
         self,
         *,
+        name: str = None,
         inputs: typing.List[dict] = [],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
@@ -41,6 +42,7 @@ class Rule:
         data_request_variables : DataRequestVariable or None :
             The DataRequestVariables this rule should create
         """
+        self.name = name
         self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in inputs]
         self.cmor_variable = cmor_variable
         self._pipelines = pipelines or [pipeline.DefaultPipeline()]
@@ -185,6 +187,7 @@ class Rule:
             A dictionary containing the rule data.
         """
         return cls(
+            name=data.pop("name", None),
             inputs=data.pop("inputs"),
             cmor_variable=data.pop("cmor_variable"),
             pipelines=data.pop("pipelines", []),

@@ -106,7 +106,7 @@ def rule_with_mass_units():
 
 
 @pytest.fixture
-def rule_with_units():
+def rule_with_data_request():
     r = Rule(
         inputs=[
             {
@@ -137,3 +137,10 @@ def rule_with_units():
     )
     r.data_request_variable = r.data_request_variables[0]
     return r
+
+
+@pytest.fixture
+def rule_sos():
+    return Rule(
+        cmor_variable="sos",
+    )
