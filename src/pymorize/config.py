@@ -44,11 +44,11 @@ Here are some examples of how to use the configuration manager::
 
     >>> engine = config("xarray_backend")
     >>> print(f"Using xarray backend: {engine}")
-    'netcdf4'
+    Using xarray backend: netcdf4
 
     >>> parallel = config("parallel")
     >>> print(f"Running in parallel: {parallel}")
-    True
+    Running in parallel: True
 
 You can define a user file at ``${XDG_CONFIG_DIR}/pymorize/pymorize.yaml``::
 
@@ -60,8 +60,7 @@ You can define a user file at ``${XDG_CONFIG_DIR}/pymorize/pymorize.yaml``::
     >>> config = PymorizeConfigManager.from_pymorize_cfg()
     >>> engine = config("xarray_backend")
     >>> print(f"Using xarray backend: {engine}")
-    'zarr'
-    
+    Using xarray backend: zarr
 
 See Also
 --------
