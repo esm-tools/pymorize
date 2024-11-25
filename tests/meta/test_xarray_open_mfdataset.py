@@ -10,6 +10,20 @@ import xarray as xr
         "h5netcdf",
     ],
 )
+def test_open_awicm_1p0_recom(awicm_1p0_recom_data, engine):
+    ds = xr.open_mfdataset(
+        awicm_1p0_recom_data / "awi-esm-1-1-lr_kh800/piControl/outdata/*.nc",
+        engine=engine,
+    )
+    assert isinstance(ds, xr.Dataset)
+
+
+@pytest.mark.parametrize(
+    "engine",
+    [
+        "h5netcdf",
+    ],
+)
 def test_open_fesom_2p6_pimesh_esm_tools(fesom_2p6_pimesh_esm_tools_data, engine):
     ds = xr.open_mfdataset(
         (

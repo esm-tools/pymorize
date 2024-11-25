@@ -51,12 +51,12 @@ def awicm_1p0_recom_data(awicm_1p0_recom_download_data):
     else:
         print(f"Using cached extraction: {data_dir}.")
 
-    # for root, dirs, files in os.walk(data_dir):
-    #     print(f"Root: {root}")
-    #     for file in files:
-    #         print(f"File: {os.path.join(root, file)}")
+    for root, dirs, files in os.walk(data_dir):
+        print(f"Root: {root}")
+        for file in files:
+            print(f"File: {os.path.join(root, file)}")
 
-    # print(f">>> RETURNING: {data_dir / 'awicm_1p0_recom' }")
+    print(f">>> RETURNING: {data_dir / 'awicm_1p0_recom' }")
     if I_need_to_make_a_local_copy:
         local_cache_path.mkdir(parents=True, exist_ok=True)
         try:
