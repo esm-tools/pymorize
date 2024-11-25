@@ -15,6 +15,7 @@ pytest_plugins = [
     "tests.fixtures.example_data.fesom_2p6_pimesh",
     "tests.fixtures.example_data.pi_uxarray",
     "tests.fixtures.fake_data.fesom_mesh",
+    "tests.fixtures.fake_data.awicm_recom",
     "tests.fixtures.fake_filesystem",
     "tests.fixtures.sample_rules",
 ]

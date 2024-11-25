@@ -55,7 +55,6 @@ setup(
         "imohash",
         "joblib",
         "netcdf4",
-        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
         "numbagg",
         "numpy",
         "pendulum",

@@ -144,10 +144,7 @@ def interpolate_dataset(ds_in, variable, mesh, indices):
     return interpolate_dataarray(da_in, mesh, indices)
 
 
-def _convert(meshpath, ipath, opath, variable, ncore, skip):
-    """Main CLI for FESOM unstructured-to-structured conversion."""
-    mesh = load_mesh(meshpath, usepickle=False, usejoblib=True)
-
+def indicies_from_mesh(mesh)
     # Precompute depth indices
     indices = {
         "ind_depth_all": [],
@@ -159,6 +156,14 @@ def _convert(meshpath, ipath, opath, variable, ncore, skip):
         indices["ind_depth_all"].append(ind_depth)
         indices["ind_noempty_all"].append(ind_noempty)
         indices["ind_empty_all"].append(ind_empty)
+
+    return indices
+
+def _convert(meshpath, ipath, opath, variable, ncore, skip):
+    """Main CLI for FESOM unstructured-to-structured conversion."""
+    mesh = load_mesh(meshpath, usepickle=False, usejoblib=True)
+    indices = indicies_from_mesh(mesh)
+
 
     # Define a reusable processor function
     def processor(ds_in):
