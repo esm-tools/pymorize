@@ -41,7 +41,6 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Check internet connectivity of CI runner
         run: |
-          ping -c 5 google.com
           sudo apt-get install -y curl
           curl -s  https://packagecloud.io/install/repositories/ookla/speedtest-cli/script.deb.sh | sudo bash
           sudo apt-get install -y speedtest
