@@ -129,6 +129,7 @@ RULES_SCHEMA = {
                 "cmor_units": {"type": "string", "required": False},
                 # FIXME(PS): How is it currently defined?
                 "model_units": {"type": "string", "required": False},
+                "file_timespan": {"type": "string", "required": False},
                 "variant_label": {
                     "type": "string",
                     "required": True,
