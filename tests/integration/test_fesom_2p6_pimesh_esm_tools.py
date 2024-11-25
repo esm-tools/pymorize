@@ -28,7 +28,7 @@ def test_process_progressive_pipeline(
         rule["pipelines"] = ["default"]
     cfg["pipelines"].append({"name": "default", "steps": []})
     pipeline = cfg["pipelines"][0]
-    pipeline["steps"][:] = steps
+    pipeline["steps"] = steps
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
 
