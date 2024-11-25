@@ -44,24 +44,25 @@ Here are some examples of how to use the configuration manager::
 
     >>> engine = config("xarray_backend")
     >>> print(f"Using xarray backend: {engine}")
-    'netcdf4'
+    Using xarray backend: netcdf4
 
     >>> parallel = config("parallel")
     >>> print(f"Running in parallel: {parallel}")
-    True
+    Running in parallel: True
 
 You can define a user file at ``${XDG_CONFIG_DIR}/pymorize/pymorize.yaml``::
 
     >>> import pathlib
+    >>> import yaml
     >>> cfg_file = pathlib.Path("~/.config/pymorize/pymorize.yaml").expanduser()
-    >>> cfg_file.mkdir(parents=True, exist_ok=True)
+    >>> cfg_file.parent.mkdir(parents=True, exist_ok=True)
+    >>> cfg_to_dump = {"xarray_backend": "zarr"}
     >>> with open(cfg_file, "w") as f:
-    ...     f.write("xarray_backend: zarr\nparallel: False\n")
+    ...     yaml.dump(cfg_to_dump, f)
     >>> config = PymorizeConfigManager.from_pymorize_cfg()
     >>> engine = config("xarray_backend")
     >>> print(f"Using xarray backend: {engine}")
-    'zarr'
-    
+    Using xarray backend: zarr
 
 See Also
 --------
