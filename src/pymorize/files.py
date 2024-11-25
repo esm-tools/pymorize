@@ -101,31 +101,6 @@ def _filename_time_range(ds, rule) -> str:
     else:
         raise NotImplementedError(f"No implementation for {frequency_str} yet.")
 
-    # # NOTE: the commented out return statments: Although they report the actual
-    # # time limits in the file, the hard-coded version is chosen 2 reason,
-    # # a) to replicate code in seamore tool
-    # # b) to have consistent time range scheme in filename (Hmmm.... ?)
-    # if frequency_str is None:
-    #     return f"{start_year}-{end_year}"
-    # if frequency_str.endswith("YE"):
-    #     return f"{start_year}-{end_year}"
-    # if frequency_str.endswith("ME"):
-    #     # return f"{start.strftime('%Y%m')}-{end.strftime('%Y%m')}"
-    #     return f"{start_year}01-{end_year}12"
-    # if frequency_str.endswith("D"):
-    #     # return f"{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}"
-    #     return f"{start_year}0101-{end_year}1231"
-    # if frequency_str.endswith("H"):
-    #     # return f"{start.strftime('%Y%m%d%H')}-{end.strftime('%Y%m%d%H')}"
-    #     if time_method == "INSTANTANEOUS":
-    #         return f"{start_year}01010030-{end_year}12312330"
-    #     else:
-    #         return f"{start_year}01010000-{end_year}12312300"
-    # # the following is not covered in seamore tool, hopefully they are used.
-    # if frequency_str.endswith("min"):
-    #     return f"{start.strftime('%Y%m%d%H%M')}-{end.strftime('%Y%m%d%H%M')}"
-    # else:
-    #     return f"{start.strftime('%Y%m%d%H%M%S')}-{end.strftime('%Y%m%d%H%M%S')}"
 
 
 def create_filepath(ds, rule):
