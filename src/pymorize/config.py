@@ -53,10 +53,12 @@ Here are some examples of how to use the configuration manager::
 You can define a user file at ``${XDG_CONFIG_DIR}/pymorize/pymorize.yaml``::
 
     >>> import pathlib
+    >>> import yaml
     >>> cfg_file = pathlib.Path("~/.config/pymorize/pymorize.yaml").expanduser()
-    >>> cfg_file.mkdir(parents=True, exist_ok=True)
+    >>> cfg_file.parent.mkdir(parents=True, exist_ok=True)
+    >>> cfg_to_dump = {"xarray_backend": "zarr"}
     >>> with open(cfg_file, "w") as f:
-    ...     f.write("xarray_backend: zarr\nparallel: False\n")
+    ...     yaml.dump(cfg_to_dump, f)
     >>> config = PymorizeConfigManager.from_pymorize_cfg()
     >>> engine = config("xarray_backend")
     >>> print(f"Using xarray backend: {engine}")
