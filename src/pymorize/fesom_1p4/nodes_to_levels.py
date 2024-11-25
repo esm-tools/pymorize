@@ -144,6 +144,7 @@ def interpolate_dataset(ds_in, variable, mesh, indices):
     return interpolate_dataarray(da_in, mesh, indices)
 
 
+# FIXME(PG): This should be... a method of the mesh object??
 def indicies_from_mesh(mesh):
     # Precompute depth indices
     indices = {

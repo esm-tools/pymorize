@@ -11,7 +11,7 @@ def test_nodes_to_levels_with_awicm_1p0_recom_data(awicm_1p0_recom_data):
     mesh = load_mesh_data.load_mesh(
         f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/input/fesom/mesh/"
     )
-    indices = nodes_to_levels.indicies_for_mesh(mesh)
+    indices = nodes_to_levels.indicies_from_mesh(mesh)
     ds_out = nodes_to_levels.interpolate_dataarray(ds, mesh, indices)
     # NOTE(PG): For now, just check if the output object is created
     # FIXME(PG): Correctness check...
