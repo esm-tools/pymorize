@@ -32,17 +32,6 @@ def awicm_1p0_recom_download_data(tmp_path_factory):
 
 @pytest.fixture(scope="session")
 def awicm_1p0_recom_data(awicm_1p0_recom_download_data):
-    I_need_to_make_a_local_copy = True
-    # Check if you have a local copy
-    # Useful for testing on your local laptop
-    local_cache_path = Path(
-        "~/.cache/pytest/github.com/esm-tools/pymorize"
-    ).expanduser()
-    local_cache_path = local_cache_path / "awicm_1p0_recom"
-    if local_cache_path.exists():
-        I_need_to_make_a_local_copy = False
-        print(f"Using local cache: {local_cache_path}")
-        return local_cache_path
     data_dir = Path(awicm_1p0_recom_download_data).parent / "awicm_1p0_recom"
     if not data_dir.exists():
         with tarfile.open(awicm_1p0_recom_download_data, "r") as tar:
@@ -56,21 +45,5 @@ def awicm_1p0_recom_data(awicm_1p0_recom_download_data):
         for file in files:
             print(f"File: {os.path.join(root, file)}")
 
-    print(f">>> RETURNING: {data_dir / 'awicm_1p0_recom' }")
-    if I_need_to_make_a_local_copy:
-        local_cache_path.mkdir(parents=True, exist_ok=True)
-        try:
-            shutil.copytree(
-                data_dir / "awicm_1p0_recom",
-                local_cache_path,
-                dirs_exist_ok=True,
-                ignore_dangling_symlinks=True,
-            )
-            # (data_dir / "awicm_1p0_recom").copy(local_cache_path, follow_symlinks=True)
-            print(f"Local cache created: {local_cache_path}")
-        except Exception as e:
-            print(f"Failed to create local cache: {e}")
-            # Remove the local cache
-            shutil.rmtree(local_cache_path)
     print(f">>> RETURNING: {data_dir / 'awicm_1p0_recom' }")
     return data_dir / "awicm_1p0_recom"
