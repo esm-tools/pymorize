@@ -99,13 +99,15 @@ def interpolate_dataarray(ds_in, mesh, indices):
     # Apply interpolation per time step
     level_data = xr.apply_ufunc(
         interpolate_to_levels,
-        data_var,
+        # data_var,
+        ds_in,
         input_core_dims=[["nodes_3d"]],
         output_core_dims=[["depth", "ncells"]],
         vectorize=True,
         dask="parallelized",
         kwargs={"mesh": mesh, "indices": indices},
         output_dtypes=[np.float32],
+        output_sizes={"depth": len(mesh.zlevs), "ncells": mesh.n2d},
     )
 
     # Build the output dataset
@@ -114,7 +116,7 @@ def interpolate_dataarray(ds_in, mesh, indices):
         "depth": ("depth", mesh.zlevs),
         "ncells": ("ncells", np.arange(mesh.n2d)),
     }
-    attrs = data_var.attrs.copy()
+    attrs = ds_in.attrs.copy()
     attrs.update(
         {
             "grid_type": "unstructured",
@@ -122,8 +124,10 @@ def interpolate_dataarray(ds_in, mesh, indices):
         }
     )
 
+    # FIXME(PG): This works but is hard to read. Level_data is already an xr.DataArray, so
+    # we need to get out the "data" attribute again...
     ds_out = xr.Dataset(
-        {variable: (["time", "depth", "ncells"], level_data, attrs)},
+        {variable: (["time", "depth", "ncells"], level_data.data, attrs)},
         coords=coords,
     )
 
