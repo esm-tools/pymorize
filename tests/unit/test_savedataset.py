@@ -58,8 +58,6 @@ Table 2: Precision of time labels used in file names
 
 """
 
-from unittest.mock import Mock
-
 import numpy as np
 import pandas as pd
 import pytest
@@ -182,3 +180,39 @@ def test_save_dataset_saves_to_single_file_when_no_time_axis(tmp_path):
     rule.output_directory = t
     # rule["institution"] = "AWI"
     save_dataset(da, rule)
+
+
+def test_save_dataset_saves_to_single_file(tmp_path):
+    t = tmp_path / "output"
+    dates = xr.cftime_range(start="2001", periods=24, freq="MS", calendar="noleap")
+    da = xr.DataArray(np.arange(24), coords=[dates], dims=["time"], name="foo")
+    rule = Mock()
+    rule.data_request_variable.frequency = "mon"
+    rule.data_request_variable.table.table_id = "Omon"
+    rule.cmor_variable = "CO2"
+    rule.variant_label = "r1i1p1f1"
+    rule.source_id = "GFDL-ESM2M"
+    rule.experiment_id = "historical"
+    rule.file_timespan = "2YE"
+    rule.output_directory = t
+    save_dataset(da, rule)
+    files = list(t.iterdir())
+    assert len(files) == 1
+
+
+def test_save_dataset_saves_to_multiple_files(tmp_path):
+    t = tmp_path / "output"
+    dates = xr.cftime_range(start="2001", periods=24, freq="MS", calendar="noleap")
+    da = xr.DataArray(np.arange(24), coords=[dates], dims=["time"], name="foo")
+    rule = Mock()
+    rule.data_request_variable.frequency = "mon"
+    rule.data_request_variable.table.table_id = "Omon"
+    rule.cmor_variable = "CO2"
+    rule.variant_label = "r1i1p1f1"
+    rule.source_id = "GFDL-ESM2M"
+    rule.experiment_id = "historical"
+    rule.file_timespan = "6MS"
+    rule.output_directory = t
+    save_dataset(da, rule)
+    files = list(t.iterdir())
+    assert len(files) == 4

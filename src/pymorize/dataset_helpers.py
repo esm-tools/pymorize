@@ -105,7 +105,8 @@ def needs_resampling(ds, timespan):
         return False
     if is_scalar(ds[time_label]):
         return False
-    start = pd.Timestamp(ds[time_label].data[0])
-    end = pd.Timestamp(ds[time_label].data[-1])
+    # string representation is need to deal with cftime
+    start = pd.Timestamp(str(ds[time_label].data[0]))
+    end = pd.Timestamp(str(ds[time_label].data[-1]))
     offset = pd.tseries.frequencies.to_offset(timespan)
     return (start + offset) < end
