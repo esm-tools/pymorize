@@ -155,10 +155,10 @@ class DataRequestVariable:
 class DataRequest:
     """Represents a data request with associated metadata."""
 
-    # NOTE(PG): Inherited from Ruby Seamore, not needed for now.
-    @staticmethod
-    def approx_interval_for_table(table_id):
-        return CMIP_FREQUENCIES[table_id]
+    # # NOTE(PG): Inherited from Ruby Seamore, not needed for now.
+    # @staticmethod
+    # def approx_interval_for_table(table_id):
+    #     return CMIP_FREQUENCIES[table_id]
 
     def __init__(self, paths: list[Union[str, Path]]):
         """

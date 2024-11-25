@@ -179,7 +179,7 @@ class CMORizer:
         for rule in self.rules:
             for tbl in tables.values():
                 if rule.cmor_variable in tbl.variable_ids:
-                    rule.add_table(tbl)
+                    rule.add_table(tbl.table_id)
 
     def _post_init_data_request_variables(self):
         for drv in self.data_request.variables:
