@@ -1,3 +1,4 @@
+import copy
 from importlib.resources import files
 from pathlib import Path
 
@@ -307,7 +308,8 @@ class CMORizer:
 
     def _post_init_attach_pymorize_config_rules(self):
         for rule in self.rules:
-            rule._pymorize_cfg = self._pymorize_cfg
+            # NOTE(PG): **COPY** (don't assign) the configuration to the rule
+            rule._pymorize_cfg = copy.deepcopy(self._pymorize_cfg)
 
     def _post_init_inherit_rules(self):
         for rule_attr, rule_value in self._inherit_cfg.items():
@@ -542,20 +544,23 @@ class CMORizer:
     def serial_process(self):
         data = {}
         for rule in track(self.rules, description="Processing rules"):
-            data[rule] = self._process_rule(rule)
+            data[rule.name] = self._process_rule(rule)
         logger.success("Processing completed.")
         return data
 
     def _process_rule(self, rule):
         logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
+        # FIXME(PG): This might also be a place we need to consider copies...
         rule.match_pipelines(self.pipelines)
         data = None
+        # NOTE(PG): Send in a COPY of the rule, not the original rule
+        local_rule_copy = copy.deepcopy(rule)
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, rule)
+            data = pipeline.run(data, local_rule_copy)
         return data
 
     @task

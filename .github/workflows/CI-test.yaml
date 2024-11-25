@@ -44,15 +44,19 @@ jobs:
           export HDF5_DEBUG=1
           export NETCDF_DEBUG=1
           export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           pytest -vvv -s --cov tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
           export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           pytest -vvv -s --cov tests/unit/*.py
       - name: Test with pytest (Integration)
         run: |
           export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           pytest -vvv -s --cov tests/integration/*.py
       - name: Test with doctest
         run: |
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           PYTHONPATH=src pytest -v --doctest-modules src/
