@@ -7,7 +7,7 @@ import xarray as xr
 @pytest.mark.parametrize(
     "engine",
     [
-        "h5netcdf",
+        "netcdf4",
     ],
 )
 def test_open_awicm_1p0_recom(awicm_1p0_recom_data, engine):
