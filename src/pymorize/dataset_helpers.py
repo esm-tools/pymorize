@@ -30,16 +30,19 @@ def get_time_label(ds):
 
     Example
     -------
+    >>> import xarray as xr
+    >>> import pandas as pd
+    >>> import numpy as np
     >>> ds = xr.Dataset({'time': ('time', pd.date_range('2000-01-01', periods=10))})
     >>> get_time_label(ds)
     'time'
-    >>> ds = xr.DataArray(np.ones(10), coords={'T': ('time', pd.date_range('2000-01-01', periods=10))})
+    >>> ds = xr.DataArray(np.ones(10), coords={'T': ('T', pd.date_range('2000-01-01', periods=10))})
     >>> get_time_label(ds)
     'T'
     >>> # The following does have a valid time coordinate, expected to return None
     >>> da = xr.Dataset({'time': ('time', [1,2,3,4,5])})
-    >>> get_time_label(da)
-    None
+    >>> get_time_label(da) is None
+    True
     """
     label = deque()
     for name, coord in ds.coords.items():
@@ -92,7 +95,7 @@ def needs_resampling(ds, timespan):
     Notes:
     ------
     After time-averaging step, this function aids in determining if
-    splitting into multiple files is requied based on provided
+    splitting into multiple files is required based on provided
     timespan.
     """
     if (timespan is None) or (not timespan):
