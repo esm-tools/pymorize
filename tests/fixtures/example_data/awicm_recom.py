@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 import requests
 
-URL = "https://nextcloud.awi.de/s/AL2cFQx5xGE473S/download/awicm-1p0-recom.tar"
+URL = "https://nextcloud.awi.de/s/DaQjtTS9xB7o7pL/download/awicm_1p0_recom.tar"
 """str : URL to download the example data from."""
 
 
