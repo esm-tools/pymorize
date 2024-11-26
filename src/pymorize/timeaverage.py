@@ -66,7 +66,7 @@ def _split_by_chunks(dataset: xr.DataArray):
     chunk_slices = {}
     logger.info(f"{dataset.chunks=}")
     if not dataset.chunks:
-        raise TypeError("Dataset has no chunks")
+        raise ValueError("Dataset has no chunks")
     if isinstance(dataset, xr.Dataset):
         chunker = dataset.chunks
     elif isinstance(dataset, xr.DataArray):
@@ -315,5 +315,7 @@ longitude: sum (comment: basin sum [along zig-zag grid path]) depth: sum time: m
 time: mean
 time: mean grid_longitude: mean
 time: point
-""".strip().split("\n")
+""".strip().split(
+    "\n"
+)
 """list: cell_methods to ignore when calculating time averages"""
