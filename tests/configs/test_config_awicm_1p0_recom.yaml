@@ -30,3 +30,7 @@ pipelines:
       - pymorize.gather_inputs.load_mfdataset
       - pymorize.generic.get_variable
       - pymorize.fesom_1p4.nodes_to_levels
+      - pymorize.caching.manual_checkpoint
+      - pymorize.generic.trigger_compute
+      - pymorize.generic.show_data
+      - pymorize.files.save_dataset
