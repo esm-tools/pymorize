@@ -58,8 +58,9 @@ def test__split_by_chunks_no_chunks():
     # ...get back the same data?
     # assert data == pymorize.timeaverage._split_by_chunks(data)
     # or
-    # ...get an error?
-    with pytest.raises(TypeError):
+    # ...get an error? ValueError? The Chatbot agrees:
+    # https://chatgpt.com/share/67458273-1368-8013-a1cc-7db511c18549
+    with pytest.raises(ValueError):
         list(pymorize.timeaverage._split_by_chunks(data))
 
 
