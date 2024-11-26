@@ -175,6 +175,9 @@ def _compute_file_timespan(da: xr.DataArray):
     """
     if "time" not in da.dims:
         raise ValueError("missing the 'time' dimension")
+    # Check if "time" dimension is empty
+    if da.time.size == 0:
+        raise ValueError("no time values in this chunk")
     chunks = _split_by_chunks(da)
     tmp_file_timespan = []
     for i in range(3):
