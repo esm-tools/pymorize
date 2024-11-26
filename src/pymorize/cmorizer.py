@@ -3,6 +3,7 @@ from importlib.resources import files
 from pathlib import Path
 
 import dask  # noqa: F401
+import os
 import pandas as pd
 import questionary
 import xarray as xr  # noqa: F401
@@ -142,6 +143,13 @@ class CMORizer:
         # FIXME: Client needs to be available here?
         logger.info(f"SLURMCluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
+        # FIXME: Include the gateway option if possible
+        logger.info(
+            "To see the dashboards run the following command in your computer's "
+            "terminal:\n"
+            f"\tpymorize ssh-tunnel --username {os.getlogin()} --compute-node "
+            f"{os.uname().nodename}"
+        )
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
