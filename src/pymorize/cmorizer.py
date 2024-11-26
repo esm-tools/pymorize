@@ -1,9 +1,11 @@
 import copy
+from importlib.resources import files
 from pathlib import Path
 
 import dask  # noqa: F401
 import pandas as pd
 import questionary
+import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
@@ -20,8 +22,13 @@ from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
+from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+
+DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
+    "dimensionless_mappings.yaml"
+)
 
 
 class CMORizer:
@@ -88,6 +95,7 @@ class CMORizer:
         self._post_init_read_bare_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
+        self._post_init_read_dimensionless_unit_mappings()
         self._post_init_data_request_variables()
         ################################################################################
 
@@ -187,6 +195,38 @@ class CMORizer:
         self._rules_expand_drvs()
         self._rules_depluralize_drvs()
 
+    def _post_init_read_dimensionless_unit_mappings(self):
+        """
+        Reads the dimensionless unit mappings from a configuration file and
+        updates the rules with these mappings.
+
+        This method reads the dimensionless unit mappings from a file specified
+        in the configuration. If the file is not specified or does not exist,
+        an empty dictionary is used. The mappings are then added to each rule
+        in the `rules` attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        pymorize_cfg = self._pymorize_cfg
+        unit_map_file = pymorize_cfg.get(
+            "dimensionless_mapping_table", DIMENSIONLESS_MAPPING_TABLE
+        )
+        if unit_map_file is None:
+            logger.warning("No dimensionless unit mappings file specified!")
+            dimensionless_unit_mappings = {}
+        else:
+            with open(unit_map_file, "r") as f:
+                dimensionless_unit_mappings = yaml.safe_load(f)
+        # Add to rules:
+        for rule in self.rules:
+            rule.dimensionless_unit_mappings = dimensionless_unit_mappings
+
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
     ) -> Rule or None:
@@ -254,7 +294,15 @@ class CMORizer:
         self.pipelines = pipelines
 
     def _post_init_create_rules(self):
-        self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
+        _rules = []
+        for p in self.rules:
+            if isinstance(p, Rule):
+                _rules.append(p)
+            elif isinstance(p, dict):
+                _rules.append(Rule.from_dict(p))
+            else:
+                raise TypeError("rule must be an instance of Rule or dict")
+        self.rules = _rules
         self._post_init_inherit_rules()
         self._post_init_attach_pymorize_config_rules()
 
@@ -276,6 +324,7 @@ class CMORizer:
         # self._check_rules_for_output_dir()
         # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
         # self._check_is_subperiod()
+        self._check_units()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
@@ -308,6 +357,49 @@ class CMORizer:
         if errors:
             for err in errors:
                 logger.error(err)
+            raise errors[0]
+
+    def _check_units(self):
+        # TODO (MA): This function needs to be cleaned up if it needs to stay
+        # but it will probably be removed soon if we do the validation checks
+        # via dryruns of the steps.
+        def is_unit_scalar(value):
+            if value is None:
+                return False
+            try:
+                x = float(value)
+            except ValueError:
+                return False
+            return (x - 1) == 0
+
+        errors = []
+        for rule in self.rules:
+            for input_collection in rule.inputs:
+                try:
+                    filename = input_collection.files[0]
+                except IndexError:
+                    break
+                model_units = rule.get("model_unit") or fc.get(filename).units
+                cmor_units = rule.data_request_variable.units
+                cmor_variable = rule.data_request_variables.get("cmor_variable")
+                if model_units is None:
+                    if not (is_unit_scalar(cmor_units) or cmor_units == "%"):
+                        errors.append(
+                            ValueError(
+                                f"dimensionless variables must have dimensionless units ({model_units}  {cmor_units})"
+                            )
+                        )
+                if is_unit_scalar(cmor_units):
+                    if not is_unit_scalar(model_units):
+                        dimless = rule.get("dimensionless_unit_mappings", {})
+                        if not cmor_units in dimless.get(cmor_variable, {}):
+                            errors.append(
+                                f"Missing mapping for dimensionless variable {cmor_variable}"
+                            )
+        if errors:
+            for err in errors:
+                logger.error(err)
+            raise errors[0]
 
     @classmethod
     def from_dict(cls, data):
@@ -337,6 +429,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
+        instance._post_init_read_dimensionless_unit_mappings()
         return instance
 
     def add_rule(self, rule):

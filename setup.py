@@ -96,7 +96,10 @@ setup(
             "externals=pymorize.externals:externals",
         ],
     },
-    package_data={},
+    include_package_data=True,
+    package_data={
+        "pymorize": ["data/*.yaml"],
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",

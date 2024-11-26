@@ -18,6 +18,10 @@ pytest_plugins = [
     "tests.fixtures.fake_data.fesom_mesh",
     "tests.fixtures.fake_filesystem",
     "tests.fixtures.sample_rules",
+    "tests.fixtures.config_files",
+    "tests.fixtures.CV_Dir",
+    "tests.fixtures.CMIP_Tables_Dir",
+    "tests.fixtures.data_requests",
 ]
 
 
