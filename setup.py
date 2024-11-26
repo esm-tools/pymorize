@@ -31,6 +31,7 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
+        "bokeh",
         "cerberus",
         "cf_xarray",
         "cftime",
