@@ -220,7 +220,9 @@ def compute_average(da: xr.DataArray, rule):
         The time averaged data array.
     """
     file_timespan = _compute_file_timespan(da)
-    rule.file_timespan = file_timespan
+    rule.file_timespan = getattr(rule, "file_timespan", None) or pd.Timedelta(
+        file_timespan, unit="D"
+    )
     drv = rule.data_request_variable
     approx_interval = drv.table.approx_interval
     approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
