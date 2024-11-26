@@ -12,16 +12,12 @@ def test_process(awicm_1p0_recom_config, awicm_1p0_recom_data):
         for input in rule["inputs"]:
             input["path"] = input["path"].replace(
                 "REPLACE_ME",
-                str(
-                    f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/outdata/fesom/"
-                ),
+                str(f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/"),
             )
         if "mesh_path" in rule:
             rule["mesh_path"] = rule["mesh_path"].replace(
                 "REPLACE_ME",
-                str(
-                    f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/input/fesom/mesh/"
-                ),
+                str(f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/"),
             )
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
