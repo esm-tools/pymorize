@@ -14,9 +14,14 @@ from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
+from .cluster import set_dashboard_link
 from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
-from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
-                           IgnoreTableFiles)
+from .data_request import (
+    DataRequest,
+    DataRequestTable,
+    DataRequestVariable,
+    IgnoreTableFiles,
+)
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -120,6 +125,7 @@ class CMORizer:
         # FIXME: In the future, we can support PBS, too.
         logger.info("Setting up SLURMCluster...")
         self._cluster = SLURMCluster()
+        set_dashboard_link(self._cluster)
         cluster_mode = self._pymorize_cfg.get("cluster_mode", "adapt")
         if cluster_mode == "adapt":
             min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
