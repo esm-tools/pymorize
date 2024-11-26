@@ -21,6 +21,10 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+      - name: Set up NetCDF4 with HDF5 support
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libnetcdf-dev libhdf5-dev
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
@@ -37,14 +41,22 @@ jobs:
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
       - name: Test if data will work (Meta-Test)
         run: |
-          # -s turns on printing to screen, even for passing tests
-          pytest -vvv --cov -s tests/meta/*.py
+          export HDF5_DEBUG=1
+          export NETCDF_DEBUG=1
+          export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
+          pytest -vvv -s --cov tests/meta/*.py
       - name: Test with pytest (Unit)
         run: |
-          pytest -vvv --cov tests/unit/*.py
+          export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
+          pytest -vvv -s --cov tests/unit/*.py
       - name: Test with pytest (Integration)
         run: |
-          pytest -vvv --cov tests/integration/*.py
+          export XARRAY_BACKEND=h5netcdf
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
+          pytest -vvv -s --cov tests/integration/*.py
       - name: Test with doctest
         run: |
+          export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           PYTHONPATH=src pytest -v --doctest-modules src/

@@ -41,10 +41,12 @@ setup(
         "deprecation",
         "distributed",
         "dpath",
+        "everett[yaml]",
         "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
         "flox",
+        "h5netcdf",
         "imohash",
-        "netcdf4",
+        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
         "numbagg",
         "pendulum",
         "pint-xarray",
@@ -85,7 +87,10 @@ setup(
             "externals=pymorize.externals:externals",
         ],
     },
-    package_data={},
+    include_package_data=True,
+    package_data={
+        "pymorize": ["data/*.yaml"],
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",

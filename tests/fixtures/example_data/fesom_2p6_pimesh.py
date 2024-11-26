@@ -1,12 +1,13 @@
 """Example data for the FESOM model."""
 
+import os
 import tarfile
 from pathlib import Path
 
 import pytest
 import requests
 
-URL = "https://nextcloud.awi.de/s/7gtFn38ZGifMAfw/download/fesom_2p6_pimesh.tar.gz"
+URL = "https://nextcloud.awi.de/s/AL2cFQx5xGE473S/download/fesom_2p6_pimesh.tar"
 """str : URL to download the example data from."""
 
 
@@ -14,7 +15,7 @@ URL = "https://nextcloud.awi.de/s/7gtFn38ZGifMAfw/download/fesom_2p6_pimesh.tar.
 def fesom_2p6_esm_tools_download_data(tmp_path_factory):
     cache_dir = tmp_path_factory.getbasetemp() / "cached_data"
     cache_dir.mkdir(exist_ok=True)
-    data_path = cache_dir / "fesom_2p6_pimesh.tar.gz"
+    data_path = cache_dir / "fesom_2p6_pimesh.tar"
 
     if not data_path.exists():
         response = requests.get(URL)
@@ -31,13 +32,17 @@ def fesom_2p6_esm_tools_download_data(tmp_path_factory):
 @pytest.fixture(scope="session")
 def fesom_2p6_pimesh_esm_tools_data(fesom_2p6_esm_tools_download_data):
     data_dir = Path(fesom_2p6_esm_tools_download_data).parent / "fesom_2p6_pimesh"
-
-    # Extract only if the directory doesn't already exist
     if not data_dir.exists():
-        with tarfile.open(fesom_2p6_esm_tools_download_data, "r:gz") as tar:
-            tar.extractall(data_dir.parent)
+        with tarfile.open(fesom_2p6_esm_tools_download_data, "r") as tar:
+            tar.extractall(data_dir)
         print(f"Data extracted to: {data_dir}.")
     else:
         print(f"Using cached extraction: {data_dir}.")
 
-    return data_dir
+    # for root, dirs, files in os.walk(data_dir):
+    #     print(f"Root: {root}")
+    #     for file in files:
+    #         print(f"File: {os.path.join(root, file)}")
+
+    # print(f">>> RETURNING: {data_dir / 'fesom_2p6_pimesh' }")
+    return data_dir / "fesom_2p6_pimesh"

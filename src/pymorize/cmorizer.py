@@ -1,17 +1,20 @@
+import copy
+from importlib.resources import files
 from pathlib import Path
 
-import dask
+import dask  # noqa: F401
 import pandas as pd
 import questionary
+import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from dask_jobqueue import SLURMCluster
+from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
-from prefect.logging import get_run_logger
-from prefect_dask import DaskTaskRunner
 from rich.progress import track
 
+from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
 from .filecache import fc
@@ -19,8 +22,13 @@ from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
+from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+
+DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
+    "dimensionless_mappings.yaml"
+)
 
 
 class CMORizer:
@@ -34,16 +42,52 @@ class CMORizer:
         inherit_cfg=None,
         **kwargs,
     ):
+        ################################################################################
         self._general_cfg = general_cfg or {}
-        self._pymorize_cfg = pymorize_cfg or {}
+        self._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg(pymorize_cfg or {})
         self._dask_cfg = dask_cfg or {}
         self._inherit_cfg = inherit_cfg or {}
         self.rules = rules_cfg or []
         self.pipelines = pipelines_cfg or []
+        self._cluster = None  # ask Cluster, might be set up later
+        ################################################################################
 
-        self._cluster = None  # Dask Cluster, might be set up later
-        if self._pymorize_cfg.get("parallel", True):
-            if pymorize_cfg.get("parallel_backend") == "dask":
+        ################################################################################
+        # Print Out Configuration:
+        logger.debug(80 * "#")
+        logger.debug("---------------------")
+        logger.debug("General Configuration")
+        logger.debug("---------------------")
+        logger.debug(yaml.dump(self._general_cfg))
+        logger.debug("-----------------------")
+        logger.debug("Pymorize Configuration:")
+        logger.debug("-----------------------")
+        # This isn't actually the config, it's the "App" object. Everett is weird about this...
+        pymorize_config = PymorizeConfig()
+        # NOTE(PG): This variable is for demonstration purposes:
+        _pymorize_config_dict = {}
+        for namespace, key, value, option in get_runtime_config(
+            self._pymorize_cfg, pymorize_config
+        ):
+            full_key = generate_uppercase_key(key, namespace)
+            _pymorize_config_dict[full_key] = value
+        logger.info(yaml.dump(_pymorize_config_dict))
+        # Avoid confusion:
+        del pymorize_config
+        logger.info(80 * "#")
+        ################################################################################
+
+        ################################################################################
+        # NOTE(PG): Curious about the configuration? Add a breakpoint here and print
+        #           out the variable _pymorize_config_dict to see EVERYTHING that is
+        #           available to you in the configuration.
+        # breakpoint()
+        ################################################################################
+
+        ################################################################################
+        # Post_Init:
+        if self._pymorize_cfg("parallel"):
+            if self._pymorize_cfg("parallel_backend") == "dask":
                 self._post_init_configure_dask()
                 self._post_init_create_dask_cluster()
         self._post_init_create_pipelines()
@@ -51,7 +95,9 @@ class CMORizer:
         self._post_init_read_bare_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
+        self._post_init_read_dimensionless_unit_mappings()
         self._post_init_data_request_variables()
+        ################################################################################
 
     def _post_init_configure_dask(self):
         """
@@ -61,8 +107,9 @@ class CMORizer:
         --------
         https://docs.dask.org/en/stable/configuration.html?highlight=config#directly-within-python
         """
-        import dask.distributed  # Needed to pre-populate config, noqa: F401
-        import dask_jobqueue  # Needed to pre-populate config, noqa: F401
+        # Needed to pre-populate config
+        import dask.distributed  # noqa: F401
+        import dask_jobqueue  # noqa: F401
 
         logger.info("Updating Dask configuration. Changed values will be:")
         logger.info(yaml.dump(self._dask_cfg))
@@ -133,7 +180,7 @@ class CMORizer:
         for rule in self.rules:
             for tbl in tables.values():
                 if rule.cmor_variable in tbl.variable_ids:
-                    rule.add_table(tbl)
+                    rule.add_table(tbl.table_id)
 
     def _post_init_data_request_variables(self):
         for drv in self.data_request.variables:
@@ -147,6 +194,38 @@ class CMORizer:
         # FIXME: This needs a better name...
         self._rules_expand_drvs()
         self._rules_depluralize_drvs()
+
+    def _post_init_read_dimensionless_unit_mappings(self):
+        """
+        Reads the dimensionless unit mappings from a configuration file and
+        updates the rules with these mappings.
+
+        This method reads the dimensionless unit mappings from a file specified
+        in the configuration. If the file is not specified or does not exist,
+        an empty dictionary is used. The mappings are then added to each rule
+        in the `rules` attribute.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        None
+        """
+        pymorize_cfg = self._pymorize_cfg
+        unit_map_file = pymorize_cfg.get(
+            "dimensionless_mapping_table", DIMENSIONLESS_MAPPING_TABLE
+        )
+        if unit_map_file is None:
+            logger.warning("No dimensionless unit mappings file specified!")
+            dimensionless_unit_mappings = {}
+        else:
+            with open(unit_map_file, "r") as f:
+                dimensionless_unit_mappings = yaml.safe_load(f)
+        # Add to rules:
+        for rule in self.rules:
+            rule.dimensionless_unit_mappings = dimensionless_unit_mappings
 
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
@@ -173,7 +252,11 @@ class CMORizer:
             else:
                 logger.critical(msg)
                 logger.critical(
-                    "This should lead to a program crash! Exception due to >> pymorize_cfg['raise_on_multiple_rules'] = False <<"
+                    """
+                    This should lead to a program crash! Exception due to:
+
+                    >> pymorize_cfg['raise_on_multiple_rules'] = False <<
+                    """
                 )
                 logger.warning("Returning the first match.")
         return matches[0]
@@ -211,8 +294,22 @@ class CMORizer:
         self.pipelines = pipelines
 
     def _post_init_create_rules(self):
-        self.rules = [Rule.from_dict(p) for p in self.rules if not isinstance(p, Rule)]
+        _rules = []
+        for p in self.rules:
+            if isinstance(p, Rule):
+                _rules.append(p)
+            elif isinstance(p, dict):
+                _rules.append(Rule.from_dict(p))
+            else:
+                raise TypeError("rule must be an instance of Rule or dict")
+        self.rules = _rules
         self._post_init_inherit_rules()
+        self._post_init_attach_pymorize_config_rules()
+
+    def _post_init_attach_pymorize_config_rules(self):
+        for rule in self.rules:
+            # NOTE(PG): **COPY** (don't assign) the configuration to the rule
+            rule._pymorize_cfg = copy.deepcopy(self._pymorize_cfg)
 
     def _post_init_inherit_rules(self):
         for rule_attr, rule_value in self._inherit_cfg.items():
@@ -227,6 +324,7 @@ class CMORizer:
         # self._check_rules_for_output_dir()
         # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
         # self._check_is_subperiod()
+        self._check_units()
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
@@ -250,7 +348,7 @@ class CMORizer:
                 if not is_subperiod:
                     errors.append(
                         ValueError(
-                            f"Frequency in source file {data_freq} is not a subperiod of frequency in table {table_freq}."
+                            f"Freq in source file {data_freq} is not a subperiod of freq in table {table_freq}."
                         ),
                     )
                 logger.info(
@@ -259,6 +357,49 @@ class CMORizer:
         if errors:
             for err in errors:
                 logger.error(err)
+            raise errors[0]
+
+    def _check_units(self):
+        # TODO (MA): This function needs to be cleaned up if it needs to stay
+        # but it will probably be removed soon if we do the validation checks
+        # via dryruns of the steps.
+        def is_unit_scalar(value):
+            if value is None:
+                return False
+            try:
+                x = float(value)
+            except ValueError:
+                return False
+            return (x - 1) == 0
+
+        errors = []
+        for rule in self.rules:
+            for input_collection in rule.inputs:
+                try:
+                    filename = input_collection.files[0]
+                except IndexError:
+                    break
+                model_units = rule.get("model_unit") or fc.get(filename).units
+                cmor_units = rule.data_request_variable.units
+                cmor_variable = rule.data_request_variables.get("cmor_variable")
+                if model_units is None:
+                    if not (is_unit_scalar(cmor_units) or cmor_units == "%"):
+                        errors.append(
+                            ValueError(
+                                f"dimensionless variables must have dimensionless units ({model_units}  {cmor_units})"
+                            )
+                        )
+                if is_unit_scalar(cmor_units):
+                    if not is_unit_scalar(model_units):
+                        dimless = rule.get("dimensionless_unit_mappings", {})
+                        if not cmor_units in dimless.get(cmor_variable, {}):
+                            errors.append(
+                                f"Missing mapping for dimensionless variable {cmor_variable}"
+                            )
+        if errors:
+            for err in errors:
+                logger.error(err)
+            raise errors[0]
 
     @classmethod
     def from_dict(cls, data):
@@ -276,6 +417,7 @@ class CMORizer:
         for rule in data.get("rules", []):
             rule_obj = Rule.from_dict(rule)
             instance.add_rule(rule_obj)
+            instance._post_init_attach_pymorize_config_rules()
         instance._post_init_inherit_rules()
         if "pipelines" in data:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
@@ -287,6 +429,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
+        instance._post_init_read_dimensionless_unit_mappings()
         return instance
 
     def add_rule(self, rule):
@@ -401,20 +544,23 @@ class CMORizer:
     def serial_process(self):
         data = {}
         for rule in track(self.rules, description="Processing rules"):
-            data[rule] = self._process_rule(rule)
+            data[rule.name] = self._process_rule(rule)
         logger.success("Processing completed.")
         return data
 
     def _process_rule(self, rule):
         logger.info(f"Starting to process rule {rule}")
         # Match up the pipelines:
+        # FIXME(PG): This might also be a place we need to consider copies...
         rule.match_pipelines(self.pipelines)
         data = None
+        # NOTE(PG): Send in a COPY of the rule, not the original rule
+        local_rule_copy = copy.deepcopy(rule)
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, rule)
+            data = pipeline.run(data, local_rule_copy)
         return data
 
     @task
