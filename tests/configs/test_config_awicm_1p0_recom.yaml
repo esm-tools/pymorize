@@ -1,0 +1,42 @@
+pymorize:
+  warn_on_no_rule: False
+  parallel: True
+general:
+  name: "fesom_2p6_pimesh"
+  description: "This is a test configuration using esm-tools generated test data on PI Mesh"
+  maintainer: "pgierz"
+  email: "pgierz@awi.de"
+  cmor_version: "CMIP6"
+  mip: "CMIP"
+  frequency: "mon"
+  CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
+rules:
+  - name: "temp"
+    experiment_id: "piControl"
+    output_directory: "./output"
+    source_id: "FESOM"
+    variant_label: "r1i1p1f1"
+    inputs:
+      - path: "REPLACE_ME/outdata/fesom"
+        pattern: "thetao.fesom..*.nc"
+    cmor_variable: "thetao"
+    model_variable: "thetao"
+  - name: "temp_with_levels"
+    experiment_id: "piControl"
+    output_directory: "./output"
+    source_id: "FESOM"
+    variant_label: "r1i1p1f1"
+    inputs:
+      - path: "REPLACE_ME/outdata/fesom"
+        pattern: "thetao.fesom..*.nc"
+    cmor_variable: "thetao"
+    model_variable: "thetao"
+    mesh_path: "REPLACE_ME/input/fesom/mesh"
+    pipelines:
+      - level_regridder
+pipelines:
+  - name: level_regridder
+    steps:
+      - pymorize.gather_inputs.load_mfdataset
+      - pymorize.generic.get_variable
+      - pymorize.fesom_1p4.nodes_to_levels

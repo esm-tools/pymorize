@@ -148,6 +148,14 @@ def interpolate_dataset(ds_in, variable, mesh, indices):
     return interpolate_dataarray(da_in, mesh, indices)
 
 
+def nodes_to_levels(data, rule):
+    mesh = rule.mesh_path
+    mesh = load_mesh(mesh)
+    indices = indicies_from_mesh(mesh)
+    data = interpolate_dataarray(data, mesh, indices)
+    return data
+
+
 # FIXME(PG): This should be... a method of the mesh object??
 def indicies_from_mesh(mesh):
     # Precompute depth indices

@@ -16,3 +16,8 @@ def pi_uxarray_config():
 @pytest.fixture
 def fesom_2p6_pimesh_esm_tools_config():
     return TEST_ROOT / "configs" / "test_config_fesom_2p6_pimesh.yaml"
+
+
+@pytest.fixture
+def awicm_1p0_recom_config():
+    return TEST_ROOT / "configs" / "test_config_awicm_1p0_recom.yaml"
