@@ -6,7 +6,7 @@ def test_os_login():
     try:
         assert os.getlogin()
     except OSError:
-        warnings.warning("os.getlogin() failed")
+        warnings.warn("os.getlogin() failed")
 
 
 def test_os_uname():
