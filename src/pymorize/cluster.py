@@ -1,16 +1,18 @@
 """
 This module contains the functions to manage the Dask cluster.
 """
+
 import dask
 
 from .logging import logger
+
 
 def set_dashboard_link(cluster):
     """
     Checks whether the default user configuration for the dashboard link is valid.
     If the configuration is invalid it tried to catch the following errors:
 
-    * KeyError: 'JUPYTERHUB_SERVICE_PREFIX' -> The dashboard link is not valid because
+    * ``KeyError``: 'JUPYTERHUB_SERVICE_PREFIX' -> The dashboard link is not valid because
       the cluster was not launched from JupyterHub. In this case, the default dashboard
       link is set to 'http://{host}:8787'.
 
