@@ -1,4 +1,5 @@
 import copy
+import getpass
 import os
 from importlib.resources import files
 from pathlib import Path
@@ -138,13 +139,14 @@ class CMORizer:
         # FIXME: Client needs to be available here?
         logger.info(f"SLURMCluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
-        # FIXME(PG): In CI context, nodename is not available (???)
+        # FIXME(PG): In CI context, os.getlogin and nodename may not be available (???)
+        username = getpass.getuser()
         nodename = getattr(os.uname(), "nodename", "UNKNOWN")
         # FIXME: Include the gateway option if possible
         logger.info(
             "To see the dashboards run the following command in your computer's "
             "terminal:\n"
-            f"\tpymorize ssh-tunnel --username {os.getlogin()} --compute-node "
+            f"\tpymorize ssh-tunnel --username {username} --compute-node "
             f"{nodename}"
         )
 
