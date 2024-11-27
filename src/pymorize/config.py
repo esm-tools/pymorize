@@ -106,7 +106,7 @@ class PymorizeConfig:
         dask_cluster_scaling_mode = Option(
             default="adapt",
             doc="Flexible dask cluster scaling",
-            parser=Choiceof(
+            parser=ChoiceOf(
                 str,
                 choices=[
                     "adapt",
@@ -151,7 +151,7 @@ class PymorizeConfig:
         pipeline_workflow_orcherstator = Option(
             default="prefect",
             doc="Which workflow orchestrator to use for running pipelines",
-            parser=Choiceof(
+            parser=ChoiceOf(
                 str,
                 choices=[
                     "prefect",
