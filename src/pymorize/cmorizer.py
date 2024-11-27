@@ -139,7 +139,7 @@ class CMORizer:
         # FIXME: Client needs to be available here?
         logger.info(f"SLURMCluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
-        # FIXME(PG): In CI context, os.getlogin and nodename may not be available (???)
+        # NOTE(PG): In CI context, os.getlogin and nodename may not be available (???)
         username = getpass.getuser()
         nodename = getattr(os.uname(), "nodename", "UNKNOWN")
         # FIXME: Include the gateway option if possible
