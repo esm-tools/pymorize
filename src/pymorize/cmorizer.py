@@ -1,4 +1,6 @@
 import copy
+import getpass
+import os
 from importlib.resources import files
 from pathlib import Path
 
@@ -14,7 +16,8 @@ from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
+from .cluster import set_dashboard_link
+from .config import PymorizeConfig, PymorizeConfigManager
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
 from .filecache import fc
@@ -22,7 +25,6 @@ from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
-from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -120,6 +122,7 @@ class CMORizer:
         # FIXME: In the future, we can support PBS, too.
         logger.info("Setting up SLURMCluster...")
         self._cluster = SLURMCluster()
+        set_dashboard_link(self._cluster)
         cluster_mode = self._pymorize_cfg.get("cluster_mode", "adapt")
         if cluster_mode == "adapt":
             min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
@@ -136,6 +139,16 @@ class CMORizer:
         # FIXME: Client needs to be available here?
         logger.info(f"SLURMCluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
+        # NOTE(PG): In CI context, os.getlogin and nodename may not be available (???)
+        username = getpass.getuser()
+        nodename = getattr(os.uname(), "nodename", "UNKNOWN")
+        # FIXME: Include the gateway option if possible
+        logger.info(
+            "To see the dashboards run the following command in your computer's "
+            "terminal:\n"
+            f"\tpymorize ssh-tunnel --username {username} --compute-node "
+            f"{nodename}"
+        )
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
@@ -392,7 +405,7 @@ class CMORizer:
                 if is_unit_scalar(cmor_units):
                     if not is_unit_scalar(model_units):
                         dimless = rule.get("dimensionless_unit_mappings", {})
-                        if not cmor_units in dimless.get(cmor_variable, {}):
+                        if cmor_units not in dimless.get(cmor_variable, {}):
                             errors.append(
                                 f"Missing mapping for dimensionless variable {cmor_variable}"
                             )
