@@ -47,13 +47,13 @@ import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
 
-from .timeaverage import _frequency_from_approx_interval
 from .dataset_helpers import (
     get_time_label,
     has_time_axis,
     is_datetime_type,
     needs_resampling,
 )
+from .timeaverage import _frequency_from_approx_interval
 
 
 def _filename_time_range(ds, rule) -> str:
@@ -100,7 +100,6 @@ def _filename_time_range(ds, rule) -> str:
         return ""
     else:
         raise NotImplementedError(f"No implementation for {frequency_str} yet.")
-
 
 
 def create_filepath(ds, rule):
@@ -190,12 +189,11 @@ def save_dataset(da: xr.DataArray, rule):
         return da.to_netcdf(filepath, mode="w", format="NETCDF4")
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
-    file_timespan = rule.file_timespan
-    frequency_str = _frequency_from_approx_interval(file_timespan)
-    if not needs_resampling(da, frequency_str):
+    file_timespan = getattr(rule, "file_timespan", None)
+    if not needs_resampling(da, file_timespan):
         filepath = create_filepath(da, rule)
         return da.to_netcdf(filepath, mode="w", format="NETCDF4")
-    groups = da.resample(time=frequency_str)
+    groups = da.resample(time=file_timespan)
     paths = []
     datasets = []
     for group_name, group_ds in groups:
