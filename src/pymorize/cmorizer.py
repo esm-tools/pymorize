@@ -1,9 +1,9 @@
 import copy
+import os
 from importlib.resources import files
 from pathlib import Path
 
 import dask  # noqa: F401
-import os
 import pandas as pd
 import questionary
 import xarray as xr  # noqa: F401
@@ -16,19 +16,14 @@ from prefect.futures import wait
 from rich.progress import track
 
 from .cluster import set_dashboard_link
-from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
-from .data_request import (
-    DataRequest,
-    DataRequestTable,
-    DataRequestVariable,
-    IgnoreTableFiles,
-)
+from .config import PymorizeConfig, PymorizeConfigManager
+from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
+                           IgnoreTableFiles)
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
-from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -406,7 +401,7 @@ class CMORizer:
                 if is_unit_scalar(cmor_units):
                     if not is_unit_scalar(model_units):
                         dimless = rule.get("dimensionless_unit_mappings", {})
-                        if not cmor_units in dimless.get(cmor_variable, {}):
+                        if cmor_units not in dimless.get(cmor_variable, {}):
                             errors.append(
                                 f"Missing mapping for dimensionless variable {cmor_variable}"
                             )
