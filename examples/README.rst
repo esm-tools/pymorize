@@ -42,7 +42,7 @@ has tunneling built into it's command line interface::
   pymorize ssh-tunnel --gateway=<LOGIN_NODE> --username=<USER> --compute-node=<JOB_NODE>
 
 **Or even more convenient!** Search for ``ssh-tunnel`` in your ``slurm-<JOB_ID>.out`` (or in the stdout if you
-are running ``pymorize process`` directly from the logging node). You should be able to find the precise
+are running ``pymorize process`` directly from the login node). You should be able to find the precise
 command you need to use in your local computer, matching the syntax above.
 
 Note that ``JOB_NODE`` is where your main ``pymorize`` job starts, and **not** one of the dask worker
