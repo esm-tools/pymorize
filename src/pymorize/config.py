@@ -42,7 +42,7 @@ Here are some examples of how to use the configuration manager::
     >>> pymorize_cfg = {}
     >>> config = PymorizeConfigManager.from_pymorize_cfg(pymorize_cfg)
 
-    >>> engine = config("xarray_backend")
+    >>> engine = config("xarray_engine")
     >>> print(f"Using xarray backend: {engine}")
     Using xarray backend: netcdf4
 
@@ -56,11 +56,11 @@ You can define a user file at ``${XDG_CONFIG_DIR}/pymorize/pymorize.yaml``::
     >>> import yaml
     >>> cfg_file = pathlib.Path("~/.config/pymorize/pymorize.yaml").expanduser()
     >>> cfg_file.parent.mkdir(parents=True, exist_ok=True)
-    >>> cfg_to_dump = {"xarray_backend": "zarr"}
+    >>> cfg_to_dump = {"xarray_engine": "zarr"}
     >>> with open(cfg_file, "w") as f:
     ...     yaml.dump(cfg_to_dump, f)
     >>> config = PymorizeConfigManager.from_pymorize_cfg()
-    >>> engine = config("xarray_backend")
+    >>> engine = config("xarray_engine")
     >>> print(f"Using xarray backend: {engine}")
     Using xarray backend: zarr
 
@@ -71,12 +71,17 @@ See Also
 
 import os
 import pathlib
+from importlib.resources import files
 
 from everett import InvalidKeyError
 from everett.ext.yamlfile import ConfigYamlEnv
 from everett.manager import (ChoiceOf, ConfigDictEnv, ConfigManager,
                              ConfigOSEnv, Option, _get_component_name,
                              parse_bool)
+
+DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
+    "dimensionless_mappings.yaml"
+)
 
 
 def _parse_bool(value):
@@ -87,33 +92,85 @@ def _parse_bool(value):
 
 class PymorizeConfig:
     class Config:
-        quiet = Option(
-            default=False, doc="Whether to suppress output.", parser=_parse_bool
+        dask_cluster = Option(
+            default="local",
+            doc="Dask cluster to use. See: https://docs.dask.org/en/stable/deploying.html",
+            parser=ChoiceOf(
+                str,
+                choices=[
+                    "local",
+                    "slurm",
+                ],
+            ),
         )
-        xarray_backend = Option(
-            default="netcdf4",
-            doc="Which backend to use for xarray.",
-            parser=ChoiceOf(str, choices=["netcdf4", "h5netcdf", "zarr"]),
+        dask_cluster_scaling_mode = Option(
+            default="adapt",
+            doc="Flexible dask cluster scaling",
+            parser=Choiceof(
+                str,
+                choices=[
+                    "adapt",
+                    "fixed",
+                ],
+            ),
+        )
+        dask_cluster_scaling_minimum_jobs = Option(
+            parser=int,
+            default=1,
+            doc="Minimum number of jobs to create for Jobqueue-backed Dask Clusters (adaptive)",
+        )
+        dask_cluster_scaling_maximum_jobs = Option(
+            parser=int,
+            default=10,
+            doc="Maximum number of jobs to create for Jobqueue-backed Dask Clusters (adaptive)",
+        )
+        dask_cluster_scaling_fixed_jobs = Option(
+            parser=int,
+            default=5,
+            doc="Number of jobs to create for Jobqueue-backed Dask Cluster",
+        )
+        dimensionless_mapping_table = Option(
+            parser=str,
+            default=DIMENSIONLESS_MAPPING_TABLE,
+            doc="Where the dimensionless unit mapping table is defined.",
+        )
+        enable_dask = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to enable Dask-based processing",
+        )
+        enable_flox = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to enable flox for group-by operation. See: https://flox.readthedocs.io/en/latest/",
         )
         parallel = Option(
             parser=_parse_bool, default="yes", doc="Whether to run in parallel."
         )
         parallel_backend = Option(default="dask", doc="Which parallel backend to use.")
-        cluster_mode = Option(default="adapt", doc="Flexible dask cluster scaling")
-        dask_scheduler = Option(
-            default="local_process",
-            doc="Dask scheduler to use.",
-        )
-        prefect_backend = Option(
-            default="dask", doc="Which backend to use for Prefect."
-        )
-        pipeline_orchestrator = Option(
+        pipeline_workflow_orcherstator = Option(
             default="prefect",
-            doc="Which orchestrator to use.",
+            doc="Which workflow orchestrator to use for running pipelines",
+            parser=Choiceof(
+                str,
+                choices=[
+                    "prefect",
+                ],
+            ),
         )
-        prefect_flow_runner = Option(
-            default="local",
+        prefect_task_runner = Option(
+            default="thread_pool",
             doc="Which runner to use for Prefect flows.",
+            parser=ChoiceOf(
+                str,
+                choices=[
+                    "thread_pool",
+                    "dask",
+                ],
+            ),
+        )
+        quiet = Option(
+            default=False, doc="Whether to suppress output.", parser=_parse_bool
         )
         raise_on_no_rule = Option(
             parser=_parse_bool,
@@ -124,6 +181,18 @@ class PymorizeConfig:
             parser=_parse_bool,
             default="yes",
             doc="Whether or not to issue a warning if no rule is found for every single DataRequestVariable",
+        )
+        xarray_engine = Option(
+            default="netcdf4",
+            doc="Which engine to use for xarray.",
+            parser=ChoiceOf(
+                str,
+                choices=[
+                    "netcdf4",
+                    "h5netcdf",
+                    "zarr",
+                ],
+            ),
         )
 
 

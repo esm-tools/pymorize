@@ -31,11 +31,10 @@ class InputFileCollection:
         self.frequency = frequency
         self.time_dim_name = time_dim_name
 
-    # def __iter__(self):
     @property
     def files(self):
         files = []
-        for file in self.path.iterdir():
+        for file in list(self.path.iterdir()):
             if self.pattern.match(
                 file.name
             ):  # Check if the filename matches the pattern
@@ -268,7 +267,7 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
-    engine = rule_spec._pymorize_cfg("xarray_backend")
+    engine = rule_spec._pymorize_cfg("xarray_engine")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:

@@ -16,7 +16,7 @@ from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .cluster import set_dashboard_link
+from .cluster import set_dashboard_link, CLUSTER_MAPPINGS
 from .config import PymorizeConfig, PymorizeConfigManager
 from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
                            IgnoreTableFiles)
@@ -88,10 +88,13 @@ class CMORizer:
 
         ################################################################################
         # Post_Init:
-        if self._pymorize_cfg("parallel"):
-            if self._pymorize_cfg("parallel_backend") == "dask":
-                self._post_init_configure_dask()
-                self._post_init_create_dask_cluster()
+        if self._pymorize_cfg("enable_dask"):
+            logger.debug("Setting up dask configuration...")
+            self._post_init_configure_dask()
+            logger.debug("...done!")
+            logger.debug("Creating dask cluster...")
+            self._post_init_create_dask_cluster()
+            logger.debug("...done!")
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
@@ -99,6 +102,7 @@ class CMORizer:
         self._post_init_populate_rules_with_tables()
         self._post_init_read_dimensionless_unit_mappings()
         self._post_init_data_request_variables()
+        logger.debug("...post-init done!")
         ################################################################################
 
     def _post_init_configure_dask(self):
@@ -120,16 +124,17 @@ class CMORizer:
 
     def _post_init_create_dask_cluster(self):
         # FIXME: In the future, we can support PBS, too.
-        logger.info("Setting up SLURMCluster...")
-        self._cluster = SLURMCluster()
+        logger.info("Setting up dask cluster...")
+        cluster_class = CLUSTER_MAPPINGS[self._pymorize_cfg("dask_cluster")]
+        self._cluster = cluster_class()
         set_dashboard_link(self._cluster)
-        cluster_mode = self._pymorize_cfg.get("cluster_mode", "adapt")
+        cluster_scaling_mode = self._pymorize_cfg.get("dask_cluster_scaling_mode", "adapt")
         if cluster_mode == "adapt":
-            min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
-            max_jobs = self._pymorize_cfg.get("maximum_jobs", 10)
+            min_jobs = self._pymorize_cfg.get("dask_cluster_scaling_minimum_jobs", 1)
+            max_jobs = self._pymorize_cfg.get("dask_cluster_scaling_maximum_jobs", 10)
             self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
         elif cluster_mode == "fixed":
-            jobs = self._pymorize_cfg.get("fixed_jobs", 5)
+            jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
             self._cluster.scale(jobs=jobs)
         else:
             raise ValueError(
@@ -137,7 +142,7 @@ class CMORizer:
             )
         # Wait for at least min_jobs to be available...
         # FIXME: Client needs to be available here?
-        logger.info(f"SLURMCluster can be found at: {self._cluster=}")
+        logger.info(f"Cluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
         # NOTE(PG): In CI context, os.getlogin and nodename may not be available (???)
         username = getpass.getuser()
@@ -152,7 +157,7 @@ class CMORizer:
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
-        if self._pymorize_cfg.get("use_flox", True):
+        if self._pymorize_cfg.get("enable_flox", True):
             dask_extras += 1
             logger.info("...flox...")
             import flox  # noqa: F401
@@ -337,7 +342,9 @@ class CMORizer:
         # self._check_rules_for_output_dir()
         # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
         # self._check_is_subperiod()
+        logger.debug("Starting validate....")
         self._check_units()
+        logger.debug("...done!")
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
@@ -443,6 +450,7 @@ class CMORizer:
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
         instance._post_init_read_dimensionless_unit_mappings()
+        logger.debug("Object creation done!")
         return instance
 
     def add_rule(self, rule):
@@ -509,16 +517,21 @@ class CMORizer:
                     logger.warning(filepath)
 
     def process(self, parallel=None):
+        logger.debug("Process start!")
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
-            parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
-            return self.parallel_process(backend=parallel_backend)
+            logger.debug("Parallel processing...")
+            # FIXME(PG): This is mixed up, hard-coding to prefect for now...
+            workflow_backend = self._pymorize_cfg.get("pipeline_orchestrator", "prefect")
+            logger.debug(f"...with {workflow_backend}...")
+            return self.parallel_process(backend=workflow_backend)
         else:
             return self.serial_process()
 
     def parallel_process(self, backend="prefect"):
         if backend == "prefect":
+            logger.debug("About to submit _parallel_process_prefect()")
             return self._parallel_process_prefect()
         elif backend == "dask":
             return self._parallel_process_dask()
@@ -529,6 +542,7 @@ class CMORizer:
         # prefect_logger = get_run_logger()
         # logger = prefect_logger
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        logger.debug("Defining dynamically generated prefect workflow...")
         @flow
         def dynamic_flow():
             rule_results = []
@@ -536,7 +550,9 @@ class CMORizer:
                 rule_results.append(self._process_rule_prefect.submit(rule))
             wait(rule_results)
             return rule_results
+        logger.debug("...done!")
 
+        logger.debug("About to return dynamic_flow()...")
         return dynamic_flow()
 
     def _parallel_process_dask(self, external_client=None):
@@ -567,13 +583,11 @@ class CMORizer:
         # FIXME(PG): This might also be a place we need to consider copies...
         rule.match_pipelines(self.pipelines)
         data = None
-        # NOTE(PG): Send in a COPY of the rule, not the original rule
-        local_rule_copy = copy.deepcopy(rule)
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, local_rule_copy)
+            data = pipeline.run(data, rule)
         return data
 
     @task
