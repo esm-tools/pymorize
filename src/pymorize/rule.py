@@ -3,7 +3,8 @@ import re
 import typing
 import warnings
 
-import deprecation
+# import deprecation
+
 # import questionary
 import yaml
 
@@ -43,7 +44,9 @@ class Rule:
             The DataRequestVariables this rule should create
         """
         self.name = name
-        self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])]
+        self.inputs = [
+            InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])
+        ]
         self.cmor_variable = cmor_variable
         self._pipelines = pipelines or [pipeline.DefaultPipeline()]
         self.tables = tables or []
@@ -199,10 +202,10 @@ class Rule:
             **data,
         )
 
-    # @classmethod
-    # def from_yaml(cls, yaml_str):
-    #     """Wrapper around ``from_dict`` for initializing from YAML"""
-    #     return cls.from_dict(yaml.safe_load(yaml_str))
+    @classmethod
+    def from_yaml(cls, yaml_str):
+        """Wrapper around ``from_dict`` for initializing from YAML"""
+        return cls.from_dict(yaml.safe_load(yaml_str))
 
     # @deprecation.deprecated(details="This shouldn't be used, avoid it")
     # def to_yaml(self):
