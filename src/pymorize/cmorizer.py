@@ -125,8 +125,8 @@ class CMORizer:
     def _post_init_create_dask_cluster(self):
         # FIXME: In the future, we can support PBS, too.
         logger.info("Setting up dask cluster...")
-        cluster_class = CLUSTER_MAPPINGS[self._pymorize_cfg("dask_cluster")]
-        self._cluster = cluster_class()
+        ClusterClass = CLUSTER_MAPPINGS[self._pymorize_cfg("dask_cluster")]
+        self._cluster = ClusterClass()
         set_dashboard_link(self._cluster)
         cluster_scaling_mode = self._pymorize_cfg.get("dask_cluster_scaling_mode", "adapt")
         if cluster_mode == "adapt":
