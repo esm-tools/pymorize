@@ -129,11 +129,11 @@ class CMORizer:
         self._cluster = ClusterClass()
         set_dashboard_link(self._cluster)
         cluster_scaling_mode = self._pymorize_cfg.get("dask_cluster_scaling_mode", "adapt")
-        if cluster_mode == "adapt":
+        if cluster_scaling_mode == "adapt":
             min_jobs = self._pymorize_cfg.get("dask_cluster_scaling_minimum_jobs", 1)
             max_jobs = self._pymorize_cfg.get("dask_cluster_scaling_maximum_jobs", 10)
             self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
-        elif cluster_mode == "fixed":
+        elif cluster_scaling_mode == "fixed":
             jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
             self._cluster.scale(jobs=jobs)
         else:
