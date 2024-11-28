@@ -132,16 +132,26 @@ class CMORizer:
         cluster_scaling_mode = self._pymorize_cfg.get(
             "dask_cluster_scaling_mode", "adapt"
         )
-        if cluster_scaling_mode == "adapt" and CLUSTER_ADAPT_SUPPORT[cluster_name]:
-            min_jobs = self._pymorize_cfg.get("dask_cluster_scaling_minimum_jobs", 1)
-            max_jobs = self._pymorize_cfg.get("dask_cluster_scaling_maximum_jobs", 10)
-            self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
-        elif cluster_scaling_mode == "fixed" and CLUSTER_SCALE_SUPPORT[cluster_name]:
-            jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
-            self._cluster.scale(jobs=jobs)
+        if cluster_scaling_mode == "adapt":
+            if CLUSTER_ADAPT_SUPPORT[cluster_name]:
+                min_jobs = self._pymorize_cfg.get(
+                    "dask_cluster_scaling_minimum_jobs", 1
+                )
+                max_jobs = self._pymorize_cfg.get(
+                    "dask_cluster_scaling_maximum_jobs", 10
+                )
+                self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
+            else:
+                logger.warning(f"{self._cluster} does not support adaptive scaling!")
+        elif cluster_scaling_mode == "fixed":
+            if CLUSTER_SCALE_SUPPORT[cluster_name]:
+                jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
+                self._cluster.scale(jobs=jobs)
+            else:
+                logger.warning(f"{self._cluster} does not support fixed scaing")
         else:
             raise ValueError(
-                "You need to specify adapt or fixed for pymorize.dask_cluster_cluster_mode"
+                "You need to specify adapt or fixed for pymorize.dask_cluster_scaling_mode"
             )
         # Wait for at least min_jobs to be available...
         # FIXME: Client needs to be available here?
