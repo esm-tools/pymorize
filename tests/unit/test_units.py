@@ -212,6 +212,7 @@ def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
     cmorizer = CMORizer(
         pymorize_cfg={
             "parallel": False,
+            "enable_dask": False,
         },
         general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir},
         rules_cfg=[rule_sos],
