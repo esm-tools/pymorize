@@ -15,19 +15,11 @@ from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .cluster import (
-    set_dashboard_link,
-    CLUSTER_MAPPINGS,
-    CLUSTER_SCALE_SUPPORT,
-    CLUSTER_ADAPT_SUPPORT,
-)
+from .cluster import (CLUSTER_ADAPT_SUPPORT, CLUSTER_MAPPINGS,
+                      CLUSTER_SCALE_SUPPORT, set_dashboard_link)
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_request import (
-    DataRequest,
-    DataRequestTable,
-    DataRequestVariable,
-    IgnoreTableFiles,
-)
+from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
+                           IgnoreTableFiles)
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -149,7 +141,7 @@ class CMORizer:
             self._cluster.scale(jobs=jobs)
         else:
             raise ValueError(
-                "You need to specify adapt or fixed for pymorize.cluster_mode"
+                "You need to specify adapt or fixed for pymorize.dask_cluster_cluster_mode"
             )
         # Wait for at least min_jobs to be available...
         # FIXME: Client needs to be available here?
