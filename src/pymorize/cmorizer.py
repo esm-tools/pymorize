@@ -153,14 +153,13 @@ class CMORizer:
             raise ValueError(
                 "You need to specify adapt or fixed for pymorize.dask_cluster_scaling_mode"
             )
-        # Wait for at least min_jobs to be available...
-        # FIXME: Client needs to be available here?
+        # FIXME: Include the gateway option if possible
+        # FIXME: Does ``Client`` needs to be available here?
         logger.info(f"Cluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
-        # NOTE(PG): In CI context, os.getlogin and nodename may not be available (???)
+
         username = getpass.getuser()
         nodename = getattr(os.uname(), "nodename", "UNKNOWN")
-        # FIXME: Include the gateway option if possible
         logger.info(
             "To see the dashboards run the following command in your computer's "
             "terminal:\n"
