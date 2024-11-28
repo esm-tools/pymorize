@@ -10,16 +10,24 @@ import questionary
 import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
-from dask_jobqueue import SLURMCluster
 from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .cluster import set_dashboard_link, CLUSTER_MAPPINGS
+from .cluster import (
+    set_dashboard_link,
+    CLUSTER_MAPPINGS,
+    CLUSTER_SCALE_SUPPORT,
+    CLUSTER_ADAPT_SUPPORT,
+)
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
-                           IgnoreTableFiles)
+from .data_request import (
+    DataRequest,
+    DataRequestTable,
+    DataRequestVariable,
+    IgnoreTableFiles,
+)
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -125,15 +133,18 @@ class CMORizer:
     def _post_init_create_dask_cluster(self):
         # FIXME: In the future, we can support PBS, too.
         logger.info("Setting up dask cluster...")
-        ClusterClass = CLUSTER_MAPPINGS[self._pymorize_cfg("dask_cluster")]
+        cluster_name = self._pymorize_cfg("dask_cluster")
+        ClusterClass = CLUSTER_MAPPINGS[cluster_name]
         self._cluster = ClusterClass()
         set_dashboard_link(self._cluster)
-        cluster_scaling_mode = self._pymorize_cfg.get("dask_cluster_scaling_mode", "adapt")
-        if cluster_scaling_mode == "adapt":
+        cluster_scaling_mode = self._pymorize_cfg.get(
+            "dask_cluster_scaling_mode", "adapt"
+        )
+        if cluster_scaling_mode == "adapt" and CLUSTER_ADAPT_SUPPORT[cluster_name]:
             min_jobs = self._pymorize_cfg.get("dask_cluster_scaling_minimum_jobs", 1)
             max_jobs = self._pymorize_cfg.get("dask_cluster_scaling_maximum_jobs", 10)
             self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
-        elif cluster_scaling_mode == "fixed":
+        elif cluster_scaling_mode == "fixed" and CLUSTER_SCALE_SUPPORT[cluster_name]:
             jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
             self._cluster.scale(jobs=jobs)
         else:
@@ -523,7 +534,9 @@ class CMORizer:
         if parallel:
             logger.debug("Parallel processing...")
             # FIXME(PG): This is mixed up, hard-coding to prefect for now...
-            workflow_backend = self._pymorize_cfg.get("pipeline_orchestrator", "prefect")
+            workflow_backend = self._pymorize_cfg.get(
+                "pipeline_orchestrator", "prefect"
+            )
             logger.debug(f"...with {workflow_backend}...")
             return self.parallel_process(backend=workflow_backend)
         else:
@@ -543,6 +556,7 @@ class CMORizer:
         # logger = prefect_logger
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
         logger.debug("Defining dynamically generated prefect workflow...")
+
         @flow
         def dynamic_flow():
             rule_results = []
@@ -550,6 +564,7 @@ class CMORizer:
                 rule_results.append(self._process_rule_prefect.submit(rule))
             wait(rule_results)
             return rule_results
+
         logger.debug("...done!")
 
         logger.debug("About to return dynamic_flow()...")

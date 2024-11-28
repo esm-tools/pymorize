@@ -9,9 +9,11 @@ from dask_jobqueue import SLURMCluster
 from .logging import logger
 
 CLUSTER_MAPPINGS = {
-        "local": LocalCluster,
-        "slurm": SLURMCluster,
-        }
+    "local": LocalCluster,
+    "slurm": SLURMCluster,
+}
+CLUSTER_SCALE_SUPPORT = {"local": False, "slurm": True}
+CLUSTER_ADAPT_SUPPORT = {"local": False, "slurm": True}
 
 
 def set_dashboard_link(cluster):
