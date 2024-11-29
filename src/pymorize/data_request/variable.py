@@ -1,11 +1,26 @@
+"""
+This module defines the ``DataRequestVariable`` abstract base class and its concrete implementation ``CMIP6DataRequestVariable``.
+
+The ``DataRequestVariable`` class outlines the necessary properties and methods that any variable class should implement.
+It includes properties such as frequency, modeling realm, standard name, units, cell methods, cell measures,
+long name, comment, dimensions, out name, type, positive direction, valid minimum and maximum values,
+acceptable minimum and maximum mean absolute values, and the table name.
+
+The ``CMIP6DataRequestVariable`` class is a concrete implementation of the ``DataRequestVariable`` class, specifically for CMIP6 variables.
+It uses the ``dataclass`` decorator to automatically generate the ``__init__``, ``__repr__``, and other special methods.
+
+The module also provides class methods for constructing ``DataRequestVariable`` instances from dictionaries and JSON files,
+as well as a method for converting a ``DataRequestVariable`` instance to a dictionary representation.
+"""
+
 import json
 import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, Optional
+from typing import Optional
 
 
-class Variable(ABC):
+class DataRequestVariable(ABC):
     """Abstract base class for a generic variable."""
 
     _type_strings = {
@@ -14,7 +29,7 @@ class Variable(ABC):
     """dict: conversion of string names in the tables to actual Python types"""
 
     #################################################################
-    # Properties a Variable needs to have
+    # Properties a DataRequestVariable needs to have
     #################################################################
 
     @property
@@ -104,12 +119,17 @@ class Variable(ABC):
     def table_name(self) -> Optional[str]:
         """The table this variable is define in"""
 
+    @property
+    @abstractmethod
+    def attrs(self) -> dict:
+        """Attributes to update the Xarray DataArray with"""
+
     #################################################################
     # Class methods for construction
     #################################################################
     @classmethod
-    def from_dict(cls, data: dict) -> "Variable":
-        """Create a Variable instance from a dictionary."""
+    def from_dict(cls, data: dict) -> "DataRequestVariable":
+        """Create a DataRequestVariable instance from a dictionary."""
         typ = cls._type_strings.get(data["type"])
         if typ is None:
             raise ValueError(f"Unsupported type: {data['type']}")
@@ -136,7 +156,7 @@ class Variable(ABC):
         )
 
     @classmethod
-    def from_json_table_file(cls, filename: str, varname: str) -> "Variable":
+    def from_json_table_file(cls, filename: str, varname: str) -> "DataRequestVariable":
         with open(filename, "r") as f:
             data = json.load(f)["variable_entry"][varname]
             data["table_name"] = pathlib.Path(filename).stem
@@ -152,11 +172,13 @@ class Variable(ABC):
     #################################################################
     # Other methods
     #################################################################
-    # Nothing yet....
+    @abstractmethod
+    def global_attrs(self, override_dict: dict = None) -> dict:
+        """Global attributes for this variable, used to set on the xr.Dataset"""
 
 
 @dataclass
-class CMIP6Variable(Variable):
+class CMIP6DataRequestVariable(DataRequestVariable):
     frequency: str
     modeling_realm: str
     standard_name: str
@@ -174,3 +196,67 @@ class CMIP6Variable(Variable):
     ok_min_mean_abs: float
     ok_max_mean_abs: float
     table_name: Optional[str] = None
+
+    @classmethod
+    def from_json_table_file(
+        cls, filename: str, varname: str
+    ) -> "CMIP6DataRequestVariable":
+        with open(filename, "r") as f:
+            data = json.load(f)["variable_entry"][varname]
+            data["table_name"] = pathlib.Path(filename).stem.replace("CMIP6_", "")
+            return cls.from_dict(data)
+
+    @property
+    def attrs(self) -> dict:
+        return {
+            "standard_name": self.standard_name,
+            "long_name": self.long_name,
+            "units": self.units,
+            "cell_methods": self.cell_methods,
+            "cell_measures": self.cell_measures,
+        }
+
+    def global_attrs(self, override_dict: dict = None) -> dict:
+        """Return a dictionary of global attributes for a CMIP6 variable
+
+        Parameters
+        ----------
+        override_dict : dict
+            A dictionary of attributes to override the default values
+        """
+        override_dict = override_dict or {}
+        # FIXME: This needs to come from the CVs somehow
+        rdict = {
+            "Conventions": None,
+            "activity_id": None,
+            "creation_date": None,
+            "data_specs_version": None,
+            "experiment": None,
+            "experiment_id": None,
+            "forcing_index": None,
+            "frequency": None,
+            "further_info_url": None,
+            "grid": None,
+            "grid_label": None,
+            "initialization_index": None,
+            "institution": None,
+            "institution_id": None,
+            "license": None,
+            "mip_era": None,
+            "nominal_resolution": None,
+            "physics_index": None,
+            "product": None,
+            "realization_index": None,
+            "realm": None,
+            "source": None,
+            "source_id": None,
+            "source_type": None,
+            "sub_experiment": None,
+            "sub_experiment_id": None,
+            "table_id": None,
+            "tracking_id": None,
+            "variable_id": None,
+            "variant_label": None,
+        }
+        rdict.update(override_dict)
+        return rdict
