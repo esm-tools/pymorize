@@ -55,6 +55,7 @@ setup(
         "pyyaml",
         "questionary",
         "randomname",
+        "semver",
         "rich-click",
         "streamlit",
         "tqdm",
