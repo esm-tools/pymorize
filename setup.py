@@ -30,6 +30,13 @@ setup(
     long_description=read("README.rst"),
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
+    # NOTE: Please keep this list sorted! In vim, you can use
+    # visual-block mode (Ctrl-V) to select the lines and then `:sort`.
+    # or use the vim-ism (starting anywhere in the list)::
+    #
+    #   vi[:sort<CR>
+    #
+    # meaning: [v]isual [i]nside square brackets, command mode, sort, enter.
     install_requires=[
         "bokeh",
         "cerberus",
@@ -47,8 +54,10 @@ setup(
         "flox",
         "h5netcdf",
         "imohash",
-        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
+        "joblib",
+        "netcdf4",
         "numbagg",
+        "numpy",
         "pendulum",
         "pint-xarray",
         "prefect[dask]",
