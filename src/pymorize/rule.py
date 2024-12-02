@@ -7,7 +7,9 @@ import deprecation
 # import questionary
 import yaml
 
-from . import data_request, pipeline
+from . import pipeline
+from .data_request.table import DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
 
@@ -20,8 +22,8 @@ class Rule:
         inputs: typing.List[dict] = [],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
-        tables: typing.List[data_request.DataRequestTable] = [],
-        data_request_variables: typing.List[data_request.DataRequestVariable] = [],
+        tables: typing.List[DataRequestTable] = [],
+        data_request_variables: typing.List[DataRequestVariable] = [],
         **kwargs,
     ):
         """

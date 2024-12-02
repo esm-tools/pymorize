@@ -1,4 +1,4 @@
-from pymorize.data_request import CMIP6JSONDataRequestVariable
+from pymorize.data_request.variable import CMIP6JSONDataRequestVariable
 
 
 def test_init():
