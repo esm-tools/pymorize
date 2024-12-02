@@ -3,8 +3,17 @@ This module contains the functions to manage the Dask cluster.
 """
 
 import dask
+from dask.distributed import LocalCluster
+from dask_jobqueue import SLURMCluster
 
 from .logging import logger
+
+CLUSTER_MAPPINGS = {
+    "local": LocalCluster,
+    "slurm": SLURMCluster,
+}
+CLUSTER_SCALE_SUPPORT = {"local": False, "slurm": True}
+CLUSTER_ADAPT_SUPPORT = {"local": False, "slurm": True}
 
 
 def set_dashboard_link(cluster):

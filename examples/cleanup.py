@@ -6,6 +6,22 @@ import shutil
 from pathlib import Path
 
 
+def rm_file(fname):
+    try:
+        fname.unlink(fname)
+        print(f"Removed file: {fname}")
+    except Exception as e:
+        print(f"Error removing file {fname}: {e}")
+
+
+def rm_dir(dirname):
+    try:
+        shutil.rmtree(dirname)
+        print(f"Removed directory: {dirname}")
+    except Exception as e:
+        print(f"Error removing directory {dirname}: {e}")
+
+
 def cleanup():
     current_dir = Path.cwd()
 
@@ -15,34 +31,19 @@ def cleanup():
             and item.name.startswith("slurm")
             and item.name.endswith("out")
         ):
-            try:
-                item.unlink()
-                print(f"Removed file: {item}")
-            except Exception as e:
-                print(f"Error removing file {item}: {e}")
+            rm_file(item)
         if (
             item.is_file()
             and item.name.startswith("pymorize")
             and item.name.endswith("json")
         ):
-            try:
-                item.unlink()
-                print(f"Removed file: {item}")
-            except Exception as e:
-                print(f"Error removing file {item}: {e}")
+            rm_file(item)
         if item.is_file() and item.name.endswith("nc"):
-            try:
-                item.unlink()
-                print(f"Removed file: {item}")
-            except Exception as e:
-                print(f"Error removing file {item}: {e}")
-
+            rm_file(item)
+        if item.name == "pymorize_report.log":
+            rm_file(item)
         elif item.is_dir() and item.name == "logs":
-            try:
-                shutil.rmtree(item)
-                print(f"Removed directory: {item}")
-            except Exception as e:
-                print(f"Error removing directory {item}: {e}")
+            rm_dir(item)
     print("Cleanup completed.")
 
 
