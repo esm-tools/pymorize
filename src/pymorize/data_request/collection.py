@@ -17,11 +17,12 @@ class DataRequest(ABC):
         raise NotImplementedError
 
 
-class IgnoreTableFiles(Enum): 
+class IgnoreTableFiles(Enum):
     """Table files to ignore when reading from a directory."""
-     CV_TEST = "CMIP6_CV_test.json"
-     COORDINATE = "CMIP6_coordinate.json"
-     CV = "CMIP6_CV.json"
-     FORMULA_TERMS = "CMIP6_formula_terms.json"
-     GRIDS = "CMIP6_grids.json"
-     INPUT_EXAMPLE = "CMIP6_input_example.json"
+
+    CV_TEST = "CMIP6_CV_test.json"
+    COORDINATE = "CMIP6_coordinate.json"
+    CV = "CMIP6_CV.json"
+    FORMULA_TERMS = "CMIP6_formula_terms.json"
+    GRIDS = "CMIP6_grids.json"
+    INPUT_EXAMPLE = "CMIP6_input_example.json"
