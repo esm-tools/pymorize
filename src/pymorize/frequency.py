@@ -11,7 +11,7 @@ Creating a Frequency instance:
 
 >>> freq = Frequency("day", 1.0)
 >>> print(freq.name)
-'day'
+day
 >>> print(freq.approx_interval)
 1.0
 >>> print(freq.time_method)
@@ -28,7 +28,7 @@ Getting a Frequency instance for a given name:
 
 >>> freq = Frequency.for_name("day")
 >>> print(freq.name)
-'day'
+day
 """
 
 from enum import Enum
@@ -171,4 +171,4 @@ ALL = [
 ]
 
 # Adding a global reference to ALL frequencies
-Frequency.ALL = ALL
+# Frequency.ALL = ALL

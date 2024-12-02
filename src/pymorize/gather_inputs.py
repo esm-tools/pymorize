@@ -11,6 +11,7 @@ import deprecation
 import dpath
 import xarray as xr
 
+from .filecache import register_cache
 from .logging import logger
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
@@ -24,9 +25,11 @@ _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 
 
 class InputFileCollection:
-    def __init__(self, path, pattern):
+    def __init__(self, path, pattern, frequency=None, time_dim_name=None):
         self.path = pathlib.Path(path)
         self.pattern = re.compile(pattern)  # Compile the regex pattern
+        self.frequency = frequency
+        self.time_dim_name = time_dim_name
 
     # def __iter__(self):
     @property
@@ -41,7 +44,7 @@ class InputFileCollection:
 
     @classmethod
     def from_dict(cls, d):
-        return cls(d["path"], d["pattern"])
+        return cls(d["path"], d["pattern"], d.get("frequency"), d.get("time_dim_name"))
 
 
 def _input_pattern_from_env(config: dict) -> re.Pattern:
@@ -83,12 +86,13 @@ def _input_pattern_from_env(config: dict) -> re.Pattern:
     re.compile('.*')
     >>> bool(pattern.match('test'))
     True
-    >>> pattern = _input_pattern_from_env(config_only_env_name)
     >>> os.environ["CMOR_PATTERN"] = "test*nc"
+    >>> pattern = _input_pattern_from_env(config_only_env_name)
     >>> pattern
     re.compile('test*nc')
     >>> bool(pattern.match('test'))
-    True
+    False
+    >>> del os.environ["CMOR_PATTERN"]
     >>> pattern = _input_pattern_from_env(config_only_env_value)
     >>> pattern
     re.compile('.*')
@@ -153,8 +157,9 @@ def _resolve_symlinks(files: List[pathlib.Path]) -> List[pathlib.Path]:
     --------
     >>> from pathlib import Path
     >>> files = [Path('/path/to/file1'), Path('/path/to/file2')]
-    >>> _resolve_symlinks(files)
-    [Path('/path/to/file1'), Path('/path/to/file2')]
+    >>> paths = _resolve_symlinks(files)
+    >>> [str(p) for p in paths]  # Convert to strings for doctest
+    ['/path/to/file1', '/path/to/file2']
     """
     if not all(isinstance(f, pathlib.Path) for f in files):
         logger.error("All files must be pathlib.Path objects. Got the following:")
@@ -263,12 +268,16 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
+    engine = rule_spec._pymorize_cfg("xarray_backend")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:
             all_files.append(f)
     all_files = _resolve_symlinks(all_files)
-    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True)
+    logger.info(f"Loading {len(all_files)} files using {engine} backend on xarray...")
+    for f in all_files:
+        logger.info(f"  * {f}")
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True, engine=engine)
     return mf_ds
 
 
@@ -293,62 +302,8 @@ def gather_inputs(config: dict) -> dict:
     config:
         The configuration dictionary with the input files added.
 
-
-    Examples
-    --------
-    Assuming a filesystem with::
-
-        /path/to/input/files/test2000.nc
-        /path/to/input/files/test2001.nc
-        /path/to/input/files/test2002.nc
-        /path/to/input/files/test2003.nc
-        /path/to/input/files/test2004.nc
-        /path/to/input/files/test2005.nc
-        /path/to/input/files/test2006.nc
-        /path/to/input/files/test2007.nc
-        /path/to/input/files/test2008.nc
-        /path/to/input/files/test2009.nc
-        /path/to/input/files/test2010.nc
-
-    >>> config = {
-    ...     "rules": [
-    ...         {
-    ...             "input_patterns": [
-    ...                 "/path/to/input/files/test*nc"
-    ...             ],
-    ...             "year_start": 2000,
-    ...             "year_end": 2010
-    ...         }
-    ...     ]
-    ... }
-    >>> gather_inputs(config)
-    {
-        "rules": [
-            {
-                "input_patterns": [
-                    "/path/to/input/files/test*nc"
-                ],
-                "year_start": 2000,
-                "year_end": 2010,
-                "input_files": {
-                    "/path/to/input/files/test*nc": [
-                        "/path/to/input/files/test2000.nc",
-                        "/path/to/input/files/test2001.nc",
-                        "/path/to/input/files/test2002.nc",
-                        "/path/to/input/files/test2003.nc",
-                        "/path/to/input/files/test2004.nc",
-                        "/path/to/input/files/test2005.nc",
-                        "/path/to/input/files/test2006.nc",
-                        "/path/to/input/files/test2007.nc",
-                        "/path/to/input/files/test2008.nc",
-                        "/path/to/input/files/test2009.nc",
-                        "/path/to/input/files/test2010.nc"
-                    ],
-                 }
-            }
-        ]
-    }
     """
+    # NOTE(PG): Example removed from docstring as it is scheduled for deprecation.
     rules = config.get("rules", [])
     for rule in rules:
         input_patterns = rule.get("input_patterns", [])

@@ -2,8 +2,8 @@ import copy
 import re
 import typing
 import warnings
-from collections import OrderedDict
 
+import deprecation
 # import questionary
 import yaml
 
@@ -16,6 +16,7 @@ class Rule:
     def __init__(
         self,
         *,
+        name: str = None,
         inputs: typing.List[dict] = [],
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = [],
@@ -41,9 +42,10 @@ class Rule:
         data_request_variables : DataRequestVariable or None :
             The DataRequestVariables this rule should create
         """
+        self.name = name
         self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in inputs]
         self.cmor_variable = cmor_variable
-        self.pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self._pipelines = pipelines or [pipeline.DefaultPipeline()]
         self.tables = tables
         self.data_request_variables = data_request_variables
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
@@ -54,8 +56,74 @@ class Rule:
         # Internal flags:
         self._pipelines_are_mapped = False
 
+    @property
+    def pipelines(self):
+        """
+        Returns
+        -------
+        list
+            The pipelines that this Rule knows about.
+        """
+        return self._pipelines
+
     def get(self, key, default=None):
+        """Gets an attribute from the Rule object
+
+        Useful for passing the Rule object to other functions that may not know the
+        current structure, e.g. when calling Pipeline steps.
+
+        Parameters
+        ----------
+        key : str
+            The name of the attribute to get.
+        default : Any, optional
+            The value to return if the attribute does not exist.
+
+        Returns
+        -------
+        value : Any
+            The value of the attribute, or the default value if the attribute does not exist.
+        """
         return getattr(self, key, default)
+
+    def set(self, key, value, force=False, warn=True):
+        """
+        Set a new attribute for the object.
+
+        Parameters
+        ----------
+        key : str
+            The name of the attribute to set.
+        value : Any
+            The value to set for the attribute.
+        force : bool, optional
+            If True, the attribute will be overwritten if it already exists.
+            If False (default), an AttributeError will be raised if the attribute already exists.
+        warn : bool, optional
+            If True (default) a warning will be issued if the attribute already exists, and
+            it will not be overwritten. If False, an AttributeError will be raised if the attribute
+            already exists.
+
+        Returns
+        -------
+        value : Any
+            Returns the value appended to the object. This is the same behaviour as setattr.
+
+        Raises
+        ------
+        AttributeError
+            If the attribute already exists and force and warn are both False.
+        """
+        if hasattr(self, key) and not force:
+            if warn:
+                warnings.warn(
+                    f"Attribute {key} already exists. Use force=True to overwrite."
+                )
+            else:
+                raise AttributeError(
+                    f"Attribute {key} already exists. Use force=True to overwrite."
+                )
+        return setattr(self, key, value)
 
     def __repr__(self):
         return f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines}, tables={self.tables}, data_request_variables={self.data_request_variables})"
@@ -89,7 +157,7 @@ class Rule:
         for pl_name, pl in known_pipelines.items():
             logger.debug(f"{pl_name}: {pl}")
         matched_pipelines = list()
-        for pl in self.pipelines:
+        for pl in self._pipelines:
             logger.debug(f"Working on: {pl}")
             # Pipeline was already matched
             if isinstance(pl, pipeline.Pipeline):
@@ -100,12 +168,26 @@ class Rule:
             else:
                 logger.error(f"No known way to match the pipeline {pl}")
                 raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
-        self.pipelines = matched_pipelines
+        self._pipelines = matched_pipelines
         self._pipelines_are_mapped = True
 
     @classmethod
     def from_dict(cls, data):
+        """Build a rule object from a dictionary
+
+        The dictionary should have the following keys: "inputs", "cmor_variable",
+        "pipelines". Note that the ``"inputs"`` key should contain a list of dictionaries
+        that can be used to build InputFileCollection objects. The ``"pipelines"`` key
+        should contain a list of dictionaries that can be used to build Pipeline objects, and
+        the ``cmor_variable`` is just a string.
+
+        Parameters
+        ----------
+        data : dict
+            A dictionary containing the rule data.
+        """
         return cls(
+            name=data.pop("name", None),
             inputs=data.pop("inputs"),
             cmor_variable=data.pop("cmor_variable"),
             pipelines=data.pop("pipelines", []),
@@ -114,8 +196,10 @@ class Rule:
 
     @classmethod
     def from_yaml(cls, yaml_str):
+        """Wrapper around ``from_dict`` for initializing from YAML"""
         return cls.from_dict(yaml.safe_load(yaml_str))
 
+    @deprecation.deprecated(details="This shouldn't be used, avoid it")
     def to_yaml(self):
         return yaml.dump(
             {
@@ -126,26 +210,54 @@ class Rule:
         )
 
     def add_table(self, tbl):
+        """Add a table to the rule"""
         self.tables.append(tbl)
         self.tables = [t for t in self.tables if t is not None]
 
+    def remove_table(self, tbl):
+        """Remove a table from the rule"""
+        self.tables.remove(tbl)
+
+    def add_input(self, inp_dict):
+        """Add an input collection to the rule."""
+        self.inputs.append(InputFileCollection.from_dict(inp_dict))
+
     def add_data_request_variable(self, drv):
+        """Add a data request variable to the rule."""
         self.data_request_variables.append(drv)
         # Filter out Nones
         self.data_request_variables = [
             v for v in self.data_request_variable if v is not None
         ]
 
+    def remove_data_request_variable(self, drv):
+        """Remove a data request variable from the rule."""
+        self.data_request_variables.remove(drv)
+
     @property
     def input_patterns(self):
-        deprecated = "input_patterns is deprecated. Use inputs instead."
-        warnings.warn(deprecated, DeprecationWarning)
+        """Return a list of compiled regex patterns for the input files."""
         return [re.compile(f"{inp.path}/{inp.pattern}") for inp in self.inputs]
 
     def clone(self):
+        """Creates a copy of this rule object as it is currently configured."""
         return copy.deepcopy(self)
 
     def expand_drvs(self):
+        """
+        Depluralize the rule by creating a new rule for each DataRequestVariable.
+
+        This method clones the current rule object for each DataRequestVariable (``drv``) it contains.
+        For each cloned rule, it also clones the corresponding drv and sets its tables, frequencies,
+        cell_methods, and cell_measures attributes to the individual elements from the original drv.
+        The cloned drv is then set as the only drv of the cloned rule. The method returns a list of all
+        these cloned rules.
+
+        Returns
+        -------
+        list
+            A list of cloned rule objects, each containing a single DataRequestVariable.
+        """
         clones = []
         for drv in self.data_request_variables:
             rule_clone = self.clone()

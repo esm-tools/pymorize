@@ -31,9 +31,10 @@ setup(
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     install_requires=[
+        "bokeh",
         "cerberus",
-        "cftime",
         "cf_xarray",
+        "cftime",
         "chemicals",
         "click-loguru",
         "dask",
@@ -41,6 +42,13 @@ setup(
         "deprecation",
         "distributed",
         "dpath",
+        "everett[yaml]",
+        "flexparser < 0.4",  # NOTE(PG): See https://tinyurl.com/ypf99xnh
+        "flox",
+        "h5netcdf",
+        "imohash",
+        "netcdf4",  # NOTE(PG): Shouldn't be a prereq for xarray?
+        "numbagg",
         "pendulum",
         "pint-xarray",
         "prefect[dask]",
@@ -48,11 +56,10 @@ setup(
         "questionary",
         "randomname",
         "rich-click",
+        "streamlit",
+        "tqdm",
         "versioneer",
         "xarray",
-        "streamlit",
-        "flox",
-        "numbagg",
     ],
     extras_require={
         "dev": [
@@ -81,7 +88,10 @@ setup(
             "externals=pymorize.externals:externals",
         ],
     },
-    package_data={},
+    include_package_data=True,
+    package_data={
+        "pymorize": ["data/*.yaml"],
+    },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
         "License :: OSI Approved :: MIT License",

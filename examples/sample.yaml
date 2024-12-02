@@ -14,6 +14,7 @@ pymorize:
   fixed_jobs: 12
   # minimum_jobs: 8
   # maximum_jobs: 30
+  dimensionless_mapping_table: ../data/dimensionless_mappings.yaml
 rules:
   - name: paul_example_rule
     description: "You can put some text here"

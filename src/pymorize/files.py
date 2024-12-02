@@ -2,10 +2,57 @@
 This module contains functions for handling file-related operations in the pymorize package.
 It includes functions for creating filepaths based on given rules and datasets, and for
 saving the resulting datasets to the generated filepaths.
+
+
+
+Table 2: Precision of time labels used in file names
+|---------------+-------------------+-----------------------------------------------|
+| Frequency     | Precision of time | Notes                                         |
+|               | label             |                                               |
+|---------------+-------------------+-----------------------------------------------|
+| yr, dec,      | “yyyy”            | Label with the years recorded in the first    |
+| yrPt          |                   | and last coordinate values.                   |
+|---------------+-------------------+-----------------------------------------------|
+| mon, monC     | “yyyyMM”          | For “mon”, label with the months recorded in  |
+|               |                   | the first and last coordinate values; for     |
+|               |                   | “monC” label with the first and last months   |
+|               |                   | contributing to the climatology.              |
+|---------------+-------------------+-----------------------------------------------|
+| day           | “yyyyMMdd”        | Label with the days recorded in the first and |
+|               |                   | last coordinate values.                       |
+|---------------+-------------------+-----------------------------------------------|
+| 6hr, 3hr,     | “yyyyMMddhhmm”    | Label 1hrCM files with the beginning of the   |
+| 1hr,          |                   | first hour and the end of the last hour       |
+| 1hrCM, 6hrPt, |                   | contributing to climatology (rounded to the   |
+| 3hrPt,        |                   | nearest minute); for other frequencies in     |
+| 1hrPt         |                   | this category, label with the first and last  |
+|               |                   | time-coordinate values (rounded to the        |
+|               |                   | nearest minute).                              |
+|---------------+-------------------+-----------------------------------------------|
+| subhrPt       | “yyyyMMddhhmmss”  | Label with the first and last time-coordinate |
+|               |                   | values (rounded to the nearest second)        |
+|---------------+-------------------+-----------------------------------------------|
+| fx            | Omit time label   | This frequency applies to variables that are  |
+|               |                   | independent of time (“fixed”).                |
+|---------------+-------------------+-----------------------------------------------|
+
 """
 
-import xarray as xr
+from collections import deque
+from pathlib import Path
 
+import cftime
+import numpy as np
+import pandas as pd
+import xarray as xr
+from xarray.core.utils import is_scalar
+
+from .dataset_helpers import (
+    get_time_label,
+    has_time_axis,
+    is_datetime_type,
+    needs_resampling,
+)
 from .timeaverage import _frequency_from_approx_interval
 
 
@@ -18,59 +65,59 @@ def _filename_time_range(ds, rule) -> str:
     ds : xarray.Dataset
         The input dataset.
     rule : Rule
-        The rule object containing information for generating the filepath.
+        The rule object containing information for generating the
+        filepath.
 
     Returns
     -------
     str
         time_range in filepath.
     """
-    start = ds.time.data[0]
-    end = ds.time.data[-1]
-    start_year = start.strftime("%Y")
-    end_year = end.strftime("%Y")
-    frequency_str = rule.get("frequency_str")
-    time_method = rule.get("time_method")
-    # NOTE: the commented out return statments: Although they report the actual
-    # time limits in the file, the hard-coded version is chosen 2 reason,
-    # a) to replicate code in seamore tool
-    # b) to have consistent time range scheme in filename (Hmmm.... ?)
-    if frequency_str is None:
-        return f"{start_year}-{end_year}"
-    if frequency_str.endswith("YE"):
-        return f"{start_year}-{end_year}"
-    if frequency_str.endswith("ME"):
-        # return f"{start.strftime('%Y%m')}-{end.strftime('%Y%m')}"
-        return f"{start_year}01-{end_year}12"
-    if frequency_str.endswith("D"):
-        # return f"{start.strftime('%Y%m%d')}-{end.strftime('%Y%m%d')}"
-        return f"{start_year}0101-{end_year}1231"
-    if frequency_str.endswith("H"):
-        # return f"{start.strftime('%Y%m%d%H')}-{end.strftime('%Y%m%d%H')}"
-        if time_method == "INSTANTANEOUS":
-            return f"{start_year}01010030-{end_year}12312330"
-        else:
-            return f"{start_year}01010000-{end_year}12312300"
-    # the following is not covered in seamore tool, hopefully they are used.
-    if frequency_str.endswith("min"):
-        return f"{start.strftime('%Y%m%d%H%M')}-{end.strftime('%Y%m%d%H%M')}"
+    if not has_time_axis(ds):
+        return ""
+    time_label = get_time_label(ds)
+    if is_scalar(ds[time_label]):
+        return ""
+    start = pd.Timestamp(str(ds[time_label].data[0]))
+    end = pd.Timestamp(str(ds[time_label].data[-1]))
+    # frequency_str = rule.get("frequency_str")
+    frequency_str = rule.data_request_variable.frequency
+    if frequency_str in ("yr", "yrPt", "dec"):
+        return f"{start:%Y}-{end:%Y}"
+    if frequency_str in ("mon", "monC", "monPt"):
+        return f"{start:%Y%m}-{end:%Y%m}"
+    if frequency_str == "day":
+        return f"{start:%Y%m%d}-{end:%Y%m%d}"
+    if frequency_str in ("6hr", "3hr", "1hr", "6hrPt", "3hrPt", "1hrPt", "1hrCM"):
+        _start = start.round("1min")
+        _end = end.round("1min")
+        return f"{_start:%Y%m%d%H%M}-{_end:%Y%m%d%H%M}"
+    if frequency_str == "subhrPt":
+        _start = start.round("1s")
+        _end = end.round("1s")
+        return f"{_start:%Y%m%d%H%M%S}-{_end:%Y%m%d%H%M%S}"
+    if frequency_str == "fx":
+        return ""
     else:
-        return f"{start.strftime('%Y%m%d%H%M%S')}-{end.strftime('%Y%m%d%H%M%S')}"
+        raise NotImplementedError(f"No implementation for {frequency_str} yet.")
 
 
 def create_filepath(ds, rule):
     """
     Generate a filepath when given an xarray dataset and a rule.
 
-    This function generates a filepath for the output file based on the given dataset and rule.
-    The filepath includes the name, table_id, institution, source_id, experiment_id, label, grid, and optionally the start and end time.
+    This function generates a filepath for the output file based on
+    the given dataset and rule.  The filepath includes the name,
+    table_id, institution, source_id, experiment_id, label, grid, and
+    optionally the start and end time.
 
     Parameters
     ----------
     ds : xarray.Dataset
         The input dataset.
     rule : Rule
-        The rule object containing information for generating the filepath.
+        The rule object containing information for generating the
+        filepath.
 
     Returns
     -------
@@ -79,7 +126,9 @@ def create_filepath(ds, rule):
 
     Notes
     -----
-    The rule object should have the following attributes: cmor_variable, data_request_variable, variant_label, source_id, experiment_id, output_directory, and optionally institution.
+    The rule object should have the following attributes:
+    cmor_variable, data_request_variable, variant_label, source_id,
+    experiment_id, output_directory, and optionally institution.
     """
     name = rule.cmor_variable
     table_id = rule.data_request_variable.table.table_id  # Omon
@@ -91,24 +140,60 @@ def create_filepath(ds, rule):
     grid = "gn"  # grid_type
     time_range = _filename_time_range(ds, rule)
     filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{time_range}.nc"
+    Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     return filepath
 
 
 def save_dataset(da: xr.DataArray, rule):
     """
-    save datasets to multiple files
+    Save dataset to one or more files.
+
+    Parameters
+    ----------
+    da : xr.DataArray
+        The dataset to be saved.
+    rule : Rule
+        The rule object containing information for generating the
+        filepath.
+
+    Returns
+    -------
+    None
+
+    Notes
+    -----
+    If the dataset does not have a time axis, or if the time axis is a scalar,
+    this function will save the dataset to a single file.  Otherwise, it will
+    split the dataset into chunks based on the time axis and save each chunk
+    to a separate file.
+
+    The filepath will be generated based on the rule object and the time range
+    of the dataset.  The filepath will include the name, table_id, institution,
+    source_id, experiment_id, label, grid, and optionally the start and end time.
+
+    If the dataset needs resampling (i.e., the time axis does not align with the
+    time frequency specified in the rule object), this function will split the
+    dataset into chunks based on the time axis and resample each chunk to the
+    specified frequency.  The resampled chunks will then be saved to separate
+    files.
 
     NOTE: prior to calling this function, call dask.compute() method,
     otherwise tasks will progress very slow.
     """
-    file_timespan = rule.file_timespan
-    if "time" not in da.dims:
+    if not has_time_axis(da):
+        filepath = create_filepath(da, rule)
+        return da.to_netcdf(filepath, mode="w", format="NETCDF4")
+    time_label = get_time_label(da)
+    if is_scalar(da[time_label]):
         filepath = create_filepath(da, rule)
         return da.to_netcdf(filepath, mode="w", format="NETCDF4")
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
-    frequency_str = _frequency_from_approx_interval(file_timespan)
-    groups = da.resample(time=frequency_str)
+    file_timespan = getattr(rule, "file_timespan", None)
+    if not needs_resampling(da, file_timespan):
+        filepath = create_filepath(da, rule)
+        return da.to_netcdf(filepath, mode="w", format="NETCDF4")
+    groups = da.resample(time=file_timespan)
     paths = []
     datasets = []
     for group_name, group_ds in groups:

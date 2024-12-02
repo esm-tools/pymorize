@@ -4,25 +4,63 @@ import rich_click as click
 
 
 @click.command()
-@click.option("--local-port", default=8787, help="Local port to forward from")
-@click.option("--remote-port", default=8787, help="Remote port to forward to")
-@click.option("--gateway", default="levante2.dkrz.de", help="Gateway server hostname")
+@click.option(
+    "--local-dask-port",
+    default=8787,
+    help="Local port to forward from (Dask) [default: 8787]",
+)
+@click.option(
+    "--remote-dask-port",
+    default=8787,
+    help="Remote port to forward to (Dask) [default: 8787]",
+)
+@click.option(
+    "--local-prefect-port",
+    default=4200,
+    help="Local port to forward from (Prefect) [default: 4200]",
+)
+@click.option(
+    "--remote-prefect-port",
+    default=4200,
+    help="Remote port to forward to (Prefect) [default: 4200]",
+)
+@click.option(
+    "--gateway",
+    default="levante1.dkrz.de",
+    help="Gateway server hostname [default: levante1.dkrz.de]",
+)
 @click.option("--compute-node", required=True, help="Compute node hostname")
 @click.option("--username", required=True, help="Username for SSH connections")
-def ssh_tunnel_cli(local_port, remote_port, gateway, compute_node, username):
+def ssh_tunnel_cli(
+    local_dask_port,
+    remote_dask_port,
+    local_prefect_port,
+    remote_prefect_port,
+    gateway,
+    compute_node,
+    username,
+):
     """
-    Create an SSH tunnel to access a Dask dashboard on a remote compute node.
+    Create an SSH tunnel to access Prefect and Dask dashboards on a remote compute node.
+    """
+    dask_link = click.style(f"http://localhost:{local_dask_port}/status", fg='blue', underline=True)
+    prefect_link = click.style(f"http://localhost:{local_prefect_port}", fg='blue', underline=True)
 
-    This script sets up an SSH tunnel to access a Dask dashboard running
-    on a remote compute node, routed through a gateway server.
-    """
-    ssh_command = f"ssh -nNT -L {local_port}:{compute_node}:{remote_port} -L 4200:{compute_node}:4200 {username}@{gateway}"
+    ssh_command = f"ssh -nNT -L {local_dask_port}:{compute_node}:{remote_dask_port} -L {local_prefect_port}:{compute_node}:{remote_prefect_port} {username}@{gateway}"
 
     click.echo(f"Creating SSH tunnel via: {ssh_command}")
     click.echo(
-        f"Port forwarding: localhost:{local_port} -> {gateway}:{remote_port} -> {compute_node}:{remote_port}"
+        f"Port forwarding: localhost:{local_dask_port} -> {gateway}:{remote_dask_port} -> {compute_node}:{remote_dask_port}"
     )
-    click.echo(f"Dashboard will be accessible at http://localhost:{local_port}/status")
+    click.echo(
+        f"Port forwarding: localhost:{local_prefect_port} -> {gateway}:{remote_prefect_port} -> {compute_node}:{remote_prefect_port}"
+    )
+    click.echo(
+        f"Dask Dashboard will be accessible at {dask_link}"
+    )
+    click.echo(
+        f"Prefect Dashboard will be accessible at {prefect_link}"
+    )
     click.echo("Press Ctrl+C to close the tunnel")
 
     try:

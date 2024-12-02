@@ -10,6 +10,14 @@ import yaml
 from pymorize.cmorizer import CMORizer
 from pymorize.logging import logger
 
+def test_init(test_config):
+    logger.info(f"Processing {test_config}")
+    with open(test_config, "r") as f:
+        cfg = yaml.safe_load(f)
+    CMORizer.from_dict(cfg)
+    # If we get this far, it was possible to construct
+    # the object, so this test passes:
+    assert True
 
 @pytest.mark.skipif(
     shutil.which("sbatch") is None, reason="sbatch is not available on this host"
@@ -22,8 +30,3 @@ def test_process(test_config):
     cmorizer.process()
 
 
-def test_init(test_config):
-    logger.info(f"Processing {test_config}")
-    with open(test_config, "r") as f:
-        cfg = yaml.safe_load(f)
-    cmorizer = CMORizer.from_dict(cfg)

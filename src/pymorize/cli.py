@@ -2,6 +2,7 @@ import os
 import pathlib
 import sys
 from importlib import resources
+from typing import List
 
 import pkg_resources
 import rich_click as click
@@ -11,9 +12,10 @@ from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
-from . import _version, dev_utils
+from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
-from .logging import logger
+from .filecache import fc
+from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -68,7 +70,7 @@ def find_subcommands():
 
 
 @click_loguru.logging_options
-@click.group(name="pymorize", help="Pymorize - Makes CMOR Simple (or Great Again!)")
+@click.group(name="pymorize", help="Pymorize - Makes CMOR Simple")
 @click_loguru.stash_subcommand()
 @click.version_option(version=VERSION, prog_name=NAME)
 def cli(verbose, quiet, logfile, profile_mem):
@@ -88,6 +90,9 @@ def cli(verbose, quiet, logfile, profile_mem):
 @click_loguru.init_logger()
 @click.argument("config_file", type=click.Path(exists=True))
 def process(config_file):
+    # NOTE(PG): The ``init_logger`` decorator above removes *ALL* previously configured loggers,
+    #           so we need to re-create the report logger here. Paul does not like this at all.
+    add_report_logger()
     logger.info(f"Processing {config_file}")
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
@@ -121,6 +126,14 @@ def validate(verbose, quiet, logfile, profile_mem):
 @click_loguru.stash_subcommand()
 @click.version_option(version=VERSION, prog_name=NAME)
 def develop(verbose, quiet, logfile, profile_mem):
+    return 0
+
+
+@click_loguru.logging_options
+@click.group()
+@click_loguru.stash_subcommand()
+@click.version_option(version=VERSION, prog_name=NAME)
+def cache(verbose, quiet, logfile, profile_mem):
     return 0
 
 
@@ -211,13 +224,58 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
 ################################################################################
 ################################################################################
 
+################################################################################
+# COMMANDS FOR cache
+################################################################################
+
+
+@cache.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument(
+    "cache_dir",
+    default=f"{os.environ['HOME']}/.prefect/storage/",
+    type=click.Path(exists=True, dir_okay=True),
+)
+def inspect_prefect_global(cache_dir, verbose, quiet, logfile, profile_mem):
+    """Print information about items in Prefect's storage cache"""
+    logger.info(f"Inspecting Prefect Cache at {cache_dir}")
+    caching.inspect_cache(cache_dir)
+    return 0
+
+
+@cache.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument(
+    "result",
+    type=click.Path(exists=True),
+)
+def inspect_prefect_result(result, verbose, quiet, logfile, profile_mem):
+    obj = caching.inspect_result(result)
+    logger.info(obj)
+    return 0
+
+
+@cache.command()
+@click_loguru.logging_options
+@click.argument("files", type=click.Path(exists=True), nargs=-1)
+def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
+    fc.add_files(files)
+    fc.save()
+
+
+################################################################################
+################################################################################
+################################################################################
+cli.add_command(validate)
+cli.add_command(develop)
+cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
+
 
 def main():
     for entry_point_name, entry_point in find_subcommands().items():
         cli.add_command(entry_point["callable"], name=entry_point_name)
-    cli.add_command(validate)
-    cli.add_command(develop)
-    cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
     cli(auto_envvar_prefix="PYMORIZE")
 
 
