@@ -18,8 +18,8 @@ from rich.progress import track
 from .cluster import (CLUSTER_ADAPT_SUPPORT, CLUSTER_MAPPINGS,
                       CLUSTER_SCALE_SUPPORT, set_dashboard_link)
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_reqest.table import DataRequestTable
 from .data_request.collection import DataRequest, IgnoreTableFiles
+from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .filecache import fc
 from .logging import logger
