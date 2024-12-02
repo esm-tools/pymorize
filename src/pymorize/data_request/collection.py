@@ -7,14 +7,14 @@ from .table import DataRequestTable
 
 class DataRequest(ABC):
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "DataRequest":
         """Create a DataRequest from a dictionary of tables."""
         raise NotImplementedError
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def from_directory(cls, directory: str) -> "DataRequest":
         """Create a DataRequest from a directory of tables."""
         raise NotImplementedError
