@@ -2,12 +2,14 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict
 
+from .table import DataRequestTable
+
 
 class DataRequest(ABC):
 
     @abstractmethod
     @classmethod
-    def from_tables(cls, tables: Dict[str, "DataRequestTable"]) -> "DataRequest":
+    def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "DataRequest":
         """Create a DataRequest from a dictionary of tables."""
         raise NotImplementedError
 
