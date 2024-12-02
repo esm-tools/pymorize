@@ -1,7 +1,7 @@
 import pytest
 
 from pymorize.config import PymorizeConfigManager
-from pymorize.data_request import DataRequestVariable
+from pymorize.data_request.variable import DataRequestVariable
 from pymorize.rule import Rule
 
 
