@@ -19,7 +19,7 @@ from .cluster import (CLUSTER_ADAPT_SUPPORT, CLUSTER_MAPPINGS,
                       CLUSTER_SCALE_SUPPORT, set_dashboard_link)
 from .config import PymorizeConfig, PymorizeConfigManager
 from .data_request.collection import DataRequest, IgnoreTableFiles
-from .data_request.table import DataRequestTable
+from .data_request.table import CMIP6JSONDataRequestTable
 from .data_request.variable import DataRequestVariable
 from .filecache import fc
 from .logging import logger
@@ -193,7 +193,7 @@ class CMORizer:
             logger.debug(f"{tbl_name}, {tbl_file}")
             if tbl_file.name not in ignore_files:
                 logger.debug(f"Adding Table {tbl_name}")
-                tables[tbl_name] = DataRequestTable(tbl_file)
+                tables[tbl_name] = CMIP6JSONDataRequestTable.from_json_file(tbl_file)
         self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_create_data_request(self):

@@ -13,6 +13,7 @@ from .variable import CMIP6DataRequestVariable, DataRequestVariable
 ################################################################################
 
 
+@dataclass
 class DataRequestTable(ABC):
     """Abstract base class for a generic data request table."""
 
@@ -49,6 +50,7 @@ class DataRequestTable(ABC):
 ################################################################################
 
 
+@dataclass
 class DataRequestTableHeader(ABC):
 
     @property
