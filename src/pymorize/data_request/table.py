@@ -308,19 +308,23 @@ class CMIP6DataRequestTable(DataRequestTable):
             f"A Variable with the attribute {find_by}={name} not found in the table."
         )
 
-    @classmethod
-    def from_dict(cls, data: dict) -> "CMIP6DataRequestTable":
-        header = CMIP6DataRequestTableHeader.from_dict(data["Header"])
-        variables = [
-            CMIP6DataRequestVariable.from_dict(v) for v in data["variable_entry"]
-        ]
-        return cls(header, variables)
-
 
 ################################################################################
 
 
 class CMIP6JSONDataRequestTable(CMIP6DataRequestTable):
+
+    # NOTE(PG): Special from dict constructor, sicne this is how the dict appears
+    #           when loaded from the JSON file. I have no idea how it would look
+    #           in a different source, so we keep it clean here...
+    @classmethod
+    def from_dict(cls, data: dict) -> "CMIP6DataRequestTable":
+        header = CMIP6DataRequestTableHeader.from_dict(data["Header"])
+        variables = [
+            CMIP6DataRequestVariable.from_dict(v)
+            for v in data["variable_entry"].values()
+        ]
+        return cls(header, variables)
 
     @classmethod
     def from_json_file(cls, jfile) -> "CMIP6JSONDataRequestTable":
