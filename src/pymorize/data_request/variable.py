@@ -20,6 +20,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 
+@dataclass
 class DataRequestVariable(ABC):
     """Abstract base class for a generic variable."""
 
