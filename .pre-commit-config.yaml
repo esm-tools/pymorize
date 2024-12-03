@@ -2,7 +2,7 @@ default_language_version:
     python: python3.9
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v3.2.0
+    rev: v5.0.0
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
@@ -16,6 +16,11 @@ repos:
     rev: '7.1.1'
     hooks:
     - id: flake8
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
+    hooks:
+      - id: isort
+        name: isort (python)
 # YAML stuff from https://earth.bsc.es/gitlab/digital-twins/de_340-2/workflow
 #  - repo: https://github.com/adrienverge/yamllint.git
 #    rev: v1.35.1 # or higher tag
@@ -27,7 +32,8 @@ repos:
 #    hooks:
 #      - id: yamlfmt
 exclude: |
-    (?x)(
-        ^versioneer.py/|
-        ^src/pymorize/webapp.py/|
-    )
+  (?x)  # Enable verbose regex
+  (
+      ^versioneer\.py$|           # Exclude 'versioneer.py'
+      ^src/pymorize/webapp\.py$   # Exclude 'src/pymorize/webapp.py'
+  )
