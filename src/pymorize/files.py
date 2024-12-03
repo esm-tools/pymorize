@@ -40,9 +40,11 @@ Table 2: Precision of time labels used in file names
 
 
 from pathlib import Path
+
 import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
+
 from .dataset_helpers import get_time_label, has_time_axis, needs_resampling
 
 
