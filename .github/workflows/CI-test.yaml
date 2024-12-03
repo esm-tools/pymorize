@@ -90,4 +90,4 @@ jobs:
           flake8 . --show-source --statistics --exclude ./cmip6-cmor-tables,_version.py,./src/pymorize/webapp.py
       - name: Run black
         run: |
-          black --check .
+          black --check --extend-exclude ./cmip6-cmor-tables,versioneer.py,./src/pymorize/webapp.py .
