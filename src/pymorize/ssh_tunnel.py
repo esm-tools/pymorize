@@ -50,14 +50,21 @@ def ssh_tunnel_cli(
         f"http://localhost:{local_prefect_port}", fg="blue", underline=True
     )
 
-    ssh_command = f"ssh -nNT -L {local_dask_port}:{compute_node}:{remote_dask_port} -L {local_prefect_port}:{compute_node}:{remote_prefect_port} {username}@{gateway}"
+    ssh_command = (
+        f"ssh -nNT "
+        f"-L {local_dask_port}:{compute_node}:{remote_dask_port} "
+        f"-L {local_prefect_port}:{compute_node}:{remote_prefect_port} "
+        f"{username}@{gateway}"
+    )
 
     click.echo(f"Creating SSH tunnel via: {ssh_command}")
     click.echo(
-        f"Port forwarding: localhost:{local_dask_port} -> {gateway}:{remote_dask_port} -> {compute_node}:{remote_dask_port}"
+        f"Port forwarding: localhost:{local_dask_port} -> "
+        f"{gateway}:{remote_dask_port} -> {compute_node}:{remote_dask_port}"
     )
     click.echo(
-        f"Port forwarding: localhost:{local_prefect_port} -> {gateway}:{remote_prefect_port} -> {compute_node}:{remote_prefect_port}"
+        f"Port forwarding: localhost:{local_prefect_port} -> "
+        f"{gateway}:{remote_prefect_port} -> {compute_node}:{remote_prefect_port}"
     )
     click.echo(f"Dask Dashboard will be accessible at {dask_link}")
     click.echo(f"Prefect Dashboard will be accessible at {prefect_link}")

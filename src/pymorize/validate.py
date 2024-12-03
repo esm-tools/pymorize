@@ -133,7 +133,7 @@ RULES_SCHEMA = {
                 "variant_label": {
                     "type": "string",
                     "required": True,
-                    "regex": "^r\d+i\d+p\d+f\d+$",
+                    "regex": "^r\d+i\d+p\d+f\d+$",  # noqa: W605
                 },
                 "source_id": {"type": "string", "required": True},
                 "output_directory": {

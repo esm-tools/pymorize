@@ -38,22 +38,18 @@ Table 2: Precision of time labels used in file names
 
 """
 
-from collections import deque
+from collections import deque  # noqa: F401
 from pathlib import Path
 
-import cftime
-import numpy as np
+import cftime  # noqa: F401
+import numpy as np  # noqa: F401
 import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
 
-from .dataset_helpers import (
-    get_time_label,
-    has_time_axis,
-    is_datetime_type,
-    needs_resampling,
-)
-from .timeaverage import _frequency_from_approx_interval
+from .dataset_helpers import is_datetime_type  # noqa: F401
+from .dataset_helpers import get_time_label, has_time_axis, needs_resampling
+from .timeaverage import _frequency_from_approx_interval  # noqa: F401
 
 
 def _filename_time_range(ds, rule) -> str:

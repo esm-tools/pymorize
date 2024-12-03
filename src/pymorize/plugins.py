@@ -20,7 +20,8 @@ def plugins(verbose, quiet, logfile, profile_mem):
 @click_loguru.init_logger()
 def _list():
     """
-    List all installed pymorize plugins. These can be to help CMORize a specific data collection (e.g. produced by FESOM, ICON, etc.)
+    List all installed pymorize plugins. These can be to help CMORize a specific data
+    collection (e.g. produced by FESOM, ICON, etc.)
     """
     discovered_plugins = find_subcommands()
     logger.info("The pymorize plugins are installed and available:")

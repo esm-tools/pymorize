@@ -3,14 +3,14 @@ import re
 import typing
 import warnings
 
-# import deprecation
-
 # import questionary
 import yaml
 
 from . import data_request, pipeline
 from .gather_inputs import InputFileCollection
 from .logging import logger
+
+# import deprecation
 
 
 class Rule:
@@ -134,7 +134,11 @@ class Rule:
         return setattr(self, key, value)
 
     def __repr__(self):
-        return f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines}, tables={self.tables}, data_request_variables={self.data_request_variables})"
+        return (
+            f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, "
+            f"pipelines={self.pipelines}, tables={self.tables}, "
+            f"data_request_variables={self.data_request_variables})"
+        )
 
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"

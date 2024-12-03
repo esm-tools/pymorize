@@ -2,7 +2,8 @@ import subprocess
 
 import rich_click as click
 
-from .cli import NAME, VERSION, click_loguru, find_subcommands  # , pymorize_cli_group
+from .cli import find_subcommands  # noqa: F401
+from .cli import NAME, VERSION, click_loguru  # , pymorize_cli_group
 from .logging import logger
 
 
@@ -22,7 +23,7 @@ def externals(ctx, verbose, quiet, logfile, profile_mem):
         "NCO": subprocess.run(["ncap2", "-r"], capture_output=True).stdout.decode(),
     }
     if ctx.invoked_subcommand is None:
-        for NAME, VERSION in ctx.externals.items():
+        for NAME, VERSION in ctx.externals.items():  # noqa: F402
             logger.info(f"{NAME}: {VERSION}")
 
 
@@ -30,7 +31,8 @@ def externals(ctx, verbose, quiet, logfile, profile_mem):
 # @click_loguru.init_logger()
 # def _list():
 #     """
-#     List all installed pymorize plugins. These can be to help CMORize a specific data collection (e.g. produced by FESOM, ICON, etc.)
+#     List all installed pymorize plugins. These can be to help CMORize a specific data
+#     collection (e.g. produced by FESOM, ICON, etc.)
 #     """
 #     discovered_plugins = find_subcommands()
 #     logger.info("The pymorize plugins are installed and available:")

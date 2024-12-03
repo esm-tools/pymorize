@@ -153,7 +153,7 @@ def test_not_defined_unit_checker(rule_with_data_request):
     da = xr.DataArray(10, name="var1", attrs={"units": None})
 
     with pytest.raises(ValueError, match="Unit not defined"):
-        new_da = handle_unit_conversion(da, rule_spec)
+        new_da = handle_unit_conversion(da, rule_spec)  # noqa: F841
 
 
 def test_data_request_missing_unit(rule_with_data_request):
@@ -165,7 +165,7 @@ def test_data_request_missing_unit(rule_with_data_request):
     with pytest.raises(
         AttributeError, match="DataRequestVariable' object has no attribute 'unit'"
     ):
-        new_da = handle_unit_conversion(da, rule_spec)
+        new_da = handle_unit_conversion(da, rule_spec)  # noqa: F841
 
 
 def test_data_request_not_defined_unit(rule_with_data_request):
@@ -175,7 +175,7 @@ def test_data_request_not_defined_unit(rule_with_data_request):
     da = xr.DataArray(10, name="var1", attrs={"units": "kg m-2 s-1"})
 
     with pytest.raises(ValueError, match="Unit not defined"):
-        new_da = handle_unit_conversion(da, rule_spec)
+        new_da = handle_unit_conversion(da, rule_spec)  # noqa: F841
 
 
 def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request):
