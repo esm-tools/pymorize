@@ -37,7 +37,7 @@ generally divided into several building blocks:
   provided, and you can also define your own.
 
 * :py:class:`~pymorize.cmorizer.CMORizer` is responsible for reading in the rules, and managing the various
-  objects. 
+  objects.
 
 :py:class:`~pymorize.rule.Rule` Class
 -------------------------------------
@@ -92,7 +92,7 @@ The :py:class:`~pymorize.cmorizer.CMORizer` class is responsible for managing th
    such as the path to the CMOR tables, or the path to the output directory. This is used to set up the environment for the rules and pipelines.
 
 3. ``pipelines``: This is a list of :py:class:`~pymorize.pipeline.Pipeline` objects that are used to process the data. These are the pipelines that are
-   applied to the data, and are referenced by the rules. Each pipeline should have a unique name, and a series of steps to perform. You can also specify 
+   applied to the data, and are referenced by the rules. Each pipeline should have a unique name, and a series of steps to perform. You can also specify
    "frozen" arguments and key-word arguments to apply to steps in the pipeline's configuration.
 
 4. ``rules``: This is a list of :py:class:`~pymorize.rule.Rule` objects that are used to match the data. Each rule should have a unique name, and a series of
@@ -107,17 +107,17 @@ Building Actions for Pipelines
 When defining actions for a :py:class:`~pymorize.pipeline.Pipeline`, you should create functions
 with the following signature::
 
-    def my_action(data: Any, 
-                  rule_spec: pymorize.rule.Rule, 
-                  cmorizer: pymorize.cmorizer.CMORizer, 
+    def my_action(data: Any,
+                  rule_spec: pymorize.rule.Rule,
+                  cmorizer: pymorize.cmorizer.CMORizer,
                   *args, **kwargs) -> Any:
         ...
         return data
 
 The ``data`` argument is the data that is passed from one action to the next. The ``rule_spec`` is the
-instance of the :py:class:`~pymorize.rule.Rule` class that is currently being evaluated. The ``cmorizer`` 
-is the instance of the :py:class:`~pymorize.cmorizer.CMORizer` class that is managing the pipeline. You 
-can pass additional arguments to the action by using ``*args`` and ``**kwargs``, however most arguments or 
+instance of the :py:class:`~pymorize.rule.Rule` class that is currently being evaluated. The ``cmorizer``
+is the instance of the :py:class:`~pymorize.cmorizer.CMORizer` class that is managing the pipeline. You
+can pass additional arguments to the action by using ``*args`` and ``**kwargs``, however most arguments or
 keyword arguments should be extracted from the ``rule_spec``. The action should return the data that will be
 passed to the next action in the pipeline. Note that the data can be any type, but it should be the same type
 as what is expected in the next action in the pipeline.
@@ -134,7 +134,7 @@ if needed, and these can be fixed to always use the same values for the entire p
 alternatively, to the rule that the action is a part of. A few illustrative examples may make this clearer.
 
 * Example 1: A simple action that adds 1 to the data::
-  
+
       def add_one(data: Any, rule_spec: pymorize.rule.Rule, cmorizer: pymorize.cmorizer.CMORizer) -> Any:
           """Add one to the data."""
           return data + 1
@@ -228,7 +228,7 @@ alternatively, to the rule that the action is a part of. A few illustrative exam
         - input_patterns: [".*"]
           cmor_variable: tas
           pipelines: [Set Attribute]
-  
+
   .. important::
 
       In the case of passing arguments that are *not* in the rule spec, you need to be careful about where you place the information. The :py:class:`~pymorize.rule.Rule` should win, if
@@ -236,12 +236,12 @@ alternatively, to the rule that the action is a part of. A few illustrative exam
       the rule, you should do:
 
       .. code-block:: yaml
-    
+
             pymorize:
               version: unreleased
-    
+
             general:
-    
+
             pipelines:
               - name: Set Attribute
                 actions:

@@ -26,4 +26,8 @@ repos:
 #    rev: v0.10.0
 #    hooks:
 #      - id: yamlfmt
-exclude: runscripts/FDB/schema
+exclude: |
+    (?x)(
+        ^versioneer.py/|
+        ^src/pymorize/webapp.py/|
+    )

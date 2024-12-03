@@ -11,7 +11,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-  
+
    installation
    pymorize_building_blocks
    pymorize_cli

@@ -7,6 +7,7 @@ from time import sleep
 
 # third-party imports
 import rich_click as click
+
 # module imports
 from click_loguru import ClickLoguru
 
