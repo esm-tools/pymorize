@@ -76,6 +76,7 @@ setup(
             "pytest-xdist",
             "sphinx",
             "sphinx_rtd_theme",
+            "yamllint",
         ],
         "doc": docs_require,
     },
