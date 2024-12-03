@@ -53,7 +53,7 @@ jobs:
         run: |
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           PYTHONPATH=src pytest -v --doctest-modules src/
-  format:
+  check_format:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
