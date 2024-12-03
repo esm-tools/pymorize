@@ -70,9 +70,10 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
+          python -m pip install black
           python -m pip install flake8 pytest
           python -m pip install isort
-          python -m pip install black
+          python -m pip install yamllint
           if ${{ matrix.python-version == '3.12' }}; then pip install --upgrade setuptools; fi
       - name: Install package
         run: |
@@ -91,3 +92,6 @@ jobs:
       - name: Run black
         run: |
           black --check --extend-exclude 'cmip6-cmor-tables|versioneer\.py|webapp\.py' .
+      - name: yamllint
+        run: |
+          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}}" .
