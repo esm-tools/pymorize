@@ -290,6 +290,14 @@ class CMIP6DataRequestTable(DataRequestTable):
     def variables(self) -> List[str]:
         return self._variables
 
+    @property
+    def header(self) -> CMIP6DataRequestTableHeader:
+        return self._header
+
+    @property
+    def table_name(self) -> str:
+        return self.header.table_id
+
     def get_variable(self, name: str, find_by="name") -> DataRequestVariable:
         """Returns the first variable with the matching name.
 
