@@ -94,4 +94,4 @@ jobs:
           black --check --extend-exclude 'cmip6-cmor-tables|versioneer\.py|webapp\.py' .
       - name: yamllint
         run: |
-          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}}" --exclude 'cmip6-cmor-tables' .
+          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}, ignore: ['cmip6-cmor-tables']}" .

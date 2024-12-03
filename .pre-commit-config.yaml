@@ -28,10 +28,6 @@ repos:
     hooks:
       - id: yamllint
         args: [-d, "{extends: default, rules: {line-length: {level: 'warning'}}}"]
-#  - repo: https://github.com/google/yamlfmt
-#    rev: v0.10.0
-#    hooks:
-#      - id: yamlfmt
 exclude: |
   (?x)  # Enable verbose regex
   (
