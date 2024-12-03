@@ -79,7 +79,7 @@ jobs:
           python -m pip install .[dev]
       - name: Run isort
         run: |
-          isort --black --check .
+          isort --profile black --check .
       - name: Lint with flake8
         run: |
           # stop the build if there are Python syntax errors or undefined names
