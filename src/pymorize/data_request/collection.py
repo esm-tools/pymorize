@@ -2,10 +2,13 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Dict
 
+import deprecation
+
+from .factory import MetaFactory
 from .table import DataRequestTable
 
 
-class DataRequest(ABC):
+class DataRequest(ABC, metaclass=MetaFactory):
 
     @classmethod
     @abstractmethod
@@ -16,6 +19,13 @@ class DataRequest(ABC):
     @classmethod
     @abstractmethod
     def from_directory(cls, directory: str) -> "DataRequest":
+        """Create a DataRequest from a directory of tables."""
+        raise NotImplementedError
+
+    @classmethod
+    @deprecation.deprecated(details="Use from_directory instead.")
+    @abstractmethod
+    def from_tables_dir(cls, directory: str) -> "DataRequest":
         """Create a DataRequest from a directory of tables."""
         raise NotImplementedError
 

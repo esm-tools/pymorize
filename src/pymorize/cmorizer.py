@@ -35,6 +35,8 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 
 
 class CMORizer:
+    _SUPPORTED_CMOR_VERSIONS = ("CMIP6",)
+
     def __init__(
         self,
         pymorize_cfg=None,
@@ -200,8 +202,16 @@ class CMORizer:
         """
         Creates a DataRequest object from the tables directory.
         """
+        if self._general_cfg.get("cmor_version") is None:
+            raise ValueError("cmor_version must be set in the general configuration.")
+        cmor_version = self._general_cfg["cmor_version"]
+        if cmor_version not in self._SUPPORTED_CMOR_VERSIONS:
+            raise ValueError(
+                f"CMOR version {cmor_version} is not supported. Supported versions are {self._SUPPORTED_CMOR_VERSION}"
+            )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        self.data_request = DataRequest.from_tables_dir(table_dir)
+        DataRequestObj = DataRequestFactory.create_data_request(cmor_version)
+        self.data_request = DataRequestObj.from_tables_dir(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
         """

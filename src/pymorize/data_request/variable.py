@@ -1,27 +1,34 @@
 """
-This module defines the ``DataRequestVariable`` abstract base class and its concrete implementation ``CMIP6DataRequestVariable``.
+This module defines the ``DataRequestVariable`` abstract base class and its
+concrete implementation ``CMIP6DataRequestVariable``.
 
-The ``DataRequestVariable`` class outlines the necessary properties and methods that any variable class should implement.
-It includes properties such as frequency, modeling realm, standard name, units, cell methods, cell measures,
-long name, comment, dimensions, out name, type, positive direction, valid minimum and maximum values,
-acceptable minimum and maximum mean absolute values, and the table name.
+The ``DataRequestVariable`` class outlines the necessary properties and methods
+that any variable class should implement. It includes properties such as frequency,
+modeling realm, standard name, units, cell methods, cell measures, long name,
+comment, dimensions, out name, type, positive direction, valid minimum and
+maximum values, acceptable minimum and maximum mean absolute values, and the
+table name.
 
-The ``CMIP6DataRequestVariable`` class is a concrete implementation of the ``DataRequestVariable`` class, specifically for CMIP6 variables.
-It uses the ``dataclass`` decorator to automatically generate the ``__init__``, ``__repr__``, and other special methods.
+The ``CMIP6DataRequestVariable`` class is a concrete implementation of the
+``DataRequestVariable`` class, specifically for CMIP6 variables. It uses the
+``dataclass`` decorator to automatically generate the ``__init__``, ``__repr__``,
+and other special methods.
 
-The module also provides class methods for constructing ``DataRequestVariable`` instances from dictionaries and JSON files,
-as well as a method for converting a ``DataRequestVariable`` instance to a dictionary representation.
+The module also provides class methods for constructing ``DataRequestVariable``
+instances from dictionaries and JSON files, as well as a method for converting
+a ``DataRequestVariable`` instance to a dictionary representation.
 """
 
 import json
-import pathlib
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
+from .factory import MetaFactory
+
 
 @dataclass
-class DataRequestVariable(ABC):
+class DataRequestVariable(ABC, metaclass=MetaFactory):
     """Abstract base class for a generic variable."""
 
     _type_strings = {

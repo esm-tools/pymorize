@@ -6,6 +6,7 @@ from typing import List
 import pendulum
 from semver.version import Version
 
+from .factory import MetaFactory
 from .variable import CMIP6DataRequestVariable, DataRequestVariable
 
 ################################################################################
@@ -14,7 +15,7 @@ from .variable import CMIP6DataRequestVariable, DataRequestVariable
 
 
 @dataclass
-class DataRequestTable(ABC):
+class DataRequestTable(ABC, metaclass=MetaFactory):
     """Abstract base class for a generic data request table."""
 
     @property
@@ -51,7 +52,7 @@ class DataRequestTable(ABC):
 
 
 @dataclass
-class DataRequestTableHeader(ABC):
+class DataRequestTableHeader(ABC, metaclass=MetaFactory):
 
     @property
     @abstractmethod
@@ -149,6 +150,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     ############################################################################
 
     # Properties without defaults:
+    # ----------------------------
     _table_id: str
     _realm: str
     _table_date: pendulum.Date
@@ -156,7 +158,9 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     _generic_levels: List[str]
 
     # Properties with known defaults:
-    # NOTE(PG): I don't like doing it this way, but it is fastest for right by now...
+    # -------------------------------
+    # NOTE(PG): I don't like doing it this way, but it is fastest to
+    #           implement for right by now...
     # Key: Value --> Old: New
     _HARD_CODED_DATA_SPECS_REPLACEMENTS = {
         "01.00.33": "1.0.33",
@@ -193,10 +197,13 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
         # Handle Version conversions
         if "_data_specs_version" in extracted_data:
             for old_value, new_value in cls._HARD_CODED_DATA_SPECS_REPLACEMENTS.items():
-                extracted_data["_data_specs_version"] = Version.parse(
-                    extracted_data["_data_specs_version"].replace(old_value, new_value),
-                    optional_minor_and_patch=True,
-                )
+                extracted_data["_data_specs_version"] = extracted_data[
+                    "_data_specs_version"
+                ].replace(old_value, new_value)
+            extracted_data["_data_specs_version"] = Version.parse(
+                extracted_data["_data_specs_version"],
+                optional_minor_and_patch=True,
+            )
         if "_cmor_version" in extracted_data:
             extracted_data["_cmor_version"] = Version.parse(
                 extracted_data["_cmor_version"],
@@ -280,6 +287,7 @@ class CMIP6JSONDataRequestTableHeader(CMIP6DataRequestTableHeader):
 class CMIP6DataRequestTable(DataRequestTable):
     """DataRequestTable for CMIP6."""
 
+    # FIXME(PG): This might bite itself in the ass...
     def __init__(
         self,
         header: CMIP6DataRequestTableHeader,
@@ -324,7 +332,7 @@ class CMIP6DataRequestTable(DataRequestTable):
 
 class CMIP6JSONDataRequestTable(CMIP6DataRequestTable):
 
-    # NOTE(PG): Special from dict constructor, sicne this is how the dict appears
+    # NOTE(PG): Special from_dict constructor, since this is how the dict appears
     #           when loaded from the JSON file. I have no idea how it would look
     #           in a different source, so we keep it clean here...
     @classmethod
