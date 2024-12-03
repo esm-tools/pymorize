@@ -156,10 +156,14 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     _generic_levels: List[str]
 
     # Properties with known defaults:
-    _HARD_CODED_DATA_SPECS_OLD = "01.00.33"
-    _HARD_CODED_DATA_SPECS_NEW = "1.0.33"
+    # NOTE(PG): I don't like doing it this way, but it is fastest for right by now...
+    # Key: Value --> Old: New
+    _HARD_CODED_DATA_SPECS_REPLACEMENTS = {
+        "01.00.33": "1.0.33",
+        "01.00.27": "1.0.27",
+    }
     _data_specs_version: Version = Version.parse(
-        _HARD_CODED_DATA_SPECS_NEW,
+        "1.0.33",
         optional_minor_and_patch=True,
     )
     _cmor_version: Version = Version.parse(
@@ -188,13 +192,11 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
                 extracted_data[key] = data[key.lstrip("_")]
         # Handle Version conversions
         if "_data_specs_version" in extracted_data:
-            extracted_data["_data_specs_version"] = Version.parse(
-                extracted_data["_data_specs_version"].replace(
-                    cls._HARD_CODED_DATA_SPECS_OLD,
-                    cls._HARD_CODED_DATA_SPECS_NEW,
-                ),
-                optional_minor_and_patch=True,
-            )
+            for old_value, new_value in cls._HARD_CODED_DATA_SPECS_REPLACEMENTS.items():
+                extracted_data["_data_specs_version"] = Version.parse(
+                    extracted_data["_data_specs_version"].replace(old_value, new_value),
+                    optional_minor_and_patch=True,
+                )
         if "_cmor_version" in extracted_data:
             extracted_data["_cmor_version"] = Version.parse(
                 extracted_data["_cmor_version"],
