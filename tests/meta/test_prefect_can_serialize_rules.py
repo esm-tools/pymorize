@@ -3,7 +3,6 @@ from prefect.cache_policies import INPUTS, TASK_SOURCE
 
 
 def test_prefect_can_serialize_rules(simple_rule):
-
     @task
     def my_step(data, rule):
         return data
@@ -18,7 +17,6 @@ def test_prefect_can_serialize_rules(simple_rule):
 
 
 def test_prefect_can_serialize_rules_with_cache(simple_rule):
-
     @task(cache_policy=TASK_SOURCE + INPUTS)
     def my_step(data, rule):
         return data
@@ -33,7 +31,6 @@ def test_prefect_can_serialize_rules_with_cache(simple_rule):
 
 
 def test_prefect_can_serialize_rules_with_cache_in_nested_flow(simple_rule):
-
     @task(cache_policy=TASK_SOURCE + INPUTS)
     def my_step(data, rule):
         return data
@@ -52,7 +49,6 @@ def test_prefect_can_serialize_rules_with_cache_in_nested_flow(simple_rule):
 
 
 def test_prefect_can_serialize_as_pipeline(simple_rule):
-
     class Pipeline:
         @task(cache_policy=TASK_SOURCE + INPUTS)
         def my_step(self, data, rule):
@@ -81,7 +77,6 @@ def test_prefect_can_serialize_as_pipeline(simple_rule):
 
 
 def test_prefect_can_serialize_as_pipeline_with_cache(simple_rule):
-
     class Pipeline:
         @task
         def my_step(self, data, rule):
@@ -110,7 +105,6 @@ def test_prefect_can_serialize_as_pipeline_with_cache(simple_rule):
 
 
 def test_prefect_can_serialize_simplified():
-
     @task
     def my_step(data, rule):
         return data
@@ -151,7 +145,6 @@ def test_prefect_can_serialize_simplified():
 
 
 def test_prefect_can_serialize_simplified_with_cache():
-
     @task(cache_policy=TASK_SOURCE + INPUTS)
     def my_step(data, rule):
         return data

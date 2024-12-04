@@ -11,7 +11,7 @@ import deprecation
 import dpath
 import xarray as xr
 
-from .filecache import register_cache
+from .filecache import register_cache  # noqa: F401
 from .logging import logger
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"

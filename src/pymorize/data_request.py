@@ -86,7 +86,8 @@ class DataRequestVariable:
             i = self.table_ids().index(table_id)
         except ValueError:
             raise ValueError(
-                f"variable_id '{self.variable_id}' is not associated with table_id '{table_id}', available table_id(s): {', '.join(self.table_ids)}"
+                f"variable_id '{self.variable_id}' is not associated with table_id "
+                f"'{table_id}', available table_id(s): {', '.join(self.table_ids)}"
             )
         return self.frequencies[i]
 
@@ -95,7 +96,8 @@ class DataRequestVariable:
             i = self.table_ids().index(table_id)
         except ValueError:
             raise ValueError(
-                f"variable_id '{self.variable_id}' is not associated with table_id '{table_id}', available table_id(s): {', '.join(self.table_ids)}"
+                f"variable_id '{self.variable_id}' is not associated with table_id "
+                f"'{table_id}', available table_id(s): {', '.join(self.table_ids)}"
             )
         return self.cell_methods[i]
 
@@ -104,7 +106,8 @@ class DataRequestVariable:
             i = self.table_ids().index(table_id)
         except ValueError:
             raise ValueError(
-                f"variable_id '{self.variable_id}' is not associated with table_id '{table_id}', available table_id(s): {', '.join(self.table_ids)}"
+                f"variable_id '{self.variable_id}' is not associated with table_id "
+                f"'{table_id}', available table_id(s): {', '.join(self.table_ids)}"
             )
         return self.cell_measures[i]
 
@@ -118,7 +121,9 @@ class DataRequestVariable:
     #     yield DataRequestVariableStub.from_drv(self)
 
     def __str__(self):
-        return f"{self.variable_id} '{self.unit}' [{' '.join(self.frequencies)}] [{' '.join([t.table_id for t in self.tables])}]"
+        return f"{self.variable_id} '{self.unit}' "
+        f"[{' '.join(self.frequencies)}] "
+        f"[{' '.join([t.table_id for t in self.tables])}]"
 
     def __repr__(self):
         return f"""{self.__class__.__name__}(
@@ -170,7 +175,9 @@ class DataRequest:
         for x in self.tables:
             if self.tables[0].version != x.version:
                 raise ValueError(
-                    f"tables have different data request versions ({self.tables[0].version}@{self.tables[0].path} vs {x.version}@{x.path})"
+                    f"tables have different data request versions "
+                    f"({self.tables[0].version}@{self.tables[0].path} vs "
+                    f"{x.version}@{x.path})"
                 )
         self.tables = sorted(self.tables, key=lambda x: x.table_id)
         # Merge variables with identical variable_id and frequency which may appear in multiple tables

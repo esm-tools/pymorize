@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from tests.utils.constants import TEST_ROOT
+from tests.utils.constants import TEST_ROOT  # noqa: F401
 
 pytest_plugins = [
     "tests.fixtures.CMIP_Tables_Dir",
@@ -19,7 +19,6 @@ pytest_plugins = [
     "tests.fixtures.sample_rules",
     "tests.fixtures.config_files",
     "tests.fixtures.CV_Dir",
-    "tests.fixtures.CMIP_Tables_Dir",
     "tests.fixtures.data_requests",
 ]
 

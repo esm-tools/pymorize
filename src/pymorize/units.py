@@ -15,10 +15,6 @@ import re
 import warnings
 from typing import Pattern, Union
 
-warnings.filterwarnings(
-    "ignore", message=".*unavailable to set up matplotlib support.*"
-)
-
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint_xarray
 import xarray as xr
@@ -26,6 +22,10 @@ from chemicals import periodic_table
 
 from .logging import logger
 from .rule import Rule
+
+warnings.filterwarnings(
+    "ignore", message=".*unavailable to set up matplotlib support.*"
+)
 
 ureg = pint_xarray.unit_registry
 

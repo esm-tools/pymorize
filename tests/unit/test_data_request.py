@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from pymorize.data_request import DataRequest, DataRequestTable
