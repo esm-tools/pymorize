@@ -1,43 +1,16 @@
 # global_attributes.py
 
-import re
 import json
+import re
 from pathlib import Path
+
+from .controlled_vocabularies import ControlledVocabularies
+
 # from loguru import logger
 
-# TODO: no need to hard-code these values, can be directly read from cmip6-cmor-tables/Tables/CMIP6_CV.json
-_fields = (
-    "activity_id",
-    "Conventions",
-    "creation_date",
-    "data_specs_version",
-    "experiment",
-    "experiment_id",
-    "forcing_index",
-    "frequency",
-    "further_info_url",
-    "grid",
-    "grid_label",
-    "initialization_index",
-    "institution",
-    "institution_id",
-    "license",
-    "mip_era",
-    "nominal_resolution",
-    "physics_index",
-    "product",
-    "realization_index",
-    "realm",
-    "source",
-    "source_id",
-    "source_type",
-    "sub_experiment",
-    "sub_experiment_id",
-    "table_id",
-    "tracking_id",
-    "variable_id",
-    "variant_label",
-)
+cv = ControlledVocabularies.load_from_git()
+
+required_global_attributes = cv["required_global_attributes"]
 
 _parent_fields = (
     "branch_method",
@@ -60,35 +33,68 @@ defaults = {
 
 def set_global_attributes(ds, rule):
     gattrs = {}
-    cvs = rule.get("cvs", {})
     variant_label = rule.get("variant_label")
     update_variant_label(variant_label, gattrs)
-    source_id = rule.get("source_id")
+    variable_id = rule.data_request_variable.variable_id
+    gattrs["variable_id"] = variable_id
+    gattrs["table_id"] = rule.data_request_variable.table.table_id
+    _update_global_attributes_from_table_header(gattrs, rule)
+    gattrs["source_id"] = source_id = rule.get("source_id")
+    source_id_cv = cv["source_id"][source_id]
+    _institution_id = source_id_cv.get("institution_id")
+    if len(_institution_id) > 1:
+        institution_ids = ", ".join(_institution_id)
+        institution_id = rule.get("institution_id")
+        if institution_id is None:
+            raise ValueError(
+                f"institution_id -- {institution_ids} -- has multiple value for source_id {source_id}."
+            )
+        else:
+            assert institution_id in _institution_id
+    else:
+        institution_id = _institution_id[0]
+    gattrs["institution_id"] = institution_id
+    license_type = source_id_cv["license_info"]["id"]
+    further_info_url = rule.get("further_info_url")
+    _update_license(gattrs, cv, institution_id, license_type, further_info_url)
+    gattrs["source"] = source = rule.get("source")  # model_component
+    gattrs["grid"] = source_id_cv["model_component"][source]["description"]
+    gattrs["nominal_resolution"] = source_id_cv["model_component"][source][
+        "native_nominal_resolution"
+    ]
+    gattrs["source_type"] = rule.get("source_type")
     experiment_id = rule.get("experiment_id")
     activity_id = rule.get("activity_id", None)
     if activity_id is None:
-        _experiment_id_cv = cvs.get("experiment_id", {}).get(experiment_id, {})
+        _experiment_id_cv = cv.get("experiment_id", {}).get(experiment_id, {})
         activity_id = _experiment_id_cv.get("activity_id", [])
         if activity_id and len(activity_id) > 1:
             activity_ids = ", ".join(activity_id)
             raise ValueError(
                 f"activity_id -- {activity_ids} -- has multiple value for experiment_id {experiment_id}."
             )
+        elif activity_id:
+            activity_id = activity_id[0]
+        else:
+            raise ValueError(f"no activity_id found for experiment_id {experiment_id}")
+    gattrs["activity_id"] = activity_id
+    gattrs["experiment"] = _experiment_id_cv.get("experiment", "")
+    gattrs["experiment_id"] = experiment_id
+    # ignore parent_experiment_id for now, in the first iteration
+    # parent_activity_id = _experiment_id_cv.get("parent_activity_id", "")
+    gattrs["sub_experiment"] = rule.get("sub_experiment", "")
+    gattrs["sub_experiment_id"] = _experiment_id_cv.get("sub_experiment_id")
 
-    experiment = _experiment_id_cv.get("experiment", "")
-    parent_activity_id = _experiment_id_cv.get("parent_activity_id", "")
 
-
-def update_global_attributes(ds, rule):
-    """ """
+def _update_global_attributes_from_table_header(gattrs, rule):
+    """Updates global attributes from table header"""
     table = rule.data_request_variable.table
     header = table._data["Header"]
-    attrs = {}
-    attrs["data_specs_version"] = header["data_specs_version"]
-    attrs["Conventions"] = header["Conventions"]
-    attrs["mip_era"] = header["mip_era"]
-    attrs["realm"] = header["realm"]
-    attrs["product"] = header["product"]
+    gattrs["data_specs_version"] = header["data_specs_version"]
+    gattrs["Conventions"] = header["Conventions"]
+    gattrs["mip_era"] = header["mip_era"]
+    gattrs["realm"] = header["realm"]
+    gattrs["product"] = header["product"]
 
 
 def _parse_variant_label(label: str) -> dict:
@@ -124,17 +130,7 @@ def _update_variant_label(label: str, gattrs: dict) -> dict:
     return gattrs
 
 
-def load_cvs(path: Path):
-    "Loads all controlled vocabilaries at given path as dict mapping"
-    d = {}
-    for p in path.glob("*.json"):
-        with open(p) as fid:
-            d |= json.load(fid)
-    d.pop("version_metadata")
-    return d
-
-
-def update_license(
+def _update_license(
     gattrs: dict,
     cv: dict,
     institution_id: str = None,

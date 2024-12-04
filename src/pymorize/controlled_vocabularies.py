@@ -5,6 +5,8 @@ Controlled vocabularies for CMIP6
 import glob
 import json
 import os
+import re
+import requests
 
 
 class ControlledVocabularies(dict):
@@ -66,3 +68,53 @@ class ControlledVocabularies(dict):
                 return json.load(file)
         except json.JSONDecodeError as e:
             raise ValueError(f"file {path}: {e.msg}")
+
+    @classmethod
+    def load_from_git(cls, tag: str = "6.2.58.73"):
+        """Load the controlled vocabularies from the git repository
+
+        Parameters
+        ----------
+        tag : str
+            The git tag to use. Default is 6.2.58.73
+            If tag is None, the main branch is used.
+        Returns
+        -------
+        ControlledVocabularies
+            A new ControlledVocabularies object, behaves like a dictionary.
+        """
+        if tag is None:
+            tag = "refs/heads/main"
+        else:
+            tag = "blob/" + tag
+        url = f"https://raw.githubusercontent.com/WCRP-CMIP/CMIP6_CVs/{tag}"
+        filenames = (
+            "CMIP6_DRS.json",
+            "CMIP6_activity_id.json",
+            "CMIP6_experiment_id.json",
+            "CMIP6_frequency.json",
+            "CMIP6_grid_label.json",
+            "CMIP6_institution_id.json",
+            "CMIP6_license.json",
+            "CMIP6_nominal_resolution.json",
+            "CMIP6_realm.json",
+            "CMIP6_required_global_attributes.json",
+            "CMIP6_source_id.json",
+            "CMIP6_source_type.json",
+            "CMIP6_sub_experiment_id.json",
+            "CMIP6_table_id.json",
+            "mip_era.json",
+        )
+        name_pattern = re.compile(r"^(?:CMIP6_)?(?P<name>[^\.]+)\.json$").match
+        data = {}
+        for fname in filenames:
+            name = name_pattern(fname).groupdict().get("name")
+            fpath = "/".join([url, fname])
+            r = requests.get(fpath)
+            r.raise_for_status()
+            content = r.content.decode()
+            content = json.loads(content)
+            data[name] = content.get(name)
+        obj = cls([])
+        obj.update(data)
+        return obj
