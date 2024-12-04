@@ -23,6 +23,7 @@ Contents
    including_subcommand_plugins
    pymorize_configuration
    developer_guide
+   developer_setup
    API
 
 
