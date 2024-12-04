@@ -38,7 +38,6 @@ Table 2: Precision of time labels used in file names
 
 """
 
-
 from pathlib import Path
 
 import pandas as pd
