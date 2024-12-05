@@ -192,6 +192,7 @@ class DataRequestVariable(metaclass=MetaFactory):
 
 @dataclass
 class CMIP6DataRequestVariable(DataRequestVariable):
+    _variable_id: str
     _name: str
     _frequency: str
     _modeling_realm: str
@@ -220,6 +221,7 @@ class CMIP6DataRequestVariable(DataRequestVariable):
         return cls(
             # NOTE(PG): This one is self-defined, ``name`` is not in the dict, but useful
             _name=data["out_name"],
+            _variable_id=data["out_name"],
             _frequency=data["frequency"],
             _modeling_realm=data["modeling_realm"],
             _standard_name=data["standard_name"],
