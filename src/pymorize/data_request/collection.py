@@ -4,14 +4,12 @@ from enum import Enum
 from typing import Dict
 
 import deprecation
-import requests
 
 from .factory import MetaFactory
 from .table import DataRequestTable
 
 
 class DataRequest(metaclass=MetaFactory):
-
     @classmethod
     @abstractmethod
     def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "DataRequest":
@@ -42,12 +40,36 @@ class CMIP6DataRequest(DataRequest):
 
     GIT_URL = "..."
 
-    def __init__(self, tables: Dict[str, DataRequestTable]):
+    def __init__(
+        self,
+        tables: Dict[str, DataRequestTable],
+        flattable_variables: bool = True,
+        include_table_headers_in_variables: bool = False,
+    ):
+        """
+        Create a CMIP6DataRequest instance.
+
+        Parameters
+        ----------
+        tables : Dict[str, DataRequestTable]
+            A dictionary of tables.
+        flattable_variables: bool, optional
+            Whether or not to "flatten" tables by key, generating a unique key for each
+            variable. This is composed of the table_id and variable_id. Default is True.
+        include_table_headers_in_variables: bool, optional
+            Whether or not to include the table header in the variable object. Default is False.
+        """
         self.tables = tables
         self.variables = {}
-        for table in table.values():
+        for table in tables.values():
             for variable in table.variables:
-                self.variables[f"{table.table_id}.{variable.variable_id}"] = variable
+                if flattable_variables:
+                    var_key = f"{table.table_id}.{variable.variable_id}"
+                else:
+                    var_key = variable.variable_id
+                if include_table_headers_in_variables:
+                    variable.table_header = table.header
+                self.variables[var_key] = variable
 
     @classmethod
     def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "CMIP6DataRequest":
