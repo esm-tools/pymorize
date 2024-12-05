@@ -1,7 +1,7 @@
 import pytest
 
 from pymorize.config import PymorizeConfigManager
-from pymorize.data_request.variable import DataRequestVariable
+from pymorize.data_request.variable import CMIP6DataRequestVariable
 from pymorize.rule import Rule
 
 
@@ -87,7 +87,7 @@ def rule_with_mass_units():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable.from_dict(
+            CMIP6DataRequestVariable.from_dict(
                 dict(
                     out_name="var1",
                     unit="kg",
@@ -123,7 +123,7 @@ def rule_with_data_request():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable.from_dict(
+            CMIP6DataRequestVariable.from_dict(
                 dict(
                     out_name="var1",
                     unit="kg m-2 s-1",
