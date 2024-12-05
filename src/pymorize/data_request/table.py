@@ -53,7 +53,6 @@ class DataRequestTable(metaclass=MetaFactory):
 
 @dataclass
 class DataRequestTableHeader(metaclass=MetaFactory):
-
     @property
     @abstractmethod
     def data_specs_version(self) -> Version:
@@ -272,7 +271,6 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
 
 @dataclass
 class CMIP6JSONDataRequestTableHeader(CMIP6DataRequestTableHeader):
-
     @classmethod
     def from_json_file(cls, jfile) -> "CMIP6JSONDataRequestTableHeader":
         with open(jfile, "r") as f:
@@ -326,15 +324,6 @@ class CMIP6DataRequestTable(DataRequestTable):
             f"A Variable with the attribute {find_by}={name} not found in the table."
         )
 
-
-################################################################################
-
-
-class CMIP6JSONDataRequestTable(CMIP6DataRequestTable):
-
-    # NOTE(PG): Special from_dict constructor, since this is how the dict appears
-    #           when loaded from the JSON file. I have no idea how it would look
-    #           in a different source, so we keep it clean here...
     @classmethod
     def from_dict(cls, data: dict) -> "CMIP6DataRequestTable":
         header = CMIP6DataRequestTableHeader.from_dict(data["Header"])
@@ -345,7 +334,7 @@ class CMIP6JSONDataRequestTable(CMIP6DataRequestTable):
         return cls(header, variables)
 
     @classmethod
-    def from_json_file(cls, jfile) -> "CMIP6JSONDataRequestTable":
+    def from_json_file(cls, jfile) -> "CMIP6DataRequestTable":
         with open(jfile, "r") as f:
             data = json.load(f)
         return cls.from_dict(data)
