@@ -20,7 +20,7 @@ a ``DataRequestVariable`` instance to a dictionary representation.
 """
 
 import json
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
@@ -28,7 +28,7 @@ from .factory import MetaFactory
 
 
 @dataclass
-class DataRequestVariable(ABC, metaclass=MetaFactory):
+class DataRequestVariable(metaclass=MetaFactory):
     """Abstract base class for a generic variable."""
 
     _type_strings = {

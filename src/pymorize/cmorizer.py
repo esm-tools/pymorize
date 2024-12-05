@@ -217,10 +217,8 @@ class CMORizer:
         # DataRequestObj = data_request_factory.create("CMIP6DataRequest")
         # data_request = DataRequestObj.from_directory(tables_dir)
         data_request_factory = create_factory(DataRequest)
-        DataRequestObj = data_request_factory.create(
-            DataRequest, f"{cmor_version}DataRequest"
-        )
-        self.data_request = DataRequestObj.from_tables_dir(table_dir)
+        DataRequestKlass = data_request_factory.get(cmor_version)
+        self.data_request = DataRequestKlass.from_tables_dir(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
         """

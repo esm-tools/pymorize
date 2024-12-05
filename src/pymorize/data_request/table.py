@@ -1,5 +1,5 @@
 import json
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from dataclasses import dataclass
 from typing import List
 
@@ -15,7 +15,7 @@ from .variable import CMIP6DataRequestVariable, DataRequestVariable
 
 
 @dataclass
-class DataRequestTable(ABC, metaclass=MetaFactory):
+class DataRequestTable(metaclass=MetaFactory):
     """Abstract base class for a generic data request table."""
 
     @property
@@ -52,7 +52,7 @@ class DataRequestTable(ABC, metaclass=MetaFactory):
 
 
 @dataclass
-class DataRequestTableHeader(ABC, metaclass=MetaFactory):
+class DataRequestTableHeader(metaclass=MetaFactory):
 
     @property
     @abstractmethod
