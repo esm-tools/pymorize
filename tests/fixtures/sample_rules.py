@@ -87,17 +87,19 @@ def rule_with_mass_units():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable(
-                variable_id="var1",
-                unit="kg",
-                description="Some description",
-                time_method="instant",
-                table="Some Table",
-                frequency="mon",
-                realms=["atmos"],
-                standard_name="some_standard_name",
-                cell_methods="time: mean",
-                cell_measures="area: areacella",
+            DataRequestVariable.from_dict(
+                dict(
+                    out_name="var1",
+                    unit="kg",
+                    description="Some description",
+                    time_method="instant",
+                    table="Some Table",
+                    frequency="mon",
+                    realms=["atmos"],
+                    standard_name="some_standard_name",
+                    cell_methods="time: mean",
+                    cell_measures="area: areacella",
+                )
             )
         ],
     )
@@ -121,17 +123,19 @@ def rule_with_data_request():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable(
-                variable_id="var1",
-                unit="kg m-2 s-1",
-                description="Some description",
-                time_method="instant",
-                table="Some Table",
-                frequency="mon",
-                realms=["atmos"],
-                standard_name="some_standard_name",
-                cell_methods="time: mean",
-                cell_measures="area: areacella",
+            DataRequestVariable.from_dict(
+                dict(
+                    out_name="var1",
+                    unit="kg m-2 s-1",
+                    description="Some description",
+                    time_method="instant",
+                    table="Some Table",
+                    frequency="mon",
+                    realms=["atmos"],
+                    standard_name="some_standard_name",
+                    cell_methods="time: mean",
+                    cell_measures="area: areacella",
+                )
             )
         ],
     )
