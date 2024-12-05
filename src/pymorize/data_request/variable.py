@@ -47,6 +47,11 @@ class DataRequestVariable(metaclass=MetaFactory):
         raise NotImplementedError
 
     @property
+    def variable_id(self) -> str:
+        """Variable ID"""
+        return self.name
+
+    @property
     @abstractmethod
     def frequency(self) -> str:  # Or should this return Frequency?
         """Frequency of this variable"""
