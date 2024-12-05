@@ -3,8 +3,7 @@ import pytest
 from pymorize.data_request.collection import CMIP6DataRequest, DataRequest
 from pymorize.data_request.factory import create_factory
 from pymorize.data_request.table import CMIP6DataRequestTable, DataRequestTable
-from pymorize.data_request.variable import (CMIP6DataRequestVariable,
-                                            DataRequestVariable)
+from pymorize.data_request.variable import CMIP6DataRequestVariable, DataRequestVariable
 
 
 @pytest.mark.parametrize(
