@@ -6,7 +6,7 @@ from typing import Dict
 import deprecation
 
 from .factory import MetaFactory
-from .table import DataRequestTable
+from .table import CMIP6DataRequestTable, DataRequestTable
 
 
 class DataRequest(metaclass=MetaFactory):
@@ -42,7 +42,7 @@ class CMIP6DataRequest(DataRequest):
 
     def __init__(
         self,
-        tables: Dict[str, DataRequestTable],
+        tables: Dict[str, CMIP6DataRequestTable],
         flattable_variables: bool = True,
         include_table_headers_in_variables: bool = False,
     ):
@@ -84,7 +84,7 @@ class CMIP6DataRequest(DataRequest):
         directory = pathlib.Path(directory)
         for file in directory.iterdir():
             if file.is_file() and file.suffix == ".json":
-                table = DataRequestTable.from_json_file(file)
+                table = CMIP6DataRequestTable.from_json_file(file)
                 tables[table.table_id] = table
 
         for table in tables.values():
