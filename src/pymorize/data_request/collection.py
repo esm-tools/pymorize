@@ -88,7 +88,7 @@ class CMIP6DataRequest(DataRequest):
                 tables[table.table_id] = table
 
         for table in tables.values():
-            if table in CMIP6IgnoreTableFiles:
+            if table in CMIP6IgnoreTableFiles.values:
                 tables.pop(table)  # Remove the table from the dictionary
 
         return cls(tables)
@@ -121,3 +121,7 @@ class CMIP6IgnoreTableFiles(Enum):
     FORMULA_TERMS = "CMIP6_formula_terms.json"
     GRIDS = "CMIP6_grids.json"
     INPUT_EXAMPLE = "CMIP6_input_example.json"
+
+    @classmethod
+    def values(cls):
+        return [item.value for item in cls]
