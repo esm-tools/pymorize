@@ -25,6 +25,11 @@ class DataRequestTable(metaclass=MetaFactory):
         raise NotImplementedError
 
     @property
+    def table_id(self) -> str:
+        """Alias for table_name."""
+        return self.table_name
+
+    @property
     @abstractmethod
     def variables(self) -> List[DataRequestVariable]:
         """List of variables in the table."""
