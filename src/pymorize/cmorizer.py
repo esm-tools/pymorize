@@ -22,7 +22,7 @@ from .cluster import (
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_request.collection import DataRequest, IgnoreTableFiles
+from .data_request.collection import CMIP6IgnoreTableFiles, DataRequest
 from .data_request.factory import create_factory
 from .data_request.table import CMIP6JSONDataRequestTable
 from .data_request.variable import DataRequestVariable
@@ -195,7 +195,7 @@ class CMORizer:
             path.stem.replace("CMIP6_", ""): path for path in table_dir.glob("*.json")
         }
         tables = {}
-        ignore_files = set(ignore_file.value for ignore_file in IgnoreTableFiles)
+        ignore_files = set(ignore_file.value for ignore_file in CMIP6IgnoreTableFiles)
         for tbl_name, tbl_file in table_files.items():
             logger.debug(f"{tbl_name}, {tbl_file}")
             if tbl_file.name not in ignore_files:
