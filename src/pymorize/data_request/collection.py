@@ -88,7 +88,7 @@ class CMIP6DataRequest(DataRequest):
                 tables[table.table_id] = table
 
         for table in tables.values():
-            if table in CMIP6IgnoreTableFiles.values:
+            if table in CMIP6IgnoreTableFiles.values():
                 tables.pop(table)  # Remove the table from the dictionary
 
         return cls(tables)
