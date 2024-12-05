@@ -196,7 +196,7 @@ def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
             "parallel": False,
             "enable_dask": False,
         },
-        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir},
+        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir, "cmor_version": "CMIP6"},
         rules_cfg=[rule_sos],
     )
     da = xr.DataArray(10, name="sos", attrs={"units": "g/kg"})
