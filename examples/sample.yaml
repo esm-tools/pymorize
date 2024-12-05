@@ -5,7 +5,7 @@ general:
   email: "pgierz@awi.de"
   cmor_version: "CMIP6"
   mip: "CMIP"
-  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables" 
+  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
 pymorize:
   # parallel: True
   warn_on_no_rule: False
@@ -113,7 +113,7 @@ jobqueue:
     # worker-command: dask-worker
     processes: 4  # Limited by memory per worker!
     # scheduler-command: dask-scheduler
-    
+
     # # How to launch workers and scheduler
     # worker-template:
     #   # Command to launch a Dask worker via SLURM

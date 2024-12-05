@@ -20,10 +20,12 @@ Some guiding rules to set the grid information:
 Note: Rule 5 is not strict and may go away if it is not desired.
 """
 
-import xarray as xr
 import re
-from .rule import Rule
 from typing import Union
+
+import xarray as xr
+
+from .rule import Rule
 
 
 def setgrid(

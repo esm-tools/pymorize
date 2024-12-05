@@ -203,9 +203,9 @@ def compute_average(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
 
-    This function takes a data array and a rule, computes the timespan of the data array, and then performs time averaging
-    based on the time method specified in the rule. The time methods can be ``"INSTANTANEOUS"``,
-    ``"MEAN"``, or ``"CLIMATOLOGY"``.
+    This function takes a data array and a rule, computes the timespan of the data
+    array, and then performs time averaging based on the time method specified in the
+    rule. The time methods can be ``"INSTANTANEOUS"``, ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
     Parameters
     ----------

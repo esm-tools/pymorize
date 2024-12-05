@@ -15,8 +15,12 @@ from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .cluster import (CLUSTER_ADAPT_SUPPORT, CLUSTER_MAPPINGS,
-                      CLUSTER_SCALE_SUPPORT, set_dashboard_link)
+from .cluster import (
+    CLUSTER_ADAPT_SUPPORT,
+    CLUSTER_MAPPINGS,
+    CLUSTER_SCALE_SUPPORT,
+    set_dashboard_link,
+)
 from .config import PymorizeConfig, PymorizeConfigManager
 from .data_request.collection import DataRequest, IgnoreTableFiles
 from .data_request.factory import create_factory
@@ -211,11 +215,6 @@ class CMORizer:
                 f"CMOR version {cmor_version} is not supported. Supported versions are {self._SUPPORTED_CMOR_VERSION}"
             )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        # FIXME(PG): This....isn't how I want to write this down...
-        #            Should be like this:
-        # data_request_factory = create_factory(DataRequest)
-        # DataRequestObj = data_request_factory.create("CMIP6DataRequest")
-        # data_request = DataRequestObj.from_directory(tables_dir)
         data_request_factory = create_factory(DataRequest)
         DataRequestKlass = data_request_factory.get(cmor_version)
         self.data_request = DataRequestKlass.from_tables_dir(table_dir)

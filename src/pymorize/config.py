@@ -75,9 +75,15 @@ from importlib.resources import files
 
 from everett import InvalidKeyError
 from everett.ext.yamlfile import ConfigYamlEnv
-from everett.manager import (ChoiceOf, ConfigDictEnv, ConfigManager,
-                             ConfigOSEnv, Option, _get_component_name,
-                             parse_bool)
+from everett.manager import (
+    ChoiceOf,
+    ConfigDictEnv,
+    ConfigManager,
+    ConfigOSEnv,
+    Option,
+    _get_component_name,
+    parse_bool,
+)
 
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
