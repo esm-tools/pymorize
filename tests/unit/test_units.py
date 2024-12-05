@@ -79,7 +79,7 @@ def test_can_handle_simple_chemical_elements(rule_with_mass_units):
     from_unit = "molC"
     to_unit = "g"
     rule_spec = rule_with_mass_units
-    rule_spec.data_request_variable.unit = to_unit
+    rule_spec.data_request_variable.units = to_unit
     da = xr.DataArray(10, attrs={"units": from_unit})
     new_da = handle_unit_conversion(da, rule_spec)
     assert new_da.data == np.array(periodic_table.Carbon.MW * 10)
@@ -101,7 +101,7 @@ def test_user_defined_units_takes_precedence_over_units_in_dataarray(
     rule_with_data_request,
 ):
     rule_spec = rule_with_data_request
-    rule_spec.data_request_variable.unit = "g"
+    rule_spec.data_request_variable.units = "g"
     rule_spec.model_unit = "molC"
     to_unit = "g"
     da = xr.DataArray(10, attrs={"units": "kg"})
@@ -159,7 +159,7 @@ def test_not_defined_unit_checker(rule_with_data_request):
 def test_data_request_missing_unit(rule_with_data_request):
     """Test for missing unit attribute in the data request"""
     rule_spec = rule_with_data_request
-    del rule_spec.data_request_variable.unit
+    del rule_spec.data_request_variable.units
     da = xr.DataArray(10, name="var1", attrs={"units": "kg m-2 s-1"})
 
     with pytest.raises(
@@ -171,7 +171,7 @@ def test_data_request_missing_unit(rule_with_data_request):
 def test_data_request_not_defined_unit(rule_with_data_request):
     """Test the checker for unit not defined in the data request"""
     rule_spec = rule_with_data_request
-    rule_spec.data_request_variable.unit = None
+    rule_spec.data_request_variable.units = None
     da = xr.DataArray(10, name="var1", attrs={"units": "kg m-2 s-1"})
 
     with pytest.raises(ValueError, match="Unit not defined"):
@@ -182,7 +182,7 @@ def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request):
     """Test the checker for missing dimensionless unit in the unit mappings"""
     rule_spec = rule_with_data_request
     rule_spec.dimensionless_unit_mappings = {"var1": {"0.001": "g/kg"}}
-    rule_spec.data_request_variable.unit = "0.1"
+    rule_spec.data_request_variable.units = "0.1"
     da = xr.DataArray(10, name="var1", attrs={"units": "g/kg"})
 
     with pytest.raises(KeyError, match="Dimensionless unit not found in mappings"):
@@ -228,7 +228,7 @@ def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
 def test_catch_unit_conversion_problem(rule_with_data_request):
     """Test the checker for unit conversion problem"""
     rule_spec = rule_with_data_request
-    rule_spec.data_request_variable.unit = "broken_kg m-2 s-1"
+    rule_spec.data_request_variable.units = "broken_kg m-2 s-1"
     da = xr.DataArray(10, name="var1", attrs={"units": "broken_kg m-2 s-1"})
 
     with pytest.raises(ValueError, match="Unit conversion failed: Cannot parse units:"):
