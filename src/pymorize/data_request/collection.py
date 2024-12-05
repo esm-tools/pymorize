@@ -84,7 +84,7 @@ class CMIP6DataRequest(DataRequest):
         directory = pathlib.Path(directory)
         for file in directory.iterdir():
             if file.is_file() and file.suffix == ".json":
-                table = DataRequestTable.from_json(file)
+                table = DataRequestTable.from_json_file(file)
                 tables[table.table_id] = table
 
         for table in tables.values():
