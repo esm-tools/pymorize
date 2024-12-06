@@ -52,7 +52,7 @@ class CMIP6DataRequest(DataRequest):
         self,
         tables: Dict[str, CMIP6DataRequestTable],
         flattable_variables: bool = True,
-        include_table_headers_in_variables: bool = False,
+        include_table_headers_in_variables: bool = True,
     ):
         """
         Create a CMIP6DataRequest instance.
