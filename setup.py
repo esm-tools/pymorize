@@ -74,6 +74,7 @@ setup(
             "pytest",
             "pytest-asyncio",
             "pytest-cov",
+            "pytest-mock",
             "pytest-xdist",
             "sphinx",
             "sphinx_rtd_theme",
