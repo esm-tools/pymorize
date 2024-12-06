@@ -12,7 +12,6 @@ examples on how the mapping is written.
 """
 
 import re
-import warnings
 from typing import Pattern, Union
 
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
@@ -22,10 +21,6 @@ from chemicals import periodic_table
 
 from .logging import logger
 from .rule import Rule
-
-warnings.filterwarnings(
-    "ignore", message=".*unavailable to set up matplotlib support.*"
-)
 
 ureg = pint_xarray.unit_registry
 

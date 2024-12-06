@@ -1,10 +1,12 @@
 import os
-import re
-from pathlib import Path
-
-import pytest
 
 from tests.utils.constants import TEST_ROOT  # noqa: F401
+
+# import re
+# from pathlib import Path
+
+# import pytest
+
 
 pytest_plugins = [
     "tests.fixtures.CMIP_Tables_Dir",
@@ -23,23 +25,23 @@ pytest_plugins = [
 ]
 
 
-@pytest.hookimpl(tryfirst=True)
-def pytest_collection_modifyitems(config, items):
-    for item in items:
-        if item.fspath and item.fspath.ext == ".py":
-            item.add_marker(pytest.mark.doctest)
+# @pytest.hookimpl(tryfirst=True)
+# def pytest_collection_modifyitems(config, items):
+#     for item in items:
+#         if item.fspath and item.fspath.ext == ".py":
+#             item.add_marker(pytest.mark.doctest)
 
 
-@pytest.fixture(autouse=True)
-def pathlib_doctest_directive(doctest_namespace):
-    """Replace PosixPath/WindowsPath with Path in doc-test output."""
-    doctest_namespace["Path"] = Path
+# @pytest.fixture(autouse=True)
+# def pathlib_doctest_directive(doctest_namespace):
+#     """Replace PosixPath/WindowsPath with Path in doc-test output."""
+#     doctest_namespace["Path"] = Path
 
-    def path_replace(output):
-        """Replace platform-specific Path output with generic Path in doc-tests."""
-        return re.sub(r"(PosixPath|WindowsPath)\((.*?)\)", r"Path(\2)", output)
+#     def path_replace(output):
+#         """Replace platform-specific Path output with generic Path in doc-tests."""
+#         return re.sub(r"(PosixPath|WindowsPath)\((.*?)\)", r"Path(\2)", output)
 
-    doctest_namespace["path_replace"] = path_replace
+#     doctest_namespace["path_replace"] = path_replace
 
 
 def pytest_unconfigure(config):
