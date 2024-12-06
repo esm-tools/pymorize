@@ -121,7 +121,7 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
 
     # Process table's unit (to_unit)
     # ------------------------------
-    to_unit = drv.unit
+    to_unit = drv.units
     cmor_variable_id = drv.variable_id
     # Check for `to_unit` defined as `None`, `False`, empty string...
     if not to_unit:
