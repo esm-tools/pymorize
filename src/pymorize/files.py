@@ -122,7 +122,7 @@ def create_filepath(ds, rule):
     experiment_id, output_directory, and optionally institution.
     """
     name = rule.cmor_variable
-    table_id = rule.data_request_variable.table.table_id  # Omon
+    table_id = rule.data_request_variable.table_header.table_id  # Omon
     label = rule.variant_label  # r1i1p1f1
     source_id = rule.source_id  # AWI-CM-1-1-MR
     experiment_id = rule.experiment_id  # historical
