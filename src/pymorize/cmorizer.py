@@ -226,11 +226,11 @@ class CMORizer:
         tables = self._general_cfg["tables"]
         for rule in self.rules:
             for tbl in tables.values():
-                if rule.cmor_variable in tbl.variable_ids:
+                if rule.cmor_variable in tbl.variables:
                     rule.add_table(tbl.table_id)
 
     def _post_init_data_request_variables(self):
-        for drv in self.data_request.variables:
+        for drv in self.data_request.variables.values():
             rule_for_var = self.find_matching_rule(drv)
             if rule_for_var is None:
                 continue
@@ -321,10 +321,11 @@ class CMORizer:
         self.rules = new_rules
 
     def _rules_depluralize_drvs(self):
+        """Ensures that only one data request variable is assigned to each rule"""
         for rule in self.rules:
             assert len(rule.data_request_variables) == 1
-            drv = rule.data_request_variable = rule.data_request_variables[0]
-            drv.depluralize()
+            rule.data_request_variable = rule.data_request_variables[0]
+            del rule.data_request_variables
 
     def _post_init_create_pipelines(self):
         pipelines = []
