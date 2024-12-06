@@ -10,7 +10,7 @@ PROGRESSIVE_STEPS = [STEPS[: i + 1] for i in range(len(STEPS))]
 
 
 # There is a segfault somewhere in the code, so I'd like to find out where it is...
-@pytest.mark.skip
+# @pytest.mark.skip
 @pytest.mark.parametrize("steps", PROGRESSIVE_STEPS)
 def test_process_progressive_pipeline(
     fesom_2p6_pimesh_esm_tools_config, fesom_2p6_pimesh_esm_tools_data, steps
