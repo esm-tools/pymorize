@@ -386,7 +386,7 @@ class CMORizer:
         errors = []
         for rule in self.rules:
             table_freq = _frequency_from_approx_interval(
-                rule.data_request_variable.table.approx_interval
+                rule.data_request_variable.table_header.approx_interval
             )
             # is_subperiod from pandas does not support YE or ME notation
             table_freq = table_freq.rstrip("E")
