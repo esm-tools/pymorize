@@ -33,6 +33,17 @@ class DataRequestVariable(metaclass=MetaFactory):
 
     _type_strings = {
         "real": float,
+        "integer": int,
+        "string": str,
+        "double": float,
+        "float": float,
+        "char": str,
+        "int": int,
+        "long": int,
+        "short": int,
+        "boolean": bool,
+        "logical": bool,
+        "character": str,
     }
     """dict: conversion of string names in the tables to actual Python types"""
 

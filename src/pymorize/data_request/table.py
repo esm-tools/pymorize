@@ -108,7 +108,7 @@ class DataRequestTableHeader(metaclass=MetaFactory):
 
     @property
     @abstractmethod
-    def approx_interval(self) -> float:
+    def approx_interval(self) -> float or None:
         """Approximate interval (time in days)"""
         raise NotImplementedError
 
@@ -158,7 +158,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     _table_id: str
     _realm: str
     _table_date: pendulum.Date
-    _approx_interval: float
+    _approx_interval: float  # Optional
     _generic_levels: List[str]
 
     # Properties with known defaults:
@@ -191,7 +191,10 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
             _table_id=data["table_id"].lstrip("Table "),
             _realm=data["realm"],
             _table_date=pendulum.parse(data["table_date"], strict=False).date(),
-            _approx_interval=float(data["approx_interval"]),
+            # This might be None, if the approx interval is an empty string...
+            _approx_interval=(
+                float(data["approx_interval"]) if data["approx_interval"] else None
+            ),
             _generic_levels=data["generic_levels"].split(" "),
         )
         # Optionally get the rest, which might not be present:
