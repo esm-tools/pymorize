@@ -6,9 +6,12 @@ import shutil
 
 import pytest
 import yaml
+from prefect.logging import disable_run_logger
 
 from pymorize.cmorizer import CMORizer
 from pymorize.logging import logger
+
+disable_run_logger()  # Turns off Prefect's extra logging layer, for testing
 
 
 def test_init(test_config):

@@ -39,6 +39,14 @@ class DataRequest(metaclass=MetaFactory):
 class CMIP6DataRequest(DataRequest):
 
     GIT_URL = "..."
+    _IGNORE_TABLE_FILES = [
+        "CMIP6_CV_test.json",
+        "CMIP6_coordinate.json",
+        "CMIP6_CV.json",
+        "CMIP6_formula_terms.json",
+        "CMIP6_grids.json",
+        "CMIP6_input_example.json",
+    ]
 
     def __init__(
         self,
@@ -84,6 +92,8 @@ class CMIP6DataRequest(DataRequest):
         directory = pathlib.Path(directory)
         for file in directory.iterdir():
             if file.is_file() and file.suffix == ".json":
+                if file.name in cls._IGNORE_TABLE_FILES:
+                    continue
                 table = CMIP6DataRequestTable.from_json_file(file)
                 tables[table.table_id] = table
 

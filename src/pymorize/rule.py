@@ -276,15 +276,10 @@ class Rule:
         for drv in self.data_request_variables:
             rule_clone = self.clone()
             drv_clone = drv.clone()
-            for drv_table, drv_freq, cell_methods, cell_measures in zip(
-                drv.tables, drv.frequencies, drv.cell_methods, drv.cell_measures
-            ):
-                drv_clone.tables = [drv_table]
-                drv_clone.frequencies = [drv_freq]
-                drv_clone.cell_methods = [cell_methods]
-                drv_clone.cell_measures = [cell_measures]
-                rule_clone.data_request_variables = [drv_clone]
-                clones.append(rule_clone)
+            # FIXME: This is bad. I need to extract one rule for each table,
+            # but the newer API doesn't work as cleanly here...
+            rule_clone.data_request_variables = [drv_clone]
+            clones.append(rule_clone)
         return clones
 
     # FIXME: Not used and broken+

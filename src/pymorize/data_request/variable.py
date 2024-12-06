@@ -19,6 +19,7 @@ instances from dictionaries and JSON files, as well as a method for converting
 a ``DataRequestVariable`` instance to a dictionary representation.
 """
 
+import copy
 import json
 from abc import abstractmethod
 from dataclasses import dataclass
@@ -200,6 +201,11 @@ class DataRequestVariable(metaclass=MetaFactory):
         """Global attributes for this variable, used to set on the xr.Dataset"""
         raise NotImplementedError
 
+    @abstractmethod
+    def clone(self) -> "DataRequestVariable":
+        """Create a copy of this variable"""
+        raise NotImplementedError
+
 
 @dataclass
 class CMIP6DataRequestVariable(DataRequestVariable):
@@ -379,6 +385,10 @@ class CMIP6DataRequestVariable(DataRequestVariable):
         }
         rdict.update(override_dict)
         return rdict
+
+    def clone(self) -> "CMIP6DataRequestVariable":
+        clone = copy.deepcopy(self)
+        return clone
 
 
 class CMIP6JSONDataRequestVariable(CMIP6DataRequestVariable):
