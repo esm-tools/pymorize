@@ -20,4 +20,6 @@ def test_cmip6_init_from_json_file():
 
 def test_cmip7_from_vendored_json():
     drv = CMIP7DataRequestVariable.from_all_var_info_json("thetao", "Omon")
-    assert drv  # Just check that the variable was created
+    assert drv.name == "thetao"
+    assert drv.frequency == "mon"
+    assert drv.table_name == "Omon"

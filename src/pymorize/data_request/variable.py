@@ -408,6 +408,7 @@ class CMIP6JSONDataRequestVariable(CMIP6DataRequestVariable):
 class CMIP7DataRequestVariable(DataRequestVariable):
 
     # Attributes without defaults
+    _name: str
     _standard_name: str
     _units: str
     _cell_methods: str
@@ -416,10 +417,12 @@ class CMIP7DataRequestVariable(DataRequestVariable):
     _spatial_shape: str
     _temporal_shape: str
     _vertical_levels: str
+    _table_name: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data):
         extracted_data = dict(
+            _name=data.get("name"),
             _standard_name=data["CF standard name"],
             _units=data["units"],
             _cell_methods=data["cell_methods"],
@@ -428,6 +431,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
             _spatial_shape=data["spatial_shape"],
             _temporal_shape=data["temporal_shape"],
             _vertical_levels=data["vertical_levels"],
+            _table_name=data.get("table_name"),
         )
         return cls(**extracted_data)
 
@@ -437,6 +441,8 @@ class CMIP7DataRequestVariable(DataRequestVariable):
         all_var_info = json.load(open(_all_var_info, "r"))
         key = f"{table_name}.{var_name}"
         data = all_var_info["Compound Name"][key]
+        data["name"] = var_name
+        data["table_name"] = table_name
         return cls.from_dict(data)
 
     @property
@@ -478,7 +484,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def name(self) -> str:
-        raise NotImplementedError("Not yet figured out")
+        return self._name
 
     @property
     def ok_max_mean_abs(self) -> float:
@@ -502,7 +508,9 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def table_name(self) -> Optional[str]:
-        raise NotImplementedError("Not yet figured out")
+        if self._table_name is None:
+            raise ValueError("Table name not set")
+        return self._table_name
 
     @property
     def typ(self) -> type:
@@ -518,10 +526,6 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def valid_min(self) -> float:
-        raise NotImplementedError("Not yet figured out")
-
-    @property
-    def variable_id(self) -> str:
         raise NotImplementedError("Not yet figured out")
 
     def clone(self) -> "CMIP7DataRequestVariable":
