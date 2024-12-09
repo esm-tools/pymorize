@@ -423,9 +423,6 @@ class CMIP7DataRequestVariable(DataRequestVariable):
     _spatial_shape: str
     _temporal_shape: str
     _cmip6_cmor_table: str
-
-    _vertical_levels: str
-
     _name: str
     _table_name: Optional[str] = None
 
@@ -435,7 +432,8 @@ class CMIP7DataRequestVariable(DataRequestVariable):
             _name=data["out_name"],
             _frequency=data["frequency"],
             _modeling_realm=data["modeling_realm"],
-            _standard_name=data["standard_name"],
+            # FIXME(PG): Not all variables appear to have standard_name
+            _standard_name=data.get("standard_name"),
             _units=data["units"],
             _cell_methods=data["cell_methods"],
             _cell_measures=data["cell_measures"],
@@ -447,7 +445,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
             _positive=data["positive"],
             _spatial_shape=data["spatial_shape"],
             _temporal_shape=data["temporal_shape"],
-            _vertical_levels=data["vertical_levels"],
+            _cmip6_cmor_table=data["cmip6_cmor_table"],
             _table_name=data["cmip6_cmor_table"],
         )
         return cls(**extracted_data)
