@@ -5,6 +5,7 @@ from typing import Dict
 
 import deprecation
 
+from ..utils import download_json_tables_from_url, list_files_in_directory
 from .factory import MetaFactory
 from .table import CMIP6DataRequestTable, DataRequestTable
 
@@ -38,7 +39,9 @@ class DataRequest(metaclass=MetaFactory):
 
 class CMIP6DataRequest(DataRequest):
 
-    GIT_URL = "..."
+    GIT_URL = "https://github.com/PCMDI/cmip6-cmor-tables/"
+    """str: The URL of the CMIP6 data request repository."""
+
     _IGNORE_TABLE_FILES = [
         "CMIP6_CV_test.json",
         "CMIP6_coordinate.json",
@@ -47,6 +50,7 @@ class CMIP6DataRequest(DataRequest):
         "CMIP6_grids.json",
         "CMIP6_input_example.json",
     ]
+    """List[str]: Table files to ignore when reading from a directory."""
 
     def __init__(
         self,
@@ -104,10 +108,17 @@ class CMIP6DataRequest(DataRequest):
         return cls(tables)
 
     @classmethod
-    def from_git(cls, url: str = None, branch: str = "master") -> "CMIP6DataRequest":
+    def from_git(cls, url: str = None, branch: str = "main") -> "CMIP6DataRequest":
         if url is None:
             url = cls.GIT_URL
-        raise NotImplementedError
+        raw_url = f"{url}/{branch}/Tables".replace(
+            "github.com", "raw.githubusercontent.com"
+        )
+        # Something for parsing the tables at the URL
+        tables = list_files_in_directory(url, "Tables", branch=branch)
+        # Something for downloading
+        dir = download_json_tables_from_url(raw_url, tables)
+        return cls.from_directory(dir)
 
     @classmethod
     @deprecation.deprecated(details="Use from_directory instead.")
