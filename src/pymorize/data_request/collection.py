@@ -7,7 +7,7 @@ import deprecation
 
 from ..utils import download_json_tables_from_url, list_files_in_directory
 from .factory import MetaFactory
-from .table import CMIP6DataRequestTable, DataRequestTable
+from .table import CMIP6DataRequestTable, CMIP7DataRequestTable, DataRequestTable
 
 
 class DataRequest(metaclass=MetaFactory):
@@ -35,6 +35,34 @@ class DataRequest(metaclass=MetaFactory):
     def from_tables_dir(cls, directory: str) -> "DataRequest":
         """Create a DataRequest from a directory of tables."""
         raise NotImplementedError
+
+
+class CMIP7DataRequest(DataRequest):
+    GIT_URL = "https://github.com/CMIP-Data-Request/CMIP7_DReq_Software/"
+    """str: The URL of the CMIP7 data request repository."""
+
+    @classmethod
+    def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "CMIP7DataRequest":
+        for table in tables.values():
+            if not isinstance(table, DataRequestTable):
+                raise ValueError("All tables must be instances of DataRequestTable.")
+        return cls(tables)
+
+    @classmethod
+    def from_directory(cls, directory: str) -> "CMIP7DataRequest":
+        """Creates the CMIP7 data request from a directory of tables"""
+        tables = {}
+        directory = pathlib.Path(directory)
+        for file in directory.iterdir():
+            if file.is_file() and file.suffix == ".json":
+                table = CMIP7DataRequestTable.from_json_file(file)
+                tables[table.table_id] = table
+        return cls(tables)
+
+    @classmethod
+    @deprecation.deprecated(details="Use from_directory instead.")
+    def from_tables_dir(cls, directory: str) -> "CMIP7DataRequest":
+        return cls.from_directory(directory)
 
 
 class CMIP6DataRequest(DataRequest):

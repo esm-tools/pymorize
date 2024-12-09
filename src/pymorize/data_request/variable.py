@@ -23,6 +23,7 @@ import copy
 import json
 from abc import abstractmethod
 from dataclasses import dataclass
+from importlib.resources import files
 from typing import Optional
 
 from .factory import MetaFactory
@@ -401,3 +402,128 @@ class CMIP6JSONDataRequestVariable(CMIP6DataRequestVariable):
             var_data = data["variable_entry"][varname]
             var_data["table_name"] = table_name
             return cls.from_dict(var_data)
+
+
+@dataclass
+class CMIP7DataRequestVariable(DataRequestVariable):
+
+    # Attributes without defaults
+    _standard_name: str
+    _units: str
+    _cell_methods: str
+    _dimensions: tuple[str, ...]
+    _frequency: str
+    _spatial_shape: str
+    _temporal_shape: str
+    _vertical_levels: str
+
+    @classmethod
+    def from_dict(cls, data):
+        extracted_data = dict(
+            _standard_name=data["CF standard name"],
+            _units=data["units"],
+            _cell_methods=data["cell_methods"],
+            _dimensions=tuple(data["dimensions"].split(" ")),
+            _frequency=data["frequency"],
+            _spatial_shape=data["spatial_shape"],
+            _temporal_shape=data["temporal_shape"],
+            _vertical_levels=data["vertical_levels"],
+        )
+        return cls(**extracted_data)
+
+    @classmethod
+    def from_all_var_info_json(cls, var_name: str, table_name: str):
+        _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+        all_var_info = json.load(open(_all_var_info, "r"))
+        key = f"{table_name}.{var_name}"
+        data = all_var_info["Compound Name"][key]
+        return cls.from_dict(data)
+
+    @property
+    def attrs(self) -> dict:
+        raise NotImplementedError("CMI7 attributes are not yet finalized")
+
+    @property
+    def cell_measures(self) -> str:
+        raise NotImplementedError("CMIP7 does not have cell measures")
+
+    @property
+    def cell_methods(self) -> str:
+        return self._cell_methods
+
+    @property
+    def comment(self) -> str:
+        raise NotImplementedError("CMIP7 does not have comments")
+
+    @property
+    def dimensions(self) -> tuple[str, ...]:
+        return self._dimensions
+
+    @property
+    def frequency(self) -> str:
+        return self._frequency
+
+    @property
+    def global_attrs(self, override_dict: dict = None) -> dict:
+        raise NotImplementedError("CMIP7 global attributes not yet finalized")
+
+    @property
+    def long_name(self) -> str:
+        # FIXME(PG): I'm not sure about this one
+        return self._standard_name
+
+    @property
+    def modeling_realm(self) -> str:
+        raise NotImplementedError("CMIP7 does not have modeling realms")
+
+    @property
+    def name(self) -> str:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def ok_max_mean_abs(self) -> float:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def ok_min_mean_abs(self) -> float:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def out_name(self) -> str:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def positive(self) -> str:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def standard_name(self) -> str:
+        return self._standard_name
+
+    @property
+    def table_name(self) -> Optional[str]:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def typ(self) -> type:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def units(self) -> str:
+        return self._units
+
+    @property
+    def valid_max(self) -> float:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def valid_min(self) -> float:
+        raise NotImplementedError("Not yet figured out")
+
+    @property
+    def variable_id(self) -> str:
+        raise NotImplementedError("Not yet figured out")
+
+    def clone(self) -> "CMIP7DataRequestVariable":
+        clone = copy.deepcopy(self)
+        return clone

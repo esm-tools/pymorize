@@ -349,3 +349,13 @@ class CMIP6DataRequestTable(DataRequestTable):
 
 
 ################################################################################
+
+
+class CMIP7DataRequestTable(DataRequestTable):
+    """DataRequestTable for CMIP7."""
+
+    def __init__(self):
+        raise NotImplementedError("CMIP7DataRequestTable is not implemented yet.")
+
+
+################################################################################
