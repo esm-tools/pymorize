@@ -6,7 +6,9 @@ import warnings
 # import questionary
 import yaml
 
-from . import data_request, pipeline
+from . import pipeline
+from .data_request.table import DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
 
@@ -21,8 +23,8 @@ class Rule:
         inputs: typing.List[dict] = None,
         cmor_variable: str,
         pipelines: typing.List[pipeline.Pipeline] = None,
-        tables: typing.List[data_request.DataRequestTable] = None,
-        data_request_variables: typing.List[data_request.DataRequestVariable] = None,
+        tables: typing.List[DataRequestTable] = None,
+        data_request_variables: typing.List[DataRequestVariable] = None,
         **kwargs,
     ):
         """
@@ -274,15 +276,10 @@ class Rule:
         for drv in self.data_request_variables:
             rule_clone = self.clone()
             drv_clone = drv.clone()
-            for drv_table, drv_freq, cell_methods, cell_measures in zip(
-                drv.tables, drv.frequencies, drv.cell_methods, drv.cell_measures
-            ):
-                drv_clone.tables = [drv_table]
-                drv_clone.frequencies = [drv_freq]
-                drv_clone.cell_methods = [cell_methods]
-                drv_clone.cell_measures = [cell_measures]
-                rule_clone.data_request_variables = [drv_clone]
-                clones.append(rule_clone)
+            # FIXME: This is bad. I need to extract one rule for each table,
+            # but the newer API doesn't work as cleanly here...
+            rule_clone.data_request_variables = [drv_clone]
+            clones.append(rule_clone)
         return clones
 
     # FIXME: Not used and broken+

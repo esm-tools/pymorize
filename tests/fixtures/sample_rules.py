@@ -1,7 +1,7 @@
 import pytest
 
 from pymorize.config import PymorizeConfigManager
-from pymorize.data_request import DataRequestVariable
+from pymorize.data_request.variable import CMIP6DataRequestVariable
 from pymorize.rule import Rule
 
 
@@ -87,17 +87,30 @@ def rule_with_mass_units():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable(
-                variable_id="var1",
-                unit="kg",
-                description="Some description",
-                time_method="instant",
-                table="Some Table",
-                frequency="mon",
-                realms=["atmos"],
-                standard_name="some_standard_name",
-                cell_methods="time: mean",
-                cell_measures="area: areacella",
+            CMIP6DataRequestVariable.from_dict(
+                dict(
+                    # unit="kg",
+                    cell_measures="area: areacella",
+                    cell_methods="time: mean",
+                    comment="Some comment",
+                    description="Some description",
+                    dimensions="lon lat",
+                    frequency="mon",
+                    long_name="Some long name",
+                    modeling_realm="atmos",
+                    ok_max_mean_abs=999,
+                    ok_min_mean_abs=-999,
+                    out_name="var1",
+                    positive="up",
+                    realms=["atmos"],
+                    standard_name="something",
+                    table="Some Table",
+                    time_method="instant",
+                    type="real",
+                    units="kg",
+                    valid_max=1,
+                    valid_min=0,
+                )
             )
         ],
     )
@@ -121,17 +134,30 @@ def rule_with_data_request():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            DataRequestVariable(
-                variable_id="var1",
-                unit="kg m-2 s-1",
-                description="Some description",
-                time_method="instant",
-                table="Some Table",
-                frequency="mon",
-                realms=["atmos"],
-                standard_name="some_standard_name",
-                cell_methods="time: mean",
-                cell_measures="area: areacella",
+            CMIP6DataRequestVariable.from_dict(
+                dict(
+                    # unit="kg",
+                    cell_measures="area: areacella",
+                    cell_methods="time: mean",
+                    comment="Some comment",
+                    description="Some description",
+                    dimensions="lon lat",
+                    frequency="mon",
+                    long_name="Some long name",
+                    modeling_realm="atmos",
+                    ok_max_mean_abs=999,
+                    ok_min_mean_abs=-999,
+                    out_name="var1",
+                    positive="up",
+                    realms=["atmos"],
+                    standard_name="something",
+                    table="Some Table",
+                    time_method="instant",
+                    type="real",
+                    units="kg",
+                    valid_max=1,
+                    valid_min=0,
+                )
             )
         ],
     )

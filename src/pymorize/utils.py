@@ -4,10 +4,13 @@ Various utility functions needed around the package
 
 import importlib
 import inspect
+import os
+import tempfile
 import time
 from functools import partial
 
 import pkg_resources
+import requests
 
 from .logging import logger
 
@@ -251,3 +254,88 @@ def wait_for_workers(client, n_workers, timeout=600):
         time.sleep(1)  # Wait for 1 second before checking again
     logger.info(f"{n_workers} workers are now available.")
     return True
+
+
+def git_url_to_api_url(git_url, path="", branch="main"):
+    """
+    Convert a GitHub URL to the GitHub API URL for accessing directory contents.
+
+    Parameters
+    ---------
+    git_url : str
+        the original GitHub repository URL.
+    path : str
+        the path to the directory within the repository (default: "").
+    branch : str
+        the branch or commit hash to target (default: main).
+
+    Returns
+    -------
+    str :
+        the API URL.
+    """
+    if not git_url.startswith("https://github.com/"):
+        raise ValueError("Invalid GitHub URL. Must start with 'https://github.com/'.")
+
+    # Extract repo owner and name
+    parts = git_url.replace("https://github.com/", "").strip("/").split("/")
+    if len(parts) < 2:
+        raise ValueError(
+            "Invalid GitHub URL. Must include both owner and repository name."
+        )
+
+    repo_owner, repo_name = parts[:2]
+
+    # Build the API URL
+    api_url = f"https://api.github.com/repos/{repo_owner}/{repo_name}/contents/{path}?ref={branch}"
+    return api_url
+
+
+def list_files_in_directory(git_url, directory_path, branch="main"):
+    """
+    Get a list of file names in a directory from a GitHub repository.
+
+    Parameters:
+    - git_url: str, the GitHub repository URL.
+    - directory_path: str, the path to the directory in the repository.
+    - branch: str, the branch or commit hash to target (default: main).
+
+    Returns:
+    - list of str, filenames in the directory.
+    """
+    api_url = git_url_to_api_url(git_url, path=directory_path, branch=branch)
+
+    response = requests.get(api_url)
+    if response.status_code == 200:
+        contents = response.json()
+        filenames = [item["name"] for item in contents if item["type"] == "file"]
+        return filenames
+    else:
+        raise ValueError(
+            f"Failed to fetch directory contents. Status code: {response.status_code}"
+        )
+
+
+def download_json_tables_from_url(url: str, filenames: list):
+    """
+    Downloads JSON tables from a raw git URL
+
+    Parameters
+    ----------
+    url : str
+        The URL to download the JSON tables from.
+
+    Returns
+    -------
+    str :
+        The directory where the JSON tables were downloaded.
+    """
+    directory = tempfile.mkdtemp()
+    logger.debug(f"Downloading JSON tables from '{url}' to '{directory}'")
+    for filename in filenames:
+        response = requests.get(f"{url}/{filename}")
+        response.raise_for_status()
+        with open(os.path.join(directory, filename), "w") as file:
+            file.write(response.text)
+            logger.debug(f"Loaded file {filename}")
+    return directory

@@ -55,6 +55,7 @@ setup(
         "pyyaml",
         "questionary",
         "randomname",
+        "semver",
         "rich-click",
         "streamlit",
         "tqdm",
@@ -73,6 +74,7 @@ setup(
             "pytest",
             "pytest-asyncio",
             "pytest-cov",
+            "pytest-mock",
             "pytest-xdist",
             "sphinx",
             "sphinx_rtd_theme",
@@ -91,7 +93,7 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "pymorize": ["data/*.yaml"],
+        "pymorize": ["data/*.yaml", "data/cmip7/all_var_info.json"],
     },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
