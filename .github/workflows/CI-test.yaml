@@ -80,7 +80,7 @@ jobs:
           python -m pip install .[dev]
       - name: Run isort
         run: |
-          isort --profile black --check --skip ./cmip6-cmor-tables --skip ./versioneer.py .
+          isort --profile black --check --skip ./cmip6-cmor-tables --skip ./versioneer.py --skip ./CMIP7_DReq_Software .
       - name: Lint with flake8
         run: |
           ## stop the build if there are Python syntax errors or undefined names
