@@ -88,10 +88,10 @@ jobs:
           ## exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
           #flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
           # stop at any error
-          flake8 . --show-source --statistics --exclude ./cmip6-cmor-tables,./build,_version.py,./src/pymorize/webapp.py
+          flake8 . --show-source --statistics --exclude ./cmip6-cmor-tables,./build,_version.py,./src/pymorize/webapp.py,./CMIP7_DReq_Software
       - name: Run black
         run: |
-          black --check --extend-exclude 'cmip6-cmor-tables|versioneer\.py|webapp\.py' .
+          black --check --extend-exclude 'cmip6-cmor-tables|CMIP7_DReq_Software|versioneer\.py|webapp\.py' .
       - name: yamllint
         run: |
-          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}, ignore: ['cmip6-cmor-tables']}" .
+          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}, ignore: ['cmip6-cmor-tables', 'CMIP7_DReq_Software']}" .
