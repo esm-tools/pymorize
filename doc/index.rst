@@ -11,12 +11,19 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-  
+
    installation
    pymorize_building_blocks
-   pymorize_config_file
+   pymorize_cli
+   table_explorer
+   pymorize_on_slurm
+   schemas
+   standard_library
+   including_custom_steps
    including_subcommand_plugins
+   pymorize_configuration
    developer_guide
+   developer_setup
    API
 
 

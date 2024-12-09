@@ -2,21 +2,46 @@
 Pipeline of the data processing steps.
 """
 
+from datetime import timedelta
+
 import randomname
 from prefect import flow
+from prefect.cache_policies import INPUTS, TASK_SOURCE
 from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
+from .caching import generate_cache_key  # noqa: F401
 from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 
 
 class Pipeline:
-    def __init__(self, *args, name=None, workflow_backend="prefect", dask_cluster=None):
+    def __init__(
+        self,
+        *args,
+        name=None,
+        workflow_backend="prefect",
+        cache_policy=None,
+        dask_cluster=None,
+        cache_expiration=None,
+    ):
         self._steps = args
         self.name = name or randomname.get_name()
         self._workflow_backend = workflow_backend
         self._cluster = dask_cluster
+        self._prefect_cache_kwargs = {}
+        if cache_policy is None:
+            self._cache_policy = TASK_SOURCE + INPUTS
+            self._prefect_cache_kwargs["cache_policy"] = self._cache_policy
+
+        if cache_expiration is None:
+            self._cache_expiration = timedelta(days=1)
+        else:
+            if isinstance(cache_expiration, timedelta):
+                self._cache_expiration = cache_expiration
+            else:
+                raise TypeError("Cache expiration must be a timedelta!")
+        self._prefect_cache_kwargs["cache_expiration"] = self._cache_expiration
 
         if self._workflow_backend == "prefect":
             self._prefectize_steps()
@@ -32,7 +57,7 @@ class Pipeline:
         return "\n".join(r_val)
 
     def assign_cluster(self, cluster):
-        logger.debug("Assinging cluster to this pipeline")
+        logger.debug("Assigning cluster to this pipeline")
         self._cluster = cluster
 
     def _prefectize_steps(self):
@@ -42,7 +67,13 @@ class Pipeline:
             logger.debug(
                 f"[{i+1}/{len(self._steps)}] Converting step {step.__name__} to Prefect task."
             )
-            prefect_tasks.append(Task(step))
+            prefect_tasks.append(
+                Task(
+                    fn=step,
+                    **self._prefect_cache_kwargs,
+                    # cache_key_fn=generate_cache_key,
+                )
+            )
 
         self._steps = prefect_tasks
 
@@ -69,11 +100,18 @@ class Pipeline:
         )
         cmor_name = rule_spec.get("cmor_name")
         rule_name = rule_spec.get("name", cmor_name)
+        if self._cluster is None:
+            logger.warning(
+                "No cluster assigned to this pipeline. Using local Dask cluster."
+            )
+            dask_scheduler_address = None
+        else:
+            dask_scheduler_address = self._cluster.scheduler
 
         @flow(
             flow_run_name=f"{self.name} - {rule_name}",
             description=f"{rule_spec.get('description', '')}",
-            task_runner=DaskTaskRunner(address=self._cluster.scheduler_address),
+            task_runner=DaskTaskRunner(address=dask_scheduler_address),
             on_completion=[self.on_completion],
             on_failure=[self.on_failure],
         )
@@ -101,18 +139,20 @@ class Pipeline:
         logger.error("Better luck next time :-( \n")
 
     @classmethod
-    def from_list(cls, steps, name=None):
-        return cls(*steps, name=name)
+    def from_list(cls, steps, name=None, **kwargs):
+        return cls(*steps, name=name, **kwargs)
 
     @classmethod
-    def from_qualname_list(cls, qualnames: list, name=None):
+    def from_qualname_list(cls, qualnames: list, name=None, **kwargs):
         return cls.from_list(
-            [get_callable_by_name(name) for name in qualnames], name=name
+            [get_callable_by_name(name) for name in qualnames], name=name, **kwargs
         )
 
     @classmethod
-    def from_callable_strings(cls, step_strings: list, name=None):
-        return cls.from_list([get_callable(name) for name in step_strings], name=name)
+    def from_callable_strings(cls, step_strings: list, name=None, **kwargs):
+        return cls.from_list(
+            [get_callable(name) for name in step_strings], name=name, **kwargs
+        )
 
     @classmethod
     def from_dict(cls, data):
@@ -120,9 +160,15 @@ class Pipeline:
             raise ValueError("Cannot have both 'uses' and 'steps' to create a pipeline")
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
-            return get_callable_by_name(data["uses"])(name=data.get("name"))
+            return get_callable_by_name(data["uses"])(
+                name=data.get("name"), cache_expiration=data.get("cache_expiration")
+            )
         if "steps" in data:
-            return cls.from_callable_strings(data["steps"], name=data.get("name"))
+            return cls.from_callable_strings(
+                data["steps"],
+                name=data.get("name"),
+                cache_expiration=data.get("cache_expiration"),
+            )
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
 
@@ -171,14 +217,15 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.generic.get_variable",
         "pymorize.timeaverage.compute_average",
         "pymorize.units.handle_unit_conversion",
+        "pymorize.caching.manual_checkpoint",
         "pymorize.generic.trigger_compute",
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
     )
 
-    def __init__(self, name="pymorize.pipeline.DefaultPipeline"):
+    def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class TestingPipeline(FrozenPipeline):
@@ -205,6 +252,6 @@ class TestingPipeline(FrozenPipeline):
         "pymorize.generic.dummy_save_data",
     )
 
-    def __init__(self, name="pymorize.pipeline.TestingPipeline"):
+    def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
         steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name)
+        super().__init__(*steps, name=name, **kwargs)

@@ -1,4 +1,6 @@
 """
+Generic
+=======
 This module, `generic.py`, provides functionalities for transforming and standardizing NetCDF files
 according to CMOR.
 
@@ -101,7 +103,9 @@ def create_cmor_directories(config: dict) -> dict:
     """
     # Directory structure =
     # <mip_era>/
-    #  <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+    #  <activity_id>/ # an exception for this exists in section "Directory structure
+    #                 # template": "If multiple activities are listed in the global
+    #                 # attribute, the first one is used in the directory structure."
     #   <institution_id>/
     #     <source_id>/
     #     <experiment_id>/
@@ -244,4 +248,7 @@ def multiyear_monthly_mean(data, rule_spec, *args, **kwargs):
 
 
 def trigger_compute(data, rule_spec, *args, **kwargs):
-    return data.compute()
+    if hasattr(data, "compute"):
+        return data.compute()
+    # Data doesn't have a compute method, do nothing
+    return data

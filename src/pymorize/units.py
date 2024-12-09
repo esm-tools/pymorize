@@ -1,43 +1,28 @@
 """
+Units
+=====
 This module deals with the auto-unit conversion in the cmorization process.
 In case the units in model files differ from CMIP Tables, this module attempts to
 convert them automatically.
 
-In case of missing units in either model files or CMIP Tables, this module can
-not convert from a dimentionless base to something with dimension. Dealing with
-such thing have to done with `action` section in the Rules module on a per
-variable basis.
-
-Additionally, the cmip frequencies are mapped here. The CMIP6 frequency
-names and corresponding number of days are available as a dictionary in the
-``CMIP_FREQUENCIES`` variable. Assignment of these frequencies to the unit registry
-can be done with the ``assign_frequency_to_unit_registry`` function.
+Conversion to-or-from a dimensionless quantity is ambiguous. In this case,
+provide a mapping of what this dimensionless quantity represents and that
+is used for the conversion. `data/dimensionless_mappings.yaml` contains some
+examples on how the mapping is written.
 """
 
 import re
-import warnings
 from typing import Pattern, Union
-
-warnings.filterwarnings(
-    "ignore", message=".*unavailable to set up matplotlib support.*"
-)
 
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
 
-from .frequency import CMIP_FREQUENCIES
 from .logging import logger
 from .rule import Rule
 
 ureg = pint_xarray.unit_registry
-
-
-def assign_frequency_to_unit_registry():
-    """Assign the CMIP6 frequencies to the unit registry."""
-    for freq_name, days in CMIP_FREQUENCIES.items():
-        ureg.define(f"{freq_name} = {days} * d")
 
 
 def handle_chemicals(
@@ -104,31 +89,109 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
     """
     if not isinstance(da, xr.DataArray):
         raise TypeError(f"Expected xr.DataArray, got {type(da)}")
-    # data_request_variable needs to be defined at this point
+
     drv = rule.data_request_variable
-    to_unit = drv.unit
+    dimless_mappings = rule.get("dimensionless_unit_mappings", {})
+
+    # Process model's unit (from_unit)
+    # --------------------------------
+    # (defined in the yaml file or in the original file)
     model_unit = rule.get("model_unit")
     from_unit = da.attrs.get("units")
+    # Overwrite model unit if defined in the yaml file
     if model_unit is not None:
-        logger.debug(
-            f"using user defined unit ({model_unit}) instead of ({from_unit}) from DataArray "
+        logger.info(
+            f"using user defined unit ({model_unit}) instead of ({from_unit}) from the "
+            "original file"
         )
         from_unit = model_unit
+    # Raise error if unit is not defined anywhere
+    if not from_unit:
+        logger.error(
+            "Unit not defined neither in the original file nor in the yaml "
+            "configuration file. Please, define the unit for your data under "
+            f"rules.{rule.name}.model_unit"
+        )
+        raise ValueError("Unit not defined")
+
+    # Process table's unit (to_unit)
+    # ------------------------------
+    to_unit = drv.units
+    cmor_variable_id = drv.variable_id
+    # Check for `to_unit` defined as `None`, `False`, empty string...
+    if not to_unit:
+        logger.error(
+            "Unit of CMOR variable '{cmor_variable_id}' not defined in the data "
+            f"request table/s {rule.tables}"
+        )
+        raise ValueError("Unit not defined")
+
+    # Check if the data request unit is a float
+    if unit_can_be_float(to_unit):
+        logger.debug(
+            f"Unit of CMOR variable '{cmor_variable_id}' can be a float: {to_unit}"
+        )
+        try:
+            _to_unit = dimless_mappings.get(cmor_variable_id, {})[to_unit]
+        except KeyError:
+            logger.error(
+                f"Dimensionless unit '{to_unit}' not found in mappings for "
+                f"CMOR variable '{cmor_variable_id}'"
+            )
+            raise KeyError("Dimensionless unit not found in mappings")
+        logger.info(
+            f"Converting units: ({da.name} -> {cmor_variable_id}) {from_unit} -> "
+            f"{to_unit}"
+        )
+    else:
+        _to_unit = to_unit
+        logger.info(
+            f"Converting units: ({da.name} -> {cmor_variable_id}) {from_unit} -> "
+            f"{_to_unit} ({to_unit})"
+        )
+
+    # Chemicals
+    # ---------
     handle_chemicals(from_unit)
     handle_chemicals(to_unit)
-    new_da = da.pint.quantify(from_unit)
-    logger.debug(f"Converting units: {from_unit} -> {to_unit}")
-    new_da = new_da.pint.to(to_unit).pint.dequantify()
+
+    # Unit conversion
+    # ---------------
+    try:
+        new_da = da.pint.quantify(from_unit)
+        new_da = new_da.pint.to(_to_unit).pint.dequantify()
+    except ValueError as e:
+        logger.error(
+            f"Unit conversion of '{cmor_variable_id}' from {from_unit} to {to_unit} "
+            f"({_to_unit}) failed: {e}"
+        )
+        raise ValueError(f"Unit conversion failed: {e}")
+
+    # Reset final unit to the original value as defined in the cmor table
     if new_da.attrs.get("units") != to_unit:
         logger.debug(
-            "Pint auto-unit attribute setter different from requested unit string, setting manually."
+            "Pint auto-unit attribute setter different from requested unit string "
+            f"({new_da.attrs.get('units')} vs {to_unit}). Setting manually."
         )
         new_da.attrs["units"] = to_unit
-    # Ensure a units attribute is present, default to None (this should never happen)
+
+    # Ensure a units attribute is present
     if "units" not in new_da.attrs:
-        logger.warning(
-            "Units attribute not present in DataArray after conversion, please check carefully!"
+        logger.error("Units attribute not present in DataArray after conversion!")
+        raise AttributeError(
+            "Units attribute not present in DataArray after conversion!"
         )
-        logger.warning("Setting to None")
-        new_da.attrs["units"] = None
+
     return new_da
+
+
+def unit_can_be_float(value):
+    try:
+        _ = float(value)
+        return True
+    except ValueError as e:
+        logger.debug(f"unit_can_be_float: {e}")
+        return False
+    except TypeError as e:
+        logger.debug(f"unit_can_be_float: {e}")
+        return False

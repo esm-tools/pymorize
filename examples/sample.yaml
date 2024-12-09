@@ -5,15 +5,19 @@ general:
   email: "pgierz@awi.de"
   cmor_version: "CMIP6"
   mip: "CMIP"
-  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables" 
+  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
 pymorize:
   # parallel: True
   warn_on_no_rule: False
   use_flox: True
-  cluster_mode: fixed
+  dask_cluster: "slurm"
+  dask_cluster_scaling_mode: fixed
   fixed_jobs: 12
   # minimum_jobs: 8
   # maximum_jobs: 30
+  # You can add your own path to the dimensionless mapping table
+  # If nothing is specified here, it will use the built-in one.
+  # dimensionless_mapping_table: ../data/dimensionless_mappings.yaml
 rules:
   - name: paul_example_rule
     description: "You can put some text here"
@@ -109,7 +113,7 @@ jobqueue:
     # worker-command: dask-worker
     processes: 4  # Limited by memory per worker!
     # scheduler-command: dask-scheduler
-    
+
     # # How to launch workers and scheduler
     # worker-template:
     #   # Command to launch a Dask worker via SLURM

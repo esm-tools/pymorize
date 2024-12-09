@@ -37,6 +37,9 @@ class PipelineValidator(Validator):
             except (ImportError, ModuleNotFoundError):
                 self._error(field, "Must be a valid Python qualname")
 
+    # Add a schema for the rule arguments
+    _validate_is_qualname.schema = {"type": "boolean"}
+
     def _validate(self, document):
         super()._validate(document)
         if "steps" not in document and "uses" not in document:
@@ -58,6 +61,9 @@ class RuleValidator(Validator):
                     pathlib.Path(value).expanduser().resolve()
                 except TypeError as e:
                     self._error(field, f"{e.args[0]}. Must be a string")
+
+    # Add a schema for the rule arguments
+    _validate_is_directory.schema = {"type": "boolean"}
 
 
 PIPELINES_SCHEMA = {
@@ -129,10 +135,11 @@ RULES_SCHEMA = {
                 "cmor_units": {"type": "string", "required": False},
                 # FIXME(PS): How is it currently defined?
                 "model_units": {"type": "string", "required": False},
+                "file_timespan": {"type": "string", "required": False},
                 "variant_label": {
                     "type": "string",
                     "required": True,
-                    "regex": "^r\d+i\d+p\d+f\d+$",
+                    "regex": r"^r\d+i\d+p\d+f\d+$",
                 },
                 "source_id": {"type": "string", "required": True},
                 "output_directory": {
