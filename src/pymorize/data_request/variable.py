@@ -408,30 +408,47 @@ class CMIP6JSONDataRequestVariable(CMIP6DataRequestVariable):
 class CMIP7DataRequestVariable(DataRequestVariable):
 
     # Attributes without defaults
-    _name: str
+    _frequency: str
+    _modeling_realm: str
     _standard_name: str
     _units: str
     _cell_methods: str
+    _cell_measures: str
+    _long_name: str
+    _comment: str
     _dimensions: tuple[str, ...]
-    _frequency: str
+    _out_name: str
+    _typ: type
+    _positive: str
     _spatial_shape: str
     _temporal_shape: str
+    _cmip6_cmor_table: str
+
     _vertical_levels: str
+
+    _name: str
     _table_name: Optional[str] = None
 
     @classmethod
     def from_dict(cls, data):
         extracted_data = dict(
-            _name=data.get("name"),
-            _standard_name=data["CF standard name"],
+            _name=data["out_name"],
+            _frequency=data["frequency"],
+            _modeling_realm=data["modeling_realm"],
+            _standard_name=data["standard_name"],
             _units=data["units"],
             _cell_methods=data["cell_methods"],
+            _cell_measures=data["cell_measures"],
+            _long_name=data["long_name"],
+            _comment=data["comment"],
             _dimensions=tuple(data["dimensions"].split(" ")),
-            _frequency=data["frequency"],
+            _out_name=data["out_name"],
+            _typ=cls._type_strings[data["type"]],
+            _positive=data["positive"],
             _spatial_shape=data["spatial_shape"],
             _temporal_shape=data["temporal_shape"],
             _vertical_levels=data["vertical_levels"],
-            _table_name=data.get("table_name"),
+            _table_name=data["cmip6_cmor_table"],
         )
         return cls(**extracted_data)
 
@@ -441,8 +458,8 @@ class CMIP7DataRequestVariable(DataRequestVariable):
         all_var_info = json.load(open(_all_var_info, "r"))
         key = f"{table_name}.{var_name}"
         data = all_var_info["Compound Name"][key]
-        data["name"] = var_name
-        data["table_name"] = table_name
+        data["out_name"] = var_name
+        data["cmip6_cmor_table"] = table_name
         return cls.from_dict(data)
 
     @property
@@ -459,7 +476,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def comment(self) -> str:
-        raise NotImplementedError("CMIP7 does not have comments")
+        return self._comment
 
     @property
     def dimensions(self) -> tuple[str, ...]:
@@ -480,7 +497,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def modeling_realm(self) -> str:
-        raise NotImplementedError("CMIP7 does not have modeling realms")
+        return self._modeling_realm
 
     @property
     def name(self) -> str:
@@ -496,11 +513,11 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def out_name(self) -> str:
-        raise NotImplementedError("Not yet figured out")
+        return self._out_name
 
     @property
     def positive(self) -> str:
-        raise NotImplementedError("Not yet figured out")
+        return self._positive
 
     @property
     def standard_name(self) -> str:
@@ -514,7 +531,7 @@ class CMIP7DataRequestVariable(DataRequestVariable):
 
     @property
     def typ(self) -> type:
-        raise NotImplementedError("Not yet figured out")
+        return self._typ
 
     @property
     def units(self) -> str:

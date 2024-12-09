@@ -1,13 +1,18 @@
 import json
 from abc import abstractmethod
 from dataclasses import dataclass
+from importlib.resources import files
 from typing import List
 
 import pendulum
 from semver.version import Version
 
 from .factory import MetaFactory
-from .variable import CMIP6DataRequestVariable, DataRequestVariable
+from .variable import (
+    CMIP6DataRequestVariable,
+    CMIP7DataRequestVariable,
+    DataRequestVariable,
+)
 
 ################################################################################
 # BLUEPRINTS: Abstract classes for the data request tables
@@ -140,6 +145,15 @@ class DataRequestTableHeader(metaclass=MetaFactory):
 ################################################################################
 # END BLUEPRINTS
 ################################################################################
+
+
+@dataclass
+class CMIP7DataRequestTableHeader(DataRequestTableHeader):
+    _data_specs_version: Version = Version.parse("v1.0", optional_minor_and_patch=True)
+
+    @property
+    def data_specs_version(self) -> Version:
+        return self._data_specs_version
 
 
 @dataclass
@@ -351,11 +365,81 @@ class CMIP6DataRequestTable(DataRequestTable):
 ################################################################################
 
 
+@dataclass
 class CMIP7DataRequestTable(DataRequestTable):
     """DataRequestTable for CMIP7."""
 
-    def __init__(self):
-        raise NotImplementedError("CMIP7DataRequestTable is not implemented yet.")
+    # FIXME(PG): This might bite itself in the ass...
+    def __init__(
+        self,
+        header: CMIP7DataRequestTableHeader,
+        variables: List[DataRequestVariable],
+    ):
+        self._header = header
+        self._variables = variables
+
+    @property
+    def variables(self) -> List[str]:
+        return self._variables
+
+    @property
+    def header(self) -> CMIP7DataRequestTableHeader:
+        return self._header
+
+    @property
+    def table_name(self) -> str:
+        return self.header.table_id
+
+    def get_variable(self, name: str, find_by="name") -> DataRequestVariable:
+        """Returns the first variable with the matching name.
+
+        Parameters
+        ----------
+        name : str
+
+        Returns
+        -------
+        DataRequestVariable
+        """
+        for v in self._variables:
+            if getattr(v, find_by) == name:
+                return v
+        raise ValueError(
+            f"A Variable with the attribute {find_by}={name} not found in the table."
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CMIP7DataRequestTable":
+        header = CMIP7DataRequestTableHeader.from_dict(data["Header"])
+        variables = []
+        for var_key, var_data in data["Compound Name"].items():
+            table_name, var_name = var_key.split(".")
+            var_data["table_name"] = table_name
+            var_data["name"] = var_name
+            variables.append(CMIP7DataRequestVariable.from_dict(var_data))
+        return cls(header, variables)
+
+    @classmethod
+    def from_all_var_info_json(cls, table_name: str) -> "CMIP7DataRequestTable":
+        _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+        all_var_info = json.load(open(_all_var_info, "r"))
+        header = all_var_info["Header"]
+        variables = []
+        for var_name, var_dict in all_var_info["Compound Name"].items():
+            if var_dict["cmip6_cmor_table"] == table_name:
+                variables.append(CMIP7DataRequestVariable.from_dict(var_dict))
+        return cls(header, variables)
+
+    @classmethod
+    def from_json_file(cls, jfile) -> "CMIP7DataRequestTable":
+        with open(jfile, "r") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+
+    @property
+    def table_id(self) -> str:
+        """Alias for table_name."""
+        return self.table_name
 
 
 ################################################################################
