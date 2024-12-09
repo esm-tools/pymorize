@@ -40,7 +40,7 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 
 
 class CMORizer:
-    _SUPPORTED_CMOR_VERSIONS = ("CMIP6",)
+    _SUPPORTED_CMOR_VERSIONS = ("CMIP6", "CMIP7")
 
     def __init__(
         self,

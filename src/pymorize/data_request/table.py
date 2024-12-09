@@ -423,6 +423,13 @@ class CMIP7DataRequestTable(DataRequestTable):
     def from_all_var_info_json(cls, table_name: str) -> "CMIP7DataRequestTable":
         _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
         all_var_info = json.load(open(_all_var_info, "r"))
+        return cls.from_all_var_info(table_name, all_var_info)
+
+    @classmethod
+    def from_all_var_info(cls, table_name: str, all_var_info: dict = None):
+        if all_var_info is None:
+            _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+            all_var_info = json.load(open(_all_var_info, "r"))
         header = all_var_info["Header"]
         variables = []
         for var_name, var_dict in all_var_info["Compound Name"].items():

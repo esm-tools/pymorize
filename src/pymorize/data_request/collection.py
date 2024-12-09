@@ -1,6 +1,8 @@
+import json
 import pathlib
 from abc import abstractmethod
 from enum import Enum
+from importlib.resources import files
 from typing import Dict
 
 import deprecation
@@ -8,6 +10,7 @@ import deprecation
 from ..utils import download_json_tables_from_url, list_files_in_directory
 from .factory import MetaFactory
 from .table import CMIP6DataRequestTable, CMIP7DataRequestTable, DataRequestTable
+from .variable import CMIP7DataRequestVariable
 
 
 class DataRequest(metaclass=MetaFactory):
@@ -41,6 +44,41 @@ class CMIP7DataRequest(DataRequest):
     GIT_URL = "https://github.com/CMIP-Data-Request/CMIP7_DReq_Software/"
     """str: The URL of the CMIP7 data request repository."""
 
+    def __init__(
+        self,
+        tables: Dict[str, DataRequestTable],
+        variables: Dict[str, CMIP7DataRequestVariable] = None,
+    ):
+        self.tables = tables
+        self.variables = variables
+
+    @classmethod
+    def from_json_file(cls, jfile: str) -> "CMIP7DataRequest":
+        """Creates a CMIP7DataRequest instance from a single JSON file"""
+        # At the moment, we assume that this file is the "all_vars_info" file
+        with open(jfile, "r") as f:
+            data = json.load(f)
+        return cls.from_all_var_info(data)
+
+    @classmethod
+    def from_vendored_json(cls):
+        _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+        all_var_info = json.load(open(_all_var_info, "r"))
+        return cls.from_all_var_info(all_var_info)
+
+    @classmethod
+    def from_all_var_info(cls, data):
+        tables = {}
+        variables = {}
+        table_ids = set(k.split(".")[0] for k in data["Compound Name"].keys())
+        for table_id in table_ids:
+            table = CMIP7DataRequestTable.from_all_var_info(table_id, data)
+            tables[table_id] = table
+        for var_name, var_dict in data["Compound Name"].items():
+            variables[var_name] = CMIP7DataRequestVariable.from_dict(var_dict)
+
+        return cls(tables, variables)
+
     @classmethod
     def from_tables(cls, tables: Dict[str, DataRequestTable]) -> "CMIP7DataRequest":
         for table in tables.values():
@@ -50,14 +88,12 @@ class CMIP7DataRequest(DataRequest):
 
     @classmethod
     def from_directory(cls, directory: str) -> "CMIP7DataRequest":
-        """Creates the CMIP7 data request from a directory of tables"""
-        tables = {}
+        """Creates the CMIP7 data request from a directory"""
         directory = pathlib.Path(directory)
         for file in directory.iterdir():
+            # We assume that the directory contains only 1 JSON file, the "all_vars_info" file
             if file.is_file() and file.suffix == ".json":
-                table = CMIP7DataRequestTable.from_json_file(file)
-                tables[table.table_id] = table
-        return cls(tables)
+                return cls.from_json_file(file)
 
     @classmethod
     @deprecation.deprecated(details="Use from_directory instead.")
