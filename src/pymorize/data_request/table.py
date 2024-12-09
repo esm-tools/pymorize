@@ -149,7 +149,7 @@ class DataRequestTableHeader(metaclass=MetaFactory):
 
 @dataclass
 class CMIP7DataRequestTableHeader(DataRequestTableHeader):
-    _data_specs_version: Version = Version.parse("v1.0", optional_minor_and_patch=True)
+    _data_specs_version: Version = Version.parse("1", optional_minor_and_patch=True)
 
     @property
     def data_specs_version(self) -> Version:
