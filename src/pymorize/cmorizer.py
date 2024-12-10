@@ -211,12 +211,7 @@ class CMORizer:
         data_request_table_factory = create_factory(DataRequestTable)
         DataRequestTableClass = data_request_table_factory.get(self.cmor_version)
         table_dir = Path(self._general_cfg["CMIP_Tables_Dir"])
-        tables = {
-            tbl_name: tbl
-            for tbl_name, tbl in DataRequestTableClass.table_dict_from_directory(
-                table_dir
-            )
-        }
+        tables = DataRequestTableClass.table_dict_from_directory(table_dir)
         self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_create_data_request(self):
