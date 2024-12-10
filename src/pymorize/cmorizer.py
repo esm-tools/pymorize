@@ -221,8 +221,8 @@ class CMORizer:
             )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
         data_request_factory = create_factory(DataRequest)
-        DataRequestKlass = data_request_factory.get(cmor_version)
-        self.data_request = DataRequestKlass.from_directory(table_dir)
+        DataRequestClass = data_request_factory.get(cmor_version)
+        self.data_request = DataRequestClass.from_directory(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
         """
