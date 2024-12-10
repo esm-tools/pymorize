@@ -13,17 +13,17 @@ from pymorize.logging import logger
 
 
 @pytest.mark.parametrize(
-    "test_config",
+    "config",
     [
         pytest.param("test_config_cmip6", id="CMIP6"),
         pytest.param("test_config_cmip7", id="CMIP7"),
     ],
     indirect=True,
 )
-def test_init_cmip6(test_config):
+def test_init_cmip6(config):
     disable_run_logger()  # Turns off Prefect's extra logging layer, for testing
-    logger.info(f"Processing {test_config}")
-    with open(test_config, "r") as f:
+    logger.info(f"Processing {config}")
+    with open(config, "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
     # If we get this far, it was possible to construct
@@ -37,16 +37,16 @@ def test_init_cmip6(test_config):
     shutil.which("sbatch") is None, reason="sbatch is not available on this host"
 )
 @pytest.mark.parametrize(
-    "test_config",
+    "config",
     [
         pytest.param("test_config_cmip6", id="CMIP6"),
         pytest.param("test_config_cmip7", id="CMIP7"),
     ],
     indirect=True,
 )
-def test_process(test_config):
-    logger.info(f"Processing {test_config}")
-    with open(test_config, "r") as f:
+def test_process(config):
+    logger.info(f"Processing {config}")
+    with open(config, "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
