@@ -70,13 +70,13 @@ class ControlledVocabularies(dict):
             raise ValueError(f"file {path}: {e.msg}")
 
     @classmethod
-    def load_from_git(cls, tag: str = "6.2.58.73"):
+    def load_from_git(cls, tag: str = "6.2.58.64"):
         """Load the controlled vocabularies from the git repository
 
         Parameters
         ----------
         tag : str
-            The git tag to use. Default is 6.2.58.73
+            The git tag to use. Default is 6.2.58.64
             If tag is None, the main branch is used.
         Returns
         -------
@@ -86,7 +86,7 @@ class ControlledVocabularies(dict):
         if tag is None:
             tag = "refs/heads/main"
         else:
-            tag = "blob/" + tag
+            tag = "refs/tags/" + tag
         url = f"https://raw.githubusercontent.com/WCRP-CMIP/CMIP6_CVs/{tag}"
         filenames = (
             "CMIP6_DRS.json",

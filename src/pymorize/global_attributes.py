@@ -3,14 +3,15 @@
 import json
 import re
 from pathlib import Path
+from datetime import datetime
 
 from .controlled_vocabularies import ControlledVocabularies
 
 # from loguru import logger
 
-cv = ControlledVocabularies.load_from_git()
+data = ControlledVocabularies.load_from_git()
 
-required_global_attributes = cv["required_global_attributes"]
+required_global_attributes = data["required_global_attributes"]
 
 _parent_fields = (
     "branch_method",
@@ -24,77 +25,48 @@ _parent_fields = (
 )
 
 
-defaults = {
-    "institution_id": "AWI",
-    "license_type": "CC BY-SA 4.0",
-    "maintainer_url": None,
-}
+"""
+attribute dependencies
+----------------------
+Table header
+------------
+data_specs_version
+Conventions
+mip_era
+realm
+product
+frequency
 
+CV
+---
+source_id
+    source
+    institution_id
+    license_info
+    model_component  # how to get model_component
+        native_nominal_resolution (nominal_resolution)
+        description (grid)
+experiment_id
+    activity_id
+    parent_experiment_id
+    sub_experiment_id
 
-def set_global_attributes(ds, rule):
-    gattrs = {}
-    variant_label = rule.get("variant_label")
-    update_variant_label(variant_label, gattrs)
-    variable_id = rule.data_request_variable.variable_id
-    gattrs["variable_id"] = variable_id
-    gattrs["table_id"] = rule.data_request_variable.table.table_id
-    _update_global_attributes_from_table_header(gattrs, rule)
-    gattrs["source_id"] = source_id = rule.get("source_id")
-    source_id_cv = cv["source_id"][source_id]
-    _institution_id = source_id_cv.get("institution_id")
-    if len(_institution_id) > 1:
-        institution_ids = ", ".join(_institution_id)
-        institution_id = rule.get("institution_id")
-        if institution_id is None:
-            raise ValueError(
-                f"institution_id -- {institution_ids} -- has multiple value for source_id {source_id}."
-            )
-        else:
-            assert institution_id in _institution_id
-    else:
-        institution_id = _institution_id[0]
-    gattrs["institution_id"] = institution_id
-    license_type = source_id_cv["license_info"]["id"]
-    further_info_url = rule.get("further_info_url")
-    _update_license(gattrs, cv, institution_id, license_type, further_info_url)
-    gattrs["source"] = source = rule.get("source")  # model_component
-    gattrs["grid"] = source_id_cv["model_component"][source]["description"]
-    gattrs["nominal_resolution"] = source_id_cv["model_component"][source][
-        "native_nominal_resolution"
-    ]
-    gattrs["source_type"] = rule.get("source_type")
-    experiment_id = rule.get("experiment_id")
-    activity_id = rule.get("activity_id", None)
-    if activity_id is None:
-        _experiment_id_cv = cv.get("experiment_id", {}).get(experiment_id, {})
-        activity_id = _experiment_id_cv.get("activity_id", [])
-        if activity_id and len(activity_id) > 1:
-            activity_ids = ", ".join(activity_id)
-            raise ValueError(
-                f"activity_id -- {activity_ids} -- has multiple value for experiment_id {experiment_id}."
-            )
-        elif activity_id:
-            activity_id = activity_id[0]
-        else:
-            raise ValueError(f"no activity_id found for experiment_id {experiment_id}")
-    gattrs["activity_id"] = activity_id
-    gattrs["experiment"] = _experiment_id_cv.get("experiment", "")
-    gattrs["experiment_id"] = experiment_id
-    # ignore parent_experiment_id for now, in the first iteration
-    # parent_activity_id = _experiment_id_cv.get("parent_activity_id", "")
-    gattrs["sub_experiment"] = rule.get("sub_experiment", "")
-    gattrs["sub_experiment_id"] = _experiment_id_cv.get("sub_experiment_id")
+User input
+----------
+table_id
+further_info_url
+institution
+variant_label
+    initialization_index
+    realization_index
+    forcing_index
+    physics_index
 
-
-def _update_global_attributes_from_table_header(gattrs, rule):
-    """Updates global attributes from table header"""
-    table = rule.data_request_variable.table
-    header = table._data["Header"]
-    gattrs["data_specs_version"] = header["data_specs_version"]
-    gattrs["Conventions"] = header["Conventions"]
-    gattrs["mip_era"] = header["mip_era"]
-    gattrs["realm"] = header["realm"]
-    gattrs["product"] = header["product"]
+system generated
+----------------
+creation_date
+tracking_id
+"""
 
 
 def _parse_variant_label(label: str) -> dict:
@@ -122,65 +94,107 @@ def _parse_variant_label(label: str) -> dict:
     return d
 
 
-def _update_variant_label(label: str, gattrs: dict) -> dict:
-    "Add variant_label to global attributes"
-    variant_label_indices = _parse_variant_label(label)
-    gattrs |= variant_label_indices
-    gattrs["variant_label"] = label
-    return gattrs
-
-
-def _update_license(
-    gattrs: dict,
-    cv: dict,
-    institution_id: str = None,
-    license_type: str = None,
-    further_info_url: str = None,
-):
-    """
-    Updates the license attribute in the global attributes dictionary.
-
-    Args:
-        gattrs (dict): The global attributes dictionary to update.
-        cv (dict): The controlled vocabulary dictionary.
-        institution_id (str, optional): The institution ID. Defaults to None.
-        license_type (str, optional): The license type. Defaults to None.
-        further_info_url (str, optional): The maintainer URL. Defaults to None.
-
-    Returns:
-        None
-
-    Raises:
-        None
-    """
-
-    institution_id = institution_id or defaults.get("institution_id")
-    license_type = license_type or defaults.get("license_type")
-    further_info_url = further_info_url or defaults.get("further_info_url")
-    logger.debug(f"{institution_id=}")
-    logger.debug(f"{license_type=}")
-    logger.debug(f"{further_info_url=}")
-    lic = cv["license"]
-    license_text = lic["license"]
-    license_id = lic["license_options"][license_type]["license_id"]
-    license_url = lic["license_options"][license_type]["license_url"]
-    if further_info_url is None:
-        logger.debug(
-            "Removing placeholder for maintainer url from license text as it is not provided."
-        )
-        license_text = re.sub(r"\[.*?\]", "", license_text)
-    institution = cv["institution_id"][institution_id]
-
-    def make_placeholders(text):
-        return re.sub(r"<.*?>", "{}", text)
-
-    logger.debug(
-        "Creating place-holders in license template found in CMIP6_license.json"
-    )
-    text = make_placeholders(license_text)
-    if further_info_url is None:
-        text = text.format(institution, license_id, license_url)
+def _source_id_related(rule):
+    source_id = rule.source_id
+    cv = data["source_id"][source_id]
+    _inst_id = getattr(rule, "institution_id", None)
+    inst_id = cv["institution_id"]
+    if _inst_id:
+        assert _inst_id in inst_id
     else:
-        text = text.format(institution, license_id, license_url, further_info_url)
-    logger.debug(f"License: {text}")
-    gattrs["license"] = text
+        if len(inst_id) > 1:
+            raise ValueError(
+                f"Provide institution_id. Mutiple values for institution_id found {inst_id}"
+            )
+        _inst_id = next(iter(inst_id))
+    model_components = cv["model_component"]
+    model_component = getattr(rule, "model_component", None)
+    if model_component:
+        assert model_component in model_components
+    else:
+        raise ValueError("Missing required attribute 'model_component'")
+    grid = model_components[model_component]["description"]
+    nominal_resolution = model_components[model_component]["native_nominal_resolution"]
+    license_id = cv["license_info"]["id"]
+    license_url = data["license"]["license_options"][license_id]["license_url"]
+    license_id = data["license"]["license_options"][license_id]["license_id"]
+    license_text = data["license"]["license"]
+    # make placeholders in license text
+    license_text = re.sub(r"<.*?>", "{}", license_text)
+    further_info_url = getattr(rule, "further_info_url", None)
+    if further_info_url is None:
+        license_text = re.sub(r"\[.*?\]", "", license_text)
+        license_text = license_text.format(_inst_id, license_id, license_url)
+    else:
+        license_text = license_text.format(
+            _inst_id, license_id, license_url, further_info_url
+        )
+    grid_label = getattr(rule, "grid_label", None)
+    if grid_label is None:
+        raise ValueError("Missing required attribute `grid_label`")
+    return {
+        "source_id": source_id,
+        "source": f"{model_component} ({cv['release_year']})",
+        "institution_id": _inst_id,
+        "institution": data["institution_id"][_inst_id],
+        "grid": grid,
+        "grid_label": grid_label,
+        "nominal_resolution": nominal_resolution,
+        "license": license_text,
+    }
+
+
+def _experiment_id_related(rule):
+    exp_id = rule.experiment_id
+    cv = data["experiment_id"][exp_id]
+    _activity_id = getattr(rule, "activity_id", None)
+    activity_id = cv["activity_id"]
+    if _activity_id:
+        assert _activity_id in activity_id
+    else:
+        if len(activity_id) > 1:
+            raise ValueError(f"Mutiple activity_id found {activity_id}")
+        _activity_id = next(iter(activity_id))
+    return {
+        "activity_id": _activity_id,
+        "experiment_id": exp_id,
+        "experiment": cv["experiment"],
+        "sub_experiment_id": " ".join(cv["sub_experiment_id"]),
+        "source_type": " ".join(cv["required_model_components"]),
+    }
+
+
+def _header_related(rule):
+    d = {}
+    d["table_id"] = rule.table.table_id
+    d["mip_era"] = rule.table.mip_era
+    d["realm"] = rule.table.modeling_realm
+    d["frequency"] = rule.table.frequency
+    d["Conventions"] = rule.table.Conventions
+    d["product"] = rule.table.product
+    d["data_specs_version"] = rule.table.data_specs_version
+    return d
+
+
+def _set_global_attributes(rule):
+    d = {}
+    d["variable_id"] = rule.cmor_variable
+    d["variant_label"] = rule.variant_label
+    d.update(_header_related(rule))
+    d.update(_parse_variant_label(rule.variant_label))
+    d.update(_source_id_related(rule))
+    d.update(_experiment_id_related(rule))
+    d = {k: d[k] for k in sorted(d)}
+    return d
+
+
+def set_global_attributes(ds, rule):
+    d = _set_global_attributes(rule)
+    # this needs to be discussed. For now setting it to today's datetime
+    # file creation date or today
+    d["creation_date"] = str(datetime.today())
+    # how to get proper tracking_id is yet to be determined
+    # This is just the tracking prefix
+    d["tracking_id"] = "hdl:21.14100"
+    ds.attrs.update(d)
+    return ds
