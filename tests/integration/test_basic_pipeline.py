@@ -15,8 +15,8 @@ from pymorize.logging import logger
 @pytest.mark.parametrize(
     "test_config",
     [
-        "test_config_cmip6",
-        "test_config_cmip7",
+        pytest.param("test_config_cmip6", id="CMIP6"),
+        pytest.param("test_config_cmip7", id="CMIP7"),
     ],
     indirect=True,
 )
@@ -39,8 +39,8 @@ def test_init_cmip6(test_config):
 @pytest.mark.parametrize(
     "test_config",
     [
-        "test_config_cmip6",
-        "test_config_cmip7",
+        pytest.param("test_config_cmip6", id="CMIP6"),
+        pytest.param("test_config_cmip7", id="CMIP7"),
     ],
     indirect=True,
 )
