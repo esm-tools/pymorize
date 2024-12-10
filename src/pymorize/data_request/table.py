@@ -452,7 +452,7 @@ class CMIP7DataRequestTable(DataRequestTable):
         variables = []
         for var_name, var_dict in all_var_info["Compound Name"].items():
             if var_dict["cmip6_cmor_table"] == table_name:
-                variables.append(cls.from_dict(var_dict))
+                variables.append(CMIP7DataRequestVariable.from_dict(var_dict))
         return cls(header, variables)
 
     @classmethod
