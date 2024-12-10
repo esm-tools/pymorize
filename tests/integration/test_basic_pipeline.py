@@ -20,7 +20,7 @@ from pymorize.logging import logger
     ],
     indirect=True,
 )
-def test_init_cmip6(config):
+def test_init(config):
     disable_run_logger()  # Turns off Prefect's extra logging layer, for testing
     logger.info(f"Processing {config}")
     with open(config, "r") as f:

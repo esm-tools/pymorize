@@ -365,9 +365,20 @@ class CMIP6DataRequestTable(DataRequestTable):
 
     @classmethod
     def table_dict_from_directory(cls, path) -> dict:
+        # We need to know which files to skip...
+        _skip_files = [
+            "CMIP6_CV_test.json",
+            "CMIP6_coordinate.json",
+            "CMIP6_CV.json",
+            "CMIP6_formula_terms.json",
+            "CMIP6_grids.json",
+            "CMIP6_input_example.json",
+        ]
         path = pathlib.Path(path)  # noop if already a Path
         tables = {}
         for file in path.iterdir():
+            if file.name in _skip_files:
+                continue
             if file.is_file() and file.suffix == ".json":
                 table = cls.from_json_file(file)
                 tables[table.table_id] = table
