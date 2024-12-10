@@ -12,7 +12,15 @@ from pymorize.cmorizer import CMORizer
 from pymorize.logging import logger
 
 
-def test_init(test_config):
+@pytest.mark.parameterize(
+    "test_config",
+    [
+        "test_config_cmip6",
+        "test_config_cmip7",
+    ],
+    indirect=True,
+)
+def test_init_cmip6(test_config):
     disable_run_logger()  # Turns off Prefect's extra logging layer, for testing
     logger.info(f"Processing {test_config}")
     with open(test_config, "r") as f:
@@ -27,6 +35,14 @@ def test_init(test_config):
 
 @pytest.mark.skipif(
     shutil.which("sbatch") is None, reason="sbatch is not available on this host"
+)
+@pytest.mark.parameterize(
+    "test_config",
+    [
+        "test_config_cmip6",
+        "test_config_cmip7",
+    ],
+    indirect=True,
 )
 def test_process(test_config):
     logger.info(f"Processing {test_config}")
