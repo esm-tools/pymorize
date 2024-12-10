@@ -12,7 +12,7 @@ from pymorize.cmorizer import CMORizer
 from pymorize.logging import logger
 
 
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "test_config",
     [
         "test_config_cmip6",
@@ -36,7 +36,7 @@ def test_init_cmip6(test_config):
 @pytest.mark.skipif(
     shutil.which("sbatch") is None, reason="sbatch is not available on this host"
 )
-@pytest.mark.parameterize(
+@pytest.mark.parametrize(
     "test_config",
     [
         "test_config_cmip6",
