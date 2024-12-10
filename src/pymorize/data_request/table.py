@@ -1,4 +1,5 @@
 import json
+import pathlib
 from abc import abstractmethod
 from dataclasses import dataclass
 from importlib.resources import files
@@ -7,6 +8,7 @@ from typing import List
 import pendulum
 from semver.version import Version
 
+from ..logging import logger
 from .factory import MetaFactory
 from .variable import (
     CMIP6DataRequestVariable,
@@ -55,6 +57,12 @@ class DataRequestTable(metaclass=MetaFactory):
     @abstractmethod
     def from_dict(cls, data: dict) -> "DataRequestTable":
         """Create a DataRequestTable from a dictionary."""
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def table_dict_from_directory(cls, path: str) -> dict:
+        """Create a dictionary of tables from a directory."""
         raise NotImplementedError
 
 
@@ -356,6 +364,16 @@ class CMIP6DataRequestTable(DataRequestTable):
         return cls(header, variables)
 
     @classmethod
+    def table_dict_from_directory(cls, path) -> dict:
+        path = pathlib.Path(path)  # noop if already a Path
+        tables = {}
+        for file in path.iterdir():
+            if file.is_file() and file.suffix == ".json":
+                table = cls.from_json_file(file)
+                tables[table.table_id] = table
+        return tables
+
+    @classmethod
     def from_json_file(cls, jfile) -> "CMIP6DataRequestTable":
         with open(jfile, "r") as f:
             data = json.load(f)
@@ -434,8 +452,28 @@ class CMIP7DataRequestTable(DataRequestTable):
         variables = []
         for var_name, var_dict in all_var_info["Compound Name"].items():
             if var_dict["cmip6_cmor_table"] == table_name:
-                variables.append(CMIP7DataRequestVariable.from_dict(var_dict))
+                variables.append(cls.from_dict(var_dict))
         return cls(header, variables)
+
+    @classmethod
+    def table_dict_from_directory(cls, path) -> dict:
+        path = pathlib.Path(path)  # noop if already a Path
+        tables = {}
+        try:
+            with open(path / "all_var_info.json", "r") as f:
+                all_var_info = json.load(f)
+        except FileNotFoundError:
+            logger.error(f"No all_var_info.json found in {path}.")
+            logger.error(
+                "It is currently possible to only create tables from the all_var_info.json file!"
+            )
+            logger.error("Sorry...")
+            raise FileNotFoundError
+        table_ids = set(k.split(".")[0] for k in all_var_info["Compound Name"].keys())
+        for table_id in table_ids:
+            table = cls.from_all_var_info(table_id, all_var_info)
+            tables[table_id] = table
+        return tables
 
     @classmethod
     def from_json_file(cls, jfile) -> "CMIP7DataRequestTable":
