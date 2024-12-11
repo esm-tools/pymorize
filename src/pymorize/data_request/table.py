@@ -264,11 +264,11 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
         # If not, we need to raise an error
         if len(attrs_for_table["realm"]) != 1:
             raise ValueError(
-                "Realms for the variables in the table are not consistent."
+                f"Realms in the table are not consistent: {attrs_for_table['realm']}"
             )
         if len(attrs_for_table["approx_interval"]) != 1:
             raise ValueError(
-                "Approximate intervals for the variables in the table are not consistent."
+                f"approx_interval in the table is not consistent: {attrs_for_table['approx_interval']}"
             )
         # Build a table header, always using defaults for known fields
         return cls(
