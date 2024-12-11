@@ -165,7 +165,7 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
     ############################################################################
     # Attributes without known defaults:
     _table_id: str
-    _realm: str
+    _realm: List[str]
     _approx_interval: float  # Optional
     _generic_levels: List[str]
 
@@ -174,7 +174,7 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
         return self._table_id
 
     @property
-    def realm(self) -> str:
+    def realm(self) -> List[str]:
         return self._realm
 
     @property
@@ -260,12 +260,8 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
                 cls._approx_interval_from_frequency(var["frequency"])
             )
 
-        # We assume that all variables in the table have the same realm and approx_interval
+        # We assume that all variables in the table have the same approx_interval
         # If not, we need to raise an error
-        if len(attrs_for_table["realm"]) != 1:
-            raise ValueError(
-                f"Realms in the table are not consistent: {attrs_for_table['realm']}"
-            )
         if len(attrs_for_table["approx_interval"]) != 1:
             raise ValueError(
                 f"approx_interval in the table is not consistent: {attrs_for_table['approx_interval']}"
@@ -273,7 +269,7 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
         # Build a table header, always using defaults for known fields
         return cls(
             _table_id=table_name,
-            _realm=attrs_for_table["realm"].pop(),
+            _realm=list(attrs_for_table["realm"]),
             _approx_interval=attrs_for_table["approx_interval"].pop(),
             _generic_levels=[],
         )
@@ -320,7 +316,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     # Properties without defaults:
     # ----------------------------
     _table_id: str
-    _realm: str
+    _realm: List[str]
     _table_date: pendulum.Date
     _approx_interval: float  # Optional
     _generic_levels: List[str]
@@ -353,7 +349,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
         # The input dict needs to have these, since we have no defaults:
         extracted_data = dict(
             _table_id=data["table_id"].lstrip("Table "),
-            _realm=data["realm"],
+            _realm=[data["realm"]],
             _table_date=pendulum.parse(data["table_date"], strict=False).date(),
             # This might be None, if the approx interval is an empty string...
             _approx_interval=(
@@ -394,7 +390,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
         return self._table_id
 
     @property
-    def realm(self) -> str:
+    def realm(self) -> List[str]:
         return self._realm
 
     @property
