@@ -127,7 +127,7 @@ class CMORizer:
         ################################################################################
 
     def __del__(self):
-        # Gracefully close the cluster if it exists
+        """Gracefully close the cluster if it exists"""
         if self._cluster is not None:
             self._cluster.close()
 
