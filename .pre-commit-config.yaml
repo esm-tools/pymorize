@@ -33,5 +33,6 @@ exclude: |
   (
       ^versioneer\.py$|           # Exclude 'versioneer.py'
       ^src/pymorize/webapp\.py$|  # Exclude 'src/pymorize/webapp.py'
-      _version\.py                # Exclude '_version.py'
+      _version\.py|               # Exclude '_version.py'
+      ^src/pymorize/data/cmip7/   # Exclude 'src/pymorize/data/cmip7/'
   )
