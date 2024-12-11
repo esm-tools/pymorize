@@ -284,7 +284,7 @@ class CMIP7DataRequestTableHeader(DataRequestTableHeader):
     # Static methods:  Useful stuff that doesn't need to be on an instance
 
     @staticmethod
-    def _approx_interval_from_frequency(self, frequency: str) -> float:
+    def _approx_interval_from_frequency(frequency: str) -> float:
         if frequency == "1hr":
             return 1.0 / 24.0
         if frequency == "3hr":
