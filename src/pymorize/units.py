@@ -12,7 +12,6 @@ examples on how the mapping is written.
 """
 
 import re
-import warnings
 from typing import Pattern, Union
 
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
@@ -22,10 +21,6 @@ from chemicals import periodic_table
 
 from .logging import logger
 from .rule import Rule
-
-warnings.filterwarnings(
-    "ignore", message=".*unavailable to set up matplotlib support.*"
-)
 
 ureg = pint_xarray.unit_registry
 
@@ -121,7 +116,7 @@ def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
 
     # Process table's unit (to_unit)
     # ------------------------------
-    to_unit = drv.unit
+    to_unit = drv.units
     cmor_variable_id = drv.variable_id
     # Check for `to_unit` defined as `None`, `False`, empty string...
     if not to_unit:

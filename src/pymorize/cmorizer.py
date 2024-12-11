@@ -22,12 +22,10 @@ from .cluster import (
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_request import (
-    DataRequest,
-    DataRequestTable,
-    DataRequestVariable,
-    IgnoreTableFiles,
-)
+from .data_request.collection import CMIP6IgnoreTableFiles, DataRequest
+from .data_request.factory import create_factory
+from .data_request.table import CMIP6DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -42,6 +40,8 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 
 
 class CMORizer:
+    _SUPPORTED_CMOR_VERSIONS = ("CMIP6",)
+
     def __init__(
         self,
         pymorize_cfg=None,
@@ -112,6 +112,11 @@ class CMORizer:
         self._post_init_data_request_variables()
         logger.debug("...post-init done!")
         ################################################################################
+
+    def __del__(self):
+        """Gracefully close the cluster if it exists"""
+        if self._cluster is not None:
+            self._cluster.close()
 
     def _post_init_configure_dask(self):
         """
@@ -195,20 +200,29 @@ class CMORizer:
             path.stem.replace("CMIP6_", ""): path for path in table_dir.glob("*.json")
         }
         tables = {}
-        ignore_files = set(ignore_file.value for ignore_file in IgnoreTableFiles)
+        ignore_files = set(ignore_file.value for ignore_file in CMIP6IgnoreTableFiles)
         for tbl_name, tbl_file in table_files.items():
             logger.debug(f"{tbl_name}, {tbl_file}")
             if tbl_file.name not in ignore_files:
                 logger.debug(f"Adding Table {tbl_name}")
-                tables[tbl_name] = DataRequestTable(tbl_file)
+                tables[tbl_name] = CMIP6DataRequestTable.from_json_file(tbl_file)
         self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_create_data_request(self):
         """
         Creates a DataRequest object from the tables directory.
         """
+        if self._general_cfg.get("cmor_version") is None:
+            raise ValueError("cmor_version must be set in the general configuration.")
+        cmor_version = self._general_cfg["cmor_version"]
+        if cmor_version not in self._SUPPORTED_CMOR_VERSIONS:
+            raise ValueError(
+                f"CMOR version {cmor_version} is not supported. Supported versions are {self._SUPPORTED_CMOR_VERSION}"
+            )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        self.data_request = DataRequest.from_tables_dir(table_dir)
+        data_request_factory = create_factory(DataRequest)
+        DataRequestClass = data_request_factory.get(cmor_version)
+        self.data_request = DataRequestClass.from_directory(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
         """
@@ -217,11 +231,11 @@ class CMORizer:
         tables = self._general_cfg["tables"]
         for rule in self.rules:
             for tbl in tables.values():
-                if rule.cmor_variable in tbl.variable_ids:
+                if rule.cmor_variable in tbl.variables:
                     rule.add_table(tbl.table_id)
 
     def _post_init_data_request_variables(self):
-        for drv in self.data_request.variables:
+        for drv in self.data_request.variables.values():
             rule_for_var = self.find_matching_rule(drv)
             if rule_for_var is None:
                 continue
@@ -312,10 +326,11 @@ class CMORizer:
         self.rules = new_rules
 
     def _rules_depluralize_drvs(self):
+        """Ensures that only one data request variable is assigned to each rule"""
         for rule in self.rules:
             assert len(rule.data_request_variables) == 1
-            drv = rule.data_request_variable = rule.data_request_variables[0]
-            drv.depluralize()
+            rule.data_request_variable = rule.data_request_variables[0]
+            del rule.data_request_variables
 
     def _post_init_create_pipelines(self):
         pipelines = []
@@ -371,7 +386,7 @@ class CMORizer:
         errors = []
         for rule in self.rules:
             table_freq = _frequency_from_approx_interval(
-                rule.data_request_variable.table.approx_interval
+                rule.data_request_variable.table_header.approx_interval
             )
             # is_subperiod from pandas does not support YE or ME notation
             table_freq = table_freq.rstrip("E")
