@@ -1,6 +1,6 @@
 import pytest
 
-from pymorize.data_request import DataRequestVariable
+from pymorize.data_request.variable import DataRequestVariable
 
 
 @pytest.fixture

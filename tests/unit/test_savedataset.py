@@ -58,14 +58,15 @@ Table 2: Precision of time labels used in file names
 
 """
 
+from unittest.mock import Mock
+
 import numpy as np
 import pandas as pd
 import pytest
 import xarray as xr
 
-from unittest.mock import Mock
 from pymorize.files import _filename_time_range, save_dataset
-from pymorize.timeaverage import _get_time_method
+from pymorize.timeaverage import _get_time_method  # noqa: F401
 
 # Tests for time-span in filename
 

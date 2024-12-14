@@ -1,4 +1,6 @@
 import copy
+import getpass
+import os
 from importlib.resources import files
 from pathlib import Path
 
@@ -8,21 +10,27 @@ import questionary
 import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
-from dask_jobqueue import SLURMCluster
 from everett.manager import generate_uppercase_key, get_runtime_config
 from prefect import flow, task
 from prefect.futures import wait
 from rich.progress import track
 
-from .config import PymorizeConfig, PymorizeConfigManager, parse_bool
-from .data_request import (DataRequest, DataRequestTable, DataRequestVariable,
-                           IgnoreTableFiles)
+from .cluster import (
+    CLUSTER_ADAPT_SUPPORT,
+    CLUSTER_MAPPINGS,
+    CLUSTER_SCALE_SUPPORT,
+    set_dashboard_link,
+)
+from .config import PymorizeConfig, PymorizeConfigManager
+from .data_request.collection import CMIP6IgnoreTableFiles, DataRequest
+from .data_request.factory import create_factory
+from .data_request.table import CMIP6DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
-from .units import handle_unit_conversion
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
@@ -32,6 +40,8 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 
 
 class CMORizer:
+    _SUPPORTED_CMOR_VERSIONS = ("CMIP6",)
+
     def __init__(
         self,
         pymorize_cfg=None,
@@ -86,10 +96,13 @@ class CMORizer:
 
         ################################################################################
         # Post_Init:
-        if self._pymorize_cfg("parallel"):
-            if self._pymorize_cfg("parallel_backend") == "dask":
-                self._post_init_configure_dask()
-                self._post_init_create_dask_cluster()
+        if self._pymorize_cfg("enable_dask"):
+            logger.debug("Setting up dask configuration...")
+            self._post_init_configure_dask()
+            logger.debug("...done!")
+            logger.debug("Creating dask cluster...")
+            self._post_init_create_dask_cluster()
+            logger.debug("...done!")
         self._post_init_create_pipelines()
         self._post_init_create_rules()
         self._post_init_read_bare_tables()
@@ -97,7 +110,13 @@ class CMORizer:
         self._post_init_populate_rules_with_tables()
         self._post_init_read_dimensionless_unit_mappings()
         self._post_init_data_request_variables()
+        logger.debug("...post-init done!")
         ################################################################################
+
+    def __del__(self):
+        """Gracefully close the cluster if it exists"""
+        if self._cluster is not None:
+            self._cluster.close()
 
     def _post_init_configure_dask(self):
         """
@@ -118,28 +137,52 @@ class CMORizer:
 
     def _post_init_create_dask_cluster(self):
         # FIXME: In the future, we can support PBS, too.
-        logger.info("Setting up SLURMCluster...")
-        self._cluster = SLURMCluster()
-        cluster_mode = self._pymorize_cfg.get("cluster_mode", "adapt")
-        if cluster_mode == "adapt":
-            min_jobs = self._pymorize_cfg.get("minimum_jobs", 1)
-            max_jobs = self._pymorize_cfg.get("maximum_jobs", 10)
-            self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
-        elif cluster_mode == "fixed":
-            jobs = self._pymorize_cfg.get("fixed_jobs", 5)
-            self._cluster.scale(jobs=jobs)
+        logger.info("Setting up dask cluster...")
+        cluster_name = self._pymorize_cfg("dask_cluster")
+        ClusterClass = CLUSTER_MAPPINGS[cluster_name]
+        self._cluster = ClusterClass()
+        set_dashboard_link(self._cluster)
+        cluster_scaling_mode = self._pymorize_cfg.get(
+            "dask_cluster_scaling_mode", "adapt"
+        )
+        if cluster_scaling_mode == "adapt":
+            if CLUSTER_ADAPT_SUPPORT[cluster_name]:
+                min_jobs = self._pymorize_cfg.get(
+                    "dask_cluster_scaling_minimum_jobs", 1
+                )
+                max_jobs = self._pymorize_cfg.get(
+                    "dask_cluster_scaling_maximum_jobs", 10
+                )
+                self._cluster.adapt(minimum_jobs=min_jobs, maximum_jobs=max_jobs)
+            else:
+                logger.warning(f"{self._cluster} does not support adaptive scaling!")
+        elif cluster_scaling_mode == "fixed":
+            if CLUSTER_SCALE_SUPPORT[cluster_name]:
+                jobs = self._pymorize_cfg.get("dask_cluster_scaling_fixed_jobs", 5)
+                self._cluster.scale(jobs=jobs)
+            else:
+                logger.warning(f"{self._cluster} does not support fixed scaing")
         else:
             raise ValueError(
-                "You need to specify adapt or fixed for pymorize.cluster_mode"
+                "You need to specify adapt or fixed for pymorize.dask_cluster_scaling_mode"
             )
-        # Wait for at least min_jobs to be available...
-        # FIXME: Client needs to be available here?
-        logger.info(f"SLURMCluster can be found at: {self._cluster=}")
+        # FIXME: Include the gateway option if possible
+        # FIXME: Does ``Client`` needs to be available here?
+        logger.info(f"Cluster can be found at: {self._cluster=}")
         logger.info(f"Dashboard {self._cluster.dashboard_link}")
+
+        username = getpass.getuser()
+        nodename = getattr(os.uname(), "nodename", "UNKNOWN")
+        logger.info(
+            "To see the dashboards run the following command in your computer's "
+            "terminal:\n"
+            f"\tpymorize ssh-tunnel --username {username} --compute-node "
+            f"{nodename}"
+        )
 
         dask_extras = 0
         logger.info("Importing Dask Extras...")
-        if self._pymorize_cfg.get("use_flox", True):
+        if self._pymorize_cfg.get("enable_flox", True):
             dask_extras += 1
             logger.info("...flox...")
             import flox  # noqa: F401
@@ -157,20 +200,29 @@ class CMORizer:
             path.stem.replace("CMIP6_", ""): path for path in table_dir.glob("*.json")
         }
         tables = {}
-        ignore_files = set(ignore_file.value for ignore_file in IgnoreTableFiles)
+        ignore_files = set(ignore_file.value for ignore_file in CMIP6IgnoreTableFiles)
         for tbl_name, tbl_file in table_files.items():
             logger.debug(f"{tbl_name}, {tbl_file}")
             if tbl_file.name not in ignore_files:
                 logger.debug(f"Adding Table {tbl_name}")
-                tables[tbl_name] = DataRequestTable(tbl_file)
+                tables[tbl_name] = CMIP6DataRequestTable.from_json_file(tbl_file)
         self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_create_data_request(self):
         """
         Creates a DataRequest object from the tables directory.
         """
+        if self._general_cfg.get("cmor_version") is None:
+            raise ValueError("cmor_version must be set in the general configuration.")
+        cmor_version = self._general_cfg["cmor_version"]
+        if cmor_version not in self._SUPPORTED_CMOR_VERSIONS:
+            raise ValueError(
+                f"CMOR version {cmor_version} is not supported. Supported versions are {self._SUPPORTED_CMOR_VERSION}"
+            )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        self.data_request = DataRequest.from_tables_dir(table_dir)
+        data_request_factory = create_factory(DataRequest)
+        DataRequestClass = data_request_factory.get(cmor_version)
+        self.data_request = DataRequestClass.from_directory(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
         """
@@ -179,11 +231,11 @@ class CMORizer:
         tables = self._general_cfg["tables"]
         for rule in self.rules:
             for tbl in tables.values():
-                if rule.cmor_variable in tbl.variable_ids:
+                if rule.cmor_variable in tbl.variables:
                     rule.add_table(tbl.table_id)
 
     def _post_init_data_request_variables(self):
-        for drv in self.data_request.variables:
+        for drv in self.data_request.variables.values():
             rule_for_var = self.find_matching_rule(drv)
             if rule_for_var is None:
                 continue
@@ -274,10 +326,11 @@ class CMORizer:
         self.rules = new_rules
 
     def _rules_depluralize_drvs(self):
+        """Ensures that only one data request variable is assigned to each rule"""
         for rule in self.rules:
             assert len(rule.data_request_variables) == 1
-            drv = rule.data_request_variable = rule.data_request_variables[0]
-            drv.depluralize()
+            rule.data_request_variable = rule.data_request_variables[0]
+            del rule.data_request_variables
 
     def _post_init_create_pipelines(self):
         pipelines = []
@@ -324,14 +377,16 @@ class CMORizer:
         # self._check_rules_for_output_dir()
         # FIXME(PS): Turn off this check, see GH #59 (https://tinyurl.com/3z7d8uuy)
         # self._check_is_subperiod()
+        logger.debug("Starting validate....")
         self._check_units()
+        logger.debug("...done!")
 
     def _check_is_subperiod(self):
         logger.info("checking frequency in netcdf file and in table...")
         errors = []
         for rule in self.rules:
             table_freq = _frequency_from_approx_interval(
-                rule.data_request_variable.table.approx_interval
+                rule.data_request_variable.table_header.approx_interval
             )
             # is_subperiod from pandas does not support YE or ME notation
             table_freq = table_freq.rstrip("E")
@@ -392,7 +447,7 @@ class CMORizer:
                 if is_unit_scalar(cmor_units):
                     if not is_unit_scalar(model_units):
                         dimless = rule.get("dimensionless_unit_mappings", {})
-                        if not cmor_units in dimless.get(cmor_variable, {}):
+                        if cmor_units not in dimless.get(cmor_variable, {}):
                             errors.append(
                                 f"Missing mapping for dimensionless variable {cmor_variable}"
                             )
@@ -430,6 +485,7 @@ class CMORizer:
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
         instance._post_init_read_dimensionless_unit_mappings()
+        logger.debug("Object creation done!")
         return instance
 
     def add_rule(self, rule):
@@ -496,16 +552,23 @@ class CMORizer:
                     logger.warning(filepath)
 
     def process(self, parallel=None):
+        logger.debug("Process start!")
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
-            parallel_backend = self._pymorize_cfg.get("parallel_backend", "prefect")
-            return self.parallel_process(backend=parallel_backend)
+            logger.debug("Parallel processing...")
+            # FIXME(PG): This is mixed up, hard-coding to prefect for now...
+            workflow_backend = self._pymorize_cfg.get(
+                "pipeline_orchestrator", "prefect"
+            )
+            logger.debug(f"...with {workflow_backend}...")
+            return self.parallel_process(backend=workflow_backend)
         else:
             return self.serial_process()
 
     def parallel_process(self, backend="prefect"):
         if backend == "prefect":
+            logger.debug("About to submit _parallel_process_prefect()")
             return self._parallel_process_prefect()
         elif backend == "dask":
             return self._parallel_process_dask()
@@ -516,6 +579,8 @@ class CMORizer:
         # prefect_logger = get_run_logger()
         # logger = prefect_logger
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
+        logger.debug("Defining dynamically generated prefect workflow...")
+
         @flow
         def dynamic_flow():
             rule_results = []
@@ -524,6 +589,9 @@ class CMORizer:
             wait(rule_results)
             return rule_results
 
+        logger.debug("...done!")
+
+        logger.debug("About to return dynamic_flow()...")
         return dynamic_flow()
 
     def _parallel_process_dask(self, external_client=None):
@@ -554,13 +622,11 @@ class CMORizer:
         # FIXME(PG): This might also be a place we need to consider copies...
         rule.match_pipelines(self.pipelines)
         data = None
-        # NOTE(PG): Send in a COPY of the rule, not the original rule
-        local_rule_copy = copy.deepcopy(rule)
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
         for pipeline in rule.pipelines:
             logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, local_rule_copy)
+            data = pipeline.run(data, rule)
         return data
 
     @task

@@ -3,13 +3,16 @@ import re
 import typing
 import warnings
 
-import deprecation
 # import questionary
 import yaml
 
-from . import data_request, pipeline
+from . import pipeline
+from .data_request.table import DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
+
+# import deprecation
 
 
 class Rule:
@@ -17,11 +20,11 @@ class Rule:
         self,
         *,
         name: str = None,
-        inputs: typing.List[dict] = [],
+        inputs: typing.List[dict] = None,
         cmor_variable: str,
-        pipelines: typing.List[pipeline.Pipeline] = [],
-        tables: typing.List[data_request.DataRequestTable] = [],
-        data_request_variables: typing.List[data_request.DataRequestVariable] = [],
+        pipelines: typing.List[pipeline.Pipeline] = None,
+        tables: typing.List[DataRequestTable] = None,
+        data_request_variables: typing.List[DataRequestVariable] = None,
         **kwargs,
     ):
         """
@@ -43,11 +46,13 @@ class Rule:
             The DataRequestVariables this rule should create
         """
         self.name = name
-        self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in inputs]
+        self.inputs = [
+            InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])
+        ]
         self.cmor_variable = cmor_variable
         self._pipelines = pipelines or [pipeline.DefaultPipeline()]
-        self.tables = tables
-        self.data_request_variables = data_request_variables
+        self.tables = tables or []
+        self.data_request_variables = data_request_variables or []
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
         # Attach all keyword arguments to the object
         for key, value in kwargs.items():
@@ -55,6 +60,11 @@ class Rule:
 
         # Internal flags:
         self._pipelines_are_mapped = False
+
+    def __getstate__(self):
+        """Custom pickling of a Rule"""
+        state = self.__dict__.copy()
+        return state
 
     @property
     def pipelines(self):
@@ -126,7 +136,11 @@ class Rule:
         return setattr(self, key, value)
 
     def __repr__(self):
-        return f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines}, tables={self.tables}, data_request_variables={self.data_request_variables})"
+        return (
+            f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, "
+            f"pipelines={self.pipelines}, tables={self.tables}, "
+            f"data_request_variables={self.data_request_variables})"
+        )
 
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
@@ -199,15 +213,15 @@ class Rule:
         """Wrapper around ``from_dict`` for initializing from YAML"""
         return cls.from_dict(yaml.safe_load(yaml_str))
 
-    @deprecation.deprecated(details="This shouldn't be used, avoid it")
-    def to_yaml(self):
-        return yaml.dump(
-            {
-                "inputs": [p.to_dict for p in self.input_patterns],
-                "cmor_variable": self.cmor_variable,
-                "pipelines": [p.to_dict() for p in self.pipelines],
-            }
-        )
+    # @deprecation.deprecated(details="This shouldn't be used, avoid it")
+    # def to_yaml(self):
+    #     return yaml.dump(
+    #         {
+    #             "inputs": [p.to_dict() for p in self.input_patterns],
+    #             "cmor_variable": self.cmor_variable,
+    #             "pipelines": [p.to_dict() for p in self.pipelines],
+    #         }
+    #     )
 
     def add_table(self, tbl):
         """Add a table to the rule"""
@@ -262,15 +276,10 @@ class Rule:
         for drv in self.data_request_variables:
             rule_clone = self.clone()
             drv_clone = drv.clone()
-            for drv_table, drv_freq, cell_methods, cell_measures in zip(
-                drv.tables, drv.frequencies, drv.cell_methods, drv.cell_measures
-            ):
-                drv_clone.tables = [drv_table]
-                drv_clone.frequencies = [drv_freq]
-                drv_clone.cell_methods = [cell_methods]
-                drv_clone.cell_measures = [cell_measures]
-                rule_clone.data_request_variables = [drv_clone]
-                clones.append(rule_clone)
+            # FIXME: This is bad. I need to extract one rule for each table,
+            # but the newer API doesn't work as cleanly here...
+            rule_clone.data_request_variables = [drv_clone]
+            clones.append(rule_clone)
         return clones
 
     # FIXME: Not used and broken+

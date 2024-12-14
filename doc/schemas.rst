@@ -14,5 +14,3 @@ yaml configuration file.
 .. cerberus-schema:: Rule Schema
    :module: pymorize.validate
    :schema: RULES_SCHEMA
-
-

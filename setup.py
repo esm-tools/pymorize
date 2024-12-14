@@ -38,6 +38,7 @@ setup(
     #
     # meaning: [v]isual [i]nside square brackets, command mode, sort, enter.
     install_requires=[
+        "bokeh",
         "cerberus",
         "cf_xarray",
         "cftime",
@@ -63,6 +64,7 @@ setup(
         "pyyaml",
         "questionary",
         "randomname",
+        "semver",
         "rich-click",
         "streamlit",
         "tqdm",
@@ -81,9 +83,11 @@ setup(
             "pytest",
             "pytest-asyncio",
             "pytest-cov",
+            "pytest-mock",
             "pytest-xdist",
             "sphinx",
             "sphinx_rtd_theme",
+            "yamllint",
         ],
         "doc": docs_require,
     },
