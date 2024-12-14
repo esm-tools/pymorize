@@ -7,6 +7,20 @@ import xarray as xr
 @pytest.mark.parametrize(
     "engine",
     [
+        "netcdf4",
+    ],
+)
+def test_open_awicm_1p0_recom(awicm_1p0_recom_data, engine):
+    ds = xr.open_mfdataset(
+        f"{awicm_1p0_recom_data}/awi-esm-1-1-lr_kh800/piControl/outdata/fesom/*.nc",
+        engine=engine,
+    )
+    assert isinstance(ds, xr.Dataset)
+
+
+@pytest.mark.parametrize(
+    "engine",
+    [
         "h5netcdf",
     ],
 )
