@@ -52,3 +52,4 @@ rules:
     input_patterns:
       - /path/to/fesom/output/files/*_temp.nc
     output_file: temp.nc
+
