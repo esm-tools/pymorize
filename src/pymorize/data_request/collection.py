@@ -74,9 +74,9 @@ class CMIP7DataRequest(DataRequest):
         for table_id in table_ids:
             table = CMIP7DataRequestTable.from_all_var_info(table_id, data)
             tables[table_id] = table
-        for var_name, var_dict in data["Compound Name"].items():
-            variables[var_name] = CMIP7DataRequestVariable.from_dict(var_dict)
-
+            for variable in table.variables:
+                variable.table_header = table.header
+                variables[variable.variable_id] = variable
         return cls(tables, variables)
 
     @classmethod
