@@ -580,7 +580,7 @@ class CMORizer:
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
         logger.debug("Defining dynamically generated prefect workflow...")
 
-        @flow
+        @flow(name="pymorize-parallel")
         def dynamic_flow():
             rule_results = []
             for rule in self.rules:
@@ -628,6 +628,6 @@ class CMORizer:
             data = pipeline.run(data, rule)
         return data
 
-    @task
+    @task(task_run_name="{rule.name}")
     def _process_rule_prefect(self, rule):
         return self._process_rule(rule)
