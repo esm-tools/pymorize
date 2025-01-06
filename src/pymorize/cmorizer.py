@@ -22,9 +22,9 @@ from .cluster import (
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
-from .data_request.collection import CMIP6IgnoreTableFiles, DataRequest
+from .data_request.collection import DataRequest
 from .data_request.factory import create_factory
-from .data_request.table import CMIP6DataRequestTable
+from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .filecache import fc
 from .logging import logger
@@ -37,10 +37,14 @@ from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
 )
+"""Path: The dimenionless unit mapping table, used to recreate meaningful units from
+dimensionless fractional values (e.g. 0.001 --> g/kg)"""
+# FIXME(PG): I don't know if this is a Path or not, so the documented type might be wrong
 
 
 class CMORizer:
-    _SUPPORTED_CMOR_VERSIONS = ("CMIP6",)
+    _SUPPORTED_CMOR_VERSIONS = ("CMIP6", "CMIP7")
+    """tuple : Supported CMOR versions."""
 
     def __init__(
         self,
@@ -61,6 +65,15 @@ class CMORizer:
         self.pipelines = pipelines_cfg or []
         self._cluster = None  # ask Cluster, might be set up later
         ################################################################################
+        # CMOR Version Settings:
+
+        if self._general_cfg.get("cmor_version") is None:
+            raise ValueError("cmor_version must be set in the general configuration.")
+        self.cmor_version = self._general_cfg["cmor_version"]
+        if self.cmor_version not in self._SUPPORTED_CMOR_VERSIONS:
+            logger.error(f"CMOR version {self.cmor_version} is not supported.")
+            logger.error(f"Supported versions are {self._SUPPORTED_CMOR_VERSION}")
+            raise ValueError(f"Unsupported CMOR version: {self.cmor_version}")
 
         ################################################################################
         # Print Out Configuration:
@@ -105,7 +118,7 @@ class CMORizer:
             logger.debug("...done!")
         self._post_init_create_pipelines()
         self._post_init_create_rules()
-        self._post_init_read_bare_tables()
+        self._post_init_create_data_request_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_read_dimensionless_unit_mappings()
@@ -189,39 +202,25 @@ class CMORizer:
             import flox.xarray  # noqa: F401
         logger.info(f"...done! Imported {dask_extras} libraries.")
 
-    def _post_init_read_bare_tables(self):
+    def _post_init_create_data_request_tables(self):
         """
         Loads all the tables from table directory as a mapping object.
         A shortened version of the filename (i.e., ``CMIP6_Omon.json`` -> ``Omon``) is used as the mapping key.
         The same key format is used in CMIP6_table_id.json
         """
+        data_request_table_factory = create_factory(DataRequestTable)
+        DataRequestTableClass = data_request_table_factory.get(self.cmor_version)
         table_dir = Path(self._general_cfg["CMIP_Tables_Dir"])
-        table_files = {
-            path.stem.replace("CMIP6_", ""): path for path in table_dir.glob("*.json")
-        }
-        tables = {}
-        ignore_files = set(ignore_file.value for ignore_file in CMIP6IgnoreTableFiles)
-        for tbl_name, tbl_file in table_files.items():
-            logger.debug(f"{tbl_name}, {tbl_file}")
-            if tbl_file.name not in ignore_files:
-                logger.debug(f"Adding Table {tbl_name}")
-                tables[tbl_name] = CMIP6DataRequestTable.from_json_file(tbl_file)
+        tables = DataRequestTableClass.table_dict_from_directory(table_dir)
         self._general_cfg["tables"] = self.tables = tables
 
     def _post_init_create_data_request(self):
         """
         Creates a DataRequest object from the tables directory.
         """
-        if self._general_cfg.get("cmor_version") is None:
-            raise ValueError("cmor_version must be set in the general configuration.")
-        cmor_version = self._general_cfg["cmor_version"]
-        if cmor_version not in self._SUPPORTED_CMOR_VERSIONS:
-            raise ValueError(
-                f"CMOR version {cmor_version} is not supported. Supported versions are {self._SUPPORTED_CMOR_VERSION}"
-            )
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
         data_request_factory = create_factory(DataRequest)
-        DataRequestClass = data_request_factory.get(cmor_version)
+        DataRequestClass = data_request_factory.get(self.cmor_version)
         self.data_request = DataRequestClass.from_directory(table_dir)
 
     def _post_init_populate_rules_with_tables(self):
