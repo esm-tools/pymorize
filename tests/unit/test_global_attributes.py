@@ -1,6 +1,7 @@
-from pymorize.global_attributes import set_global_attributes
 import pytest
 import xarray as xr
+
+from pymorize.global_attributes import set_global_attributes
 
 # Name, expected pass
 required_attributes = {
@@ -44,9 +45,7 @@ def test_global_attributes_has_expected_attributes(
     if not expected_pass:
         pytest.xfail(f"Test should fail with attribute {added_attributes}")
     matching_files = [
-        f
-        for f in (pi_uxarray_data / "outdata/fesom/").iterdir()
-        if f.name.startswith("temp.fesom")
+        f for f in (pi_uxarray_data).iterdir() if f.name.startswith("temp.fesom")
     ]
     ds = xr.open_mfdataset(
         matching_files,
