@@ -2,7 +2,7 @@
 The Standard Library
 ====================
 
-The Pymorize Standard Library contains a few functions that are useful in 
+The Pymorize Standard Library contains a few functions that are useful in
 your processing pipelines:
 
 .. attention::
@@ -15,4 +15,3 @@ your processing pipelines:
 .. automodule:: pymorize.units
 .. automodule:: pymorize.generic
 .. automodule:: pymorize.timeaverage
-

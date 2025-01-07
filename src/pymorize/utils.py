@@ -127,7 +127,9 @@ def generate_partial_function(func: callable, open_arg: str, *args, **kwargs):
     """
     if not can_be_partialized(func, open_arg, args, kwargs):
         raise ValueError(
-            f"Function '{func.__name__}' cannot be partially applied with open argument '{open_arg}' by using the provided arguments {args=} and keyword arguments {kwargs=}."
+            f"Function '{func.__name__}' cannot be partially applied with open "
+            f"argument '{open_arg}' by using the provided arguments {args=} and "
+            f"keyword arguments {kwargs=}."
         )
     logger.debug(
         f"Generating partial function for '{func.__name__}' with open argument '{open_arg}'"
@@ -139,7 +141,9 @@ def generate_partial_function(func: callable, open_arg: str, *args, **kwargs):
     # Get the index of the open argument
     open_arg_index = param_names.index(open_arg)
     # Get the names of the arguments to be fixed
-    fixed_args = param_names[:open_arg_index] + param_names[open_arg_index + 1 :]
+    fixed_args = (
+        param_names[:open_arg_index] + param_names[open_arg_index + 1 :]  # noqa: E203
+    )
     # Get the values of the arguments to be fixed
     fixed_values = [kwargs[arg] for arg in fixed_args if arg in kwargs]
     # Remove the fixed arguments from the keyword arguments

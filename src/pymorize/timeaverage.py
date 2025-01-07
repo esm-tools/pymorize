@@ -203,9 +203,9 @@ def compute_average(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
 
-    This function takes a data array and a rule, computes the timespan of the data array, and then performs time averaging
-    based on the time method specified in the rule. The time methods can be ``"INSTANTANEOUS"``,
-    ``"MEAN"``, or ``"CLIMATOLOGY"``.
+    This function takes a data array and a rule, computes the timespan of the data
+    array, and then performs time averaging based on the time method specified in the
+    rule. The time methods can be ``"INSTANTANEOUS"``, ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
     Parameters
     ----------
@@ -224,7 +224,7 @@ def compute_average(da: xr.DataArray, rule):
         file_timespan, unit="D"
     )
     drv = rule.data_request_variable
-    approx_interval = drv.table.approx_interval
+    approx_interval = drv.table_header.approx_interval
     approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
@@ -242,13 +242,13 @@ def compute_average(da: xr.DataArray, rule):
             logger.info(f"{offset=}")
             ds["time"] = ds.time.to_pandas() + offset
     elif time_method == "CLIMATOLOGY":
-        if drv.table.frequency == "monC":
+        if drv.frequency == "monC":
             ds = da.groupby("time.month").mean("time")
-        elif drv.table.frequency == "1hrCM":
+        elif drv.frequency == "1hrCM":
             ds = da.groupby("time.hour").mean("time")
         else:
             raise ValueError(
-                f"Unknown Climatology {drv.table.frequency} in Table {drv.table.table_id}"
+                f"Unknown Climatology {drv.frequency} in Table {drv.table_header.table_id}"
             )
     else:
         raise ValueError(f"Unknown time method: {time_method}")

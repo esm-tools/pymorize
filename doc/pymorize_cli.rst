@@ -5,7 +5,7 @@ Usage: The ``pymorize`` CLI
 ``pymorize`` is the command line interface to the ``pymorize`` package. It provides
 a simple way to interface with the underlying Python, without needing to know too
 many details about what is going on behind the scenes. The CLI is hopefully simple
-and is the recommended way to get going. 
+and is the recommended way to get going.
 
 You can get help with::
 

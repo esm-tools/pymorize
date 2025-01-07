@@ -2,7 +2,7 @@
 ================================
 Web Viewer for CMIP6 Data Tables
 ================================
-We provide a Streamlit web application that provides an interface for interacting with CMIP6 (Coupled Model Intercomparison Project Phase 6) data tables. 
+We provide a Streamlit web application that provides an interface for interacting with CMIP6 (Coupled Model Intercomparison Project Phase 6) data tables.
 
 Launch it from the command line with::
 

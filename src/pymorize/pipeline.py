@@ -10,7 +10,7 @@ from prefect.cache_policies import INPUTS, TASK_SOURCE
 from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
-from .caching import generate_cache_key
+from .caching import generate_cache_key  # noqa: F401
 from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 

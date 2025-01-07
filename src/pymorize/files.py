@@ -38,22 +38,13 @@ Table 2: Precision of time labels used in file names
 
 """
 
-from collections import deque
 from pathlib import Path
 
-import cftime
-import numpy as np
 import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
 
-from .dataset_helpers import (
-    get_time_label,
-    has_time_axis,
-    is_datetime_type,
-    needs_resampling,
-)
-from .timeaverage import _frequency_from_approx_interval
+from .dataset_helpers import get_time_label, has_time_axis, needs_resampling
 
 
 def _filename_time_range(ds, rule) -> str:
@@ -131,7 +122,7 @@ def create_filepath(ds, rule):
     experiment_id, output_directory, and optionally institution.
     """
     name = rule.cmor_variable
-    table_id = rule.data_request_variable.table.table_id  # Omon
+    table_id = rule.data_request_variable.table_header.table_id  # Omon
     label = rule.variant_label  # r1i1p1f1
     source_id = rule.source_id  # AWI-CM-1-1-MR
     experiment_id = rule.experiment_id  # historical
