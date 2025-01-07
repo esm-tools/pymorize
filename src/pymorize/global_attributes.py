@@ -39,11 +39,11 @@ frequency
 
 CV
 ---
-source_id
+source_id  <user input>
     source
     institution_id
     license_info
-    model_component  # how to get model_component
+    model_component  # how to get model_component <user input>
         native_nominal_resolution (nominal_resolution)
         description (grid)
 experiment_id
@@ -166,13 +166,14 @@ def _experiment_id_related(rule):
 
 def _header_related(rule):
     d = {}
-    d["table_id"] = rule.table.table_id
-    d["mip_era"] = rule.table.mip_era
-    d["realm"] = rule.table.modeling_realm
-    d["frequency"] = rule.table.frequency
-    d["Conventions"] = rule.table.Conventions
-    d["product"] = rule.table.product
-    d["data_specs_version"] = rule.table.data_specs_version
+    table = rule.data_request_variable.table_header
+    d["table_id"] = table.table_id
+    d["mip_era"] = table.mip_era
+    d["realm"] = table.modeling_realm
+    d["frequency"] = rule.data_request_variable.table.frequency
+    d["Conventions"] = table.Conventions
+    d["product"] = table.product
+    d["data_specs_version"] = table.data_specs_version
     return d
 
 

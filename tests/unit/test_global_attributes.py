@@ -1,4 +1,6 @@
 from pymorize.global_attributes import set_global_attributes
+import pytest
+import xarray as xr
 
 # Name, expected pass
 required_attributes = {

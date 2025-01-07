@@ -26,7 +26,9 @@ rules:
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    #source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: seaIce
     pipelines:
       - default
   - name: Salinity of the Ocean
@@ -39,7 +41,9 @@ rules:
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    #source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: seaIce
     pipelines:
       - default
   - name: paul_example_rule
@@ -52,7 +56,9 @@ rules:
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    #source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: ocean
     pipelines:
       - default
 pipelines:
@@ -64,6 +70,7 @@ pipelines:
       - "pymorize.units.handle_unit_conversion"
       - "pymorize.generic.trigger_compute"
       - "pymorize.generic.show_data"
+      - "pymorize.global_attributes.set_global_attributes"
       - "pymorize.files.save_dataset"
 
 # Settings for using dask-distributed
