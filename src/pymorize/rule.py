@@ -282,6 +282,12 @@ class Rule:
             clones.append(rule_clone)
         return clones
 
+    def depluralize_drvs(self):
+        """Depluralizes Data Request Variables to just a single entry"""
+        assert len(self.data_request_variables) == 1
+        self.data_request_variable = self.data_request_variables[0]
+        del self.data_request_variables
+
     # FIXME: Not used and broken+
     # @classmethod
     # def from_interface(cls, cmor_table=None):
