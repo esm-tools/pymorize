@@ -57,10 +57,12 @@ def test_global_attributes_has_expected_attributes(
     assert added_attributes in ds_out.attrs
 """
 
+
 @pytest.mark.parametrize("added_attributes, expected_pass", required_attributes)
 def test_global_attributes_has_expected_attributes(added_attributes, expected_pass):
-    class Fake():
+    class Fake:
         pass
+
     ds = Fake()
     ds.attrs = {}
     rule = Fake()

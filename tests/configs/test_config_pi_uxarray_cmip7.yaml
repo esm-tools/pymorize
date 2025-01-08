@@ -21,3 +21,4 @@ rules:
         pattern: "temp.fesom..*.nc"
     cmor_variable: "thetao"
     model_variable: "temp"
+    model_component: ocean
