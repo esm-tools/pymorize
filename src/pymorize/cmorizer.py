@@ -278,6 +278,10 @@ class CMORizer:
         for rule in self.rules:
             rule.dimensionless_unit_mappings = dimensionless_unit_mappings
 
+    def _match_pipelines_in_rules(self, force=False):
+        for rule in self.rules:
+            rule.match_pipelines(self.pipelines, force=force)
+
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
     ) -> Rule or None:
@@ -552,6 +556,7 @@ class CMORizer:
 
     def process(self, parallel=None):
         logger.debug("Process start!")
+        self._match_pipelines_in_rules()
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
