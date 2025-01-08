@@ -166,14 +166,15 @@ def _experiment_id_related(rule):
 
 def _header_related(rule):
     d = {}
-    table = rule.data_request_variable.table_header
-    d["table_id"] = table.table_id
-    d["mip_era"] = table.mip_era
-    d["realm"] = table.modeling_realm
-    d["frequency"] = rule.data_request_variable.table.frequency
-    d["Conventions"] = table.Conventions
-    d["product"] = table.product
-    d["data_specs_version"] = table.data_specs_version
+    drv = rule.data_request_variable
+    header = rule.data_request_variable.table_header
+    d["table_id"] = header.table_id
+    d["mip_era"] = header.mip_era
+    d["realm"] = header.modeling_realm
+    d["frequency"] = drv.frequency
+    d["Conventions"] = header.Conventions
+    d["product"] = header.product
+    d["data_specs_version"] = header.data_specs_version
     return d
 
 

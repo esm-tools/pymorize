@@ -35,7 +35,8 @@ rules:
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: ocean
     inputs:
       - path: "./"
         pattern: "test_input"
@@ -50,14 +51,16 @@ rules:
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: ocean
   - name: test_rule4
     cmor_variable: "thetao"
     pipelines: ["sleeper_pipeline"]
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl
-    source_id: ocean
+    source_id: AWI-CM-1-1-HR
+    model_component: ocean
     inputs:
       - path: "/a/b/c"
         pattern: ".*"
