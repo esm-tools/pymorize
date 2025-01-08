@@ -135,13 +135,6 @@ class Rule:
                 )
         return setattr(self, key, value)
 
-    def __repr__(self):
-        return (
-            f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, "
-            f"pipelines={self.pipelines}, tables={self.tables}, "
-            f"data_request_variables={self.data_request_variables})"
-        )
-
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
 
@@ -212,16 +205,6 @@ class Rule:
     def from_yaml(cls, yaml_str):
         """Wrapper around ``from_dict`` for initializing from YAML"""
         return cls.from_dict(yaml.safe_load(yaml_str))
-
-    # @deprecation.deprecated(details="This shouldn't be used, avoid it")
-    # def to_yaml(self):
-    #     return yaml.dump(
-    #         {
-    #             "inputs": [p.to_dict() for p in self.input_patterns],
-    #             "cmor_variable": self.cmor_variable,
-    #             "pipelines": [p.to_dict() for p in self.pipelines],
-    #         }
-    #     )
 
     def add_table(self, tbl):
         """Add a table to the rule"""
