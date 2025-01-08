@@ -264,33 +264,3 @@ class Rule:
             rule_clone.data_request_variables = [drv_clone]
             clones.append(rule_clone)
         return clones
-
-    # FIXME: Not used and broken+
-    # @classmethod
-    # def from_interface(cls, cmor_table=None):
-    #     """
-    #     Generates a Rule via a wizard-like interface
-
-    #     Parameters
-    #     ----------
-    #     cmor_table : dict, optional
-    #         A dictionary with the CMOR table. If provided, the user will be
-    #         prompted to select a CMOR variable from the table. Must contain a key
-    #         "variable_entry" with an iterable of CMOR variable names.
-    #     """
-    #     if cmor_table is None:
-    #         cmor_variable = questionary.text("CMOR variable: ").ask()
-    #     else:
-    #         cmor_variable = questionary.autocomplete(
-    #             "CMOR variable: ", cmor_table["variable_entry"]
-    #         ).ask()
-    #     input_patterns = []
-    #     while True:
-    #         input_patterns.append(questionary.text("Input pattern as regex: ").ask())
-    #         if input_patterns:
-    #             [logger.info(p) for p in input_patterns]
-    #         if not questionary.confirm(
-    #             f"Add another input pattern for {cmor_variable}?"
-    #         ).ask():
-    #             break
-    #     return cls(input_patterns=input_patterns, cmor_variable=cmor_variable)
