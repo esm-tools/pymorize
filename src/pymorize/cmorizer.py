@@ -121,8 +121,8 @@ class CMORizer:
         self._post_init_create_data_request_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
-        self._post_init_read_dimensionless_unit_mappings()
         self._post_init_data_request_variables()
+        self._post_init_populate_rules_with_dimensionless_unit_mappings()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -246,7 +246,7 @@ class CMORizer:
         self._rules_expand_drvs()
         self._rules_depluralize_drvs()
 
-    def _post_init_read_dimensionless_unit_mappings(self):
+    def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """
         Reads the dimensionless unit mappings from a configuration file and
         updates the rules with these mappings.
@@ -483,7 +483,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
         instance._post_init_data_request_variables()
-        instance._post_init_read_dimensionless_unit_mappings()
+        instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         logger.debug("Object creation done!")
         return instance
 
