@@ -1,13 +1,20 @@
 import json
+import pathlib
 from abc import abstractmethod
 from dataclasses import dataclass
+from importlib.resources import files
 from typing import List
 
 import pendulum
 from semver.version import Version
 
+from ..logging import logger
 from .factory import MetaFactory
-from .variable import CMIP6DataRequestVariable, DataRequestVariable
+from .variable import (
+    CMIP6DataRequestVariable,
+    CMIP7DataRequestVariable,
+    DataRequestVariable,
+)
 
 ################################################################################
 # BLUEPRINTS: Abstract classes for the data request tables
@@ -52,10 +59,19 @@ class DataRequestTable(metaclass=MetaFactory):
         """Create a DataRequestTable from a dictionary."""
         raise NotImplementedError
 
+    @classmethod
+    @abstractmethod
+    def table_dict_from_directory(cls, path: str) -> dict:
+        """Create a dictionary of tables from a directory."""
+        raise NotImplementedError
+
 
 ################################################################################
 
 
+# TODO(PG): In general, this class needs to be reworked to determine which fields
+# are generic and which are specific to CMIP6 or CMIP7. The current implementation
+# was on CMIP6, under the assumption that all fields will also be present in CMIP7.
 @dataclass
 class DataRequestTableHeader(metaclass=MetaFactory):
     @property
@@ -112,6 +128,8 @@ class DataRequestTableHeader(metaclass=MetaFactory):
         """Approximate interval (time in days)"""
         raise NotImplementedError
 
+    # TODO(PG): Find out if this is needed for *all* tables, or if it is
+    # something specific only to CMIP6!
     @property
     @abstractmethod
     def generic_levels(self) -> List[str]:
@@ -143,6 +161,148 @@ class DataRequestTableHeader(metaclass=MetaFactory):
 
 
 @dataclass
+class CMIP7DataRequestTableHeader(DataRequestTableHeader):
+    ############################################################################
+    # Attributes without known defaults:
+    _table_id: str
+    _realm: List[str]
+    _approx_interval: float  # Optional
+    _generic_levels: List[str]
+
+    @property
+    def table_id(self) -> str:
+        return self._table_id
+
+    @property
+    def realm(self) -> List[str]:
+        return self._realm
+
+    @property
+    def approx_interval(self) -> float:
+        return self._approx_interval
+
+    @property
+    def generic_levels(self) -> List[str]:
+        return self._generic_levels
+
+    ############################################################################
+
+    ############################################################################
+    # Attributes with known defaults:
+    _data_specs_version: Version = Version.parse("1", optional_minor_and_patch=True)
+    _cmor_version: Version = Version.parse("3.5", optional_minor_and_patch=True)
+    _mip_era: str = "CMIP7"
+    _Conventions: str = "CF-1.7 CMIP-7.0"
+    _missing_value: float = 1.0e20
+    _int_missing_value: int = -999
+    _product: str = "model-output"
+    # NOTE(PG): We refer here to the CMIP7 Data Request publication date, which
+    # is on GitHub: https://github.com/CMIP-Data-Request/CMIP7_DReq_Software/tree/v1.0
+    # Tag was created on: 22 Nov 2024
+    _table_date: pendulum.Date = pendulum.Date(2024, 11, 22)
+
+    @property
+    def data_specs_version(self) -> Version:
+        return self._data_specs_version
+
+    @property
+    def cmor_version(self) -> Version:
+        return self._cmor_version
+
+    @property
+    def mip_era(self) -> str:
+        return self._mip_era
+
+    @property
+    def Conventions(self) -> str:
+        return self._Conventions
+
+    @property
+    def missing_value(self) -> float:
+        return self._missing_value
+
+    @property
+    def int_missing_value(self) -> int:
+        return self._int_missing_value
+
+    @property
+    def product(self) -> str:
+        return self._product
+
+    @property
+    def table_date(self) -> pendulum.Date:
+        return self._table_date
+
+    ############################################################################
+
+    ############################################################################
+    # Constructor methods:
+    @classmethod
+    def from_all_var_info(
+        cls, table_name: str, all_var_info: dict = None
+    ) -> "CMIP7DataRequestTableHeader":
+        if all_var_info is None:
+            _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+            all_var_info = json.load(open(_all_var_info, "r"))
+        all_vars_for_table = {
+            k: v
+            for k, v in all_var_info["Compound Name"].items()
+            if k.startswith(table_name)
+        }
+        attrs_for_table = {
+            "realm": set(),
+            "approx_interval": set(),
+        }
+
+        for var in all_vars_for_table.values():
+            attrs_for_table["realm"].add(var["modeling_realm"])
+            attrs_for_table["approx_interval"].add(
+                cls._approx_interval_from_frequency(var["frequency"])
+            )
+
+        # We assume that all variables in the table have the same approx_interval
+        # If not, we need to raise an error
+        if len(attrs_for_table["approx_interval"]) != 1:
+            raise ValueError(
+                f"approx_interval in the table is not consistent: {attrs_for_table['approx_interval']}"
+            )
+        # Build a table header, always using defaults for known fields
+        return cls(
+            _table_id=table_name,
+            _realm=list(attrs_for_table["realm"]),
+            _approx_interval=attrs_for_table["approx_interval"].pop(),
+            _generic_levels=[],
+        )
+
+    ############################################################################
+
+    ############################################################################
+    # Static methods:  Useful stuff that doesn't need to be on an instance
+
+    @staticmethod
+    def _approx_interval_from_frequency(frequency: str) -> float:
+        if frequency == "1hr":
+            return 1.0 / 24.0
+        if frequency == "3hr":
+            return 0.125
+        if frequency == "6hr":
+            return 0.25
+        if frequency == "day":
+            return 1.0
+        if frequency == "dec":
+            return 365.0 * 10.0
+        if frequency == "fx":
+            return None  # Maybe this should be 0.0?
+        if frequency == "mon":
+            return 30.0
+        if frequency == "subhr":
+            return 1.0 / 60.0  # Not sure about this one...
+        if frequency == "yr":
+            return 365.0
+        raise ValueError(f"Frequency {frequency} not recognized.")
+
+
+@dataclass
 class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     ############################################################################
     # NOTE(PG): The defaults here refer to the CMIP6 Data Request Tables
@@ -156,7 +316,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
     # Properties without defaults:
     # ----------------------------
     _table_id: str
-    _realm: str
+    _realm: List[str]
     _table_date: pendulum.Date
     _approx_interval: float  # Optional
     _generic_levels: List[str]
@@ -189,7 +349,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
         # The input dict needs to have these, since we have no defaults:
         extracted_data = dict(
             _table_id=data["table_id"].lstrip("Table "),
-            _realm=data["realm"],
+            _realm=[data["realm"]],
             _table_date=pendulum.parse(data["table_date"], strict=False).date(),
             # This might be None, if the approx interval is an empty string...
             _approx_interval=(
@@ -230,7 +390,7 @@ class CMIP6DataRequestTableHeader(DataRequestTableHeader):
         return self._table_id
 
     @property
-    def realm(self) -> str:
+    def realm(self) -> List[str]:
         return self._realm
 
     @property
@@ -342,10 +502,138 @@ class CMIP6DataRequestTable(DataRequestTable):
         return cls(header, variables)
 
     @classmethod
+    def table_dict_from_directory(cls, path) -> dict:
+        # We need to know which files to skip...
+        _skip_files = [
+            "CMIP6_CV_test.json",
+            "CMIP6_coordinate.json",
+            "CMIP6_CV.json",
+            "CMIP6_formula_terms.json",
+            "CMIP6_grids.json",
+            "CMIP6_input_example.json",
+        ]
+        path = pathlib.Path(path)  # noop if already a Path
+        tables = {}
+        for file in path.iterdir():
+            if file.name in _skip_files:
+                continue
+            if file.is_file() and file.suffix == ".json":
+                table = cls.from_json_file(file)
+                tables[table.table_id] = table
+        return tables
+
+    @classmethod
     def from_json_file(cls, jfile) -> "CMIP6DataRequestTable":
         with open(jfile, "r") as f:
             data = json.load(f)
         return cls.from_dict(data)
+
+
+################################################################################
+
+
+@dataclass
+class CMIP7DataRequestTable(DataRequestTable):
+    """DataRequestTable for CMIP7."""
+
+    # FIXME(PG): This might bite itself in the ass...
+    def __init__(
+        self,
+        header: CMIP7DataRequestTableHeader,
+        variables: List[DataRequestVariable],
+    ):
+        self._header = header
+        self._variables = variables
+
+    @property
+    def variables(self) -> List[str]:
+        return self._variables
+
+    @property
+    def header(self) -> CMIP7DataRequestTableHeader:
+        return self._header
+
+    @property
+    def table_name(self) -> str:
+        return self.header.table_id
+
+    def get_variable(self, name: str, find_by="name") -> DataRequestVariable:
+        """Returns the first variable with the matching name.
+
+        Parameters
+        ----------
+        name : str
+
+        Returns
+        -------
+        DataRequestVariable
+        """
+        for v in self._variables:
+            if getattr(v, find_by) == name:
+                return v
+        raise ValueError(
+            f"A Variable with the attribute {find_by}={name} not found in the table."
+        )
+
+    @classmethod
+    def from_dict(cls, data: dict) -> "CMIP7DataRequestTable":
+        header = CMIP7DataRequestTableHeader.from_dict(data["Header"])
+        variables = []
+        for var_key, var_data in data["Compound Name"].items():
+            table_name, var_name = var_key.split(".")
+            var_data["table_name"] = table_name
+            var_data["name"] = var_name
+            variables.append(CMIP7DataRequestVariable.from_dict(var_data))
+        return cls(header, variables)
+
+    @classmethod
+    def from_all_var_info_json(cls, table_name: str) -> "CMIP7DataRequestTable":
+        _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+        all_var_info = json.load(open(_all_var_info, "r"))
+        return cls.from_all_var_info(table_name, all_var_info)
+
+    @classmethod
+    def from_all_var_info(cls, table_name: str, all_var_info: dict = None):
+        if all_var_info is None:
+            _all_var_info = files("pymorize.data.cmip7").joinpath("all_var_info.json")
+            all_var_info = json.load(open(_all_var_info, "r"))
+        header = CMIP7DataRequestTableHeader.from_all_var_info(table_name, all_var_info)
+        variables = []
+        for var_name, var_dict in all_var_info["Compound Name"].items():
+            if var_dict["cmip6_cmor_table"] == table_name:
+                variables.append(CMIP7DataRequestVariable.from_dict(var_dict))
+        return cls(header, variables)
+
+    @classmethod
+    def table_dict_from_directory(cls, path) -> dict:
+        path = pathlib.Path(path)  # noop if already a Path
+        tables = {}
+        try:
+            with open(path / "all_var_info.json", "r") as f:
+                all_var_info = json.load(f)
+        except FileNotFoundError:
+            logger.error(f"No all_var_info.json found in {path}.")
+            logger.error(
+                "It is currently possible to only create tables from the all_var_info.json file!"
+            )
+            logger.error("Sorry...")
+            raise FileNotFoundError
+        table_ids = set(k.split(".")[0] for k in all_var_info["Compound Name"].keys())
+        for table_id in table_ids:
+            table = cls.from_all_var_info(table_id, all_var_info)
+            tables[table_id] = table
+        return tables
+
+    @classmethod
+    def from_json_file(cls, jfile) -> "CMIP7DataRequestTable":
+        with open(jfile, "r") as f:
+            data = json.load(f)
+        return cls.from_dict(data)
+
+    @property
+    def table_id(self) -> str:
+        """Alias for table_name."""
+        return self.table_name
 
 
 ################################################################################
