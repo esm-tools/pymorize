@@ -37,6 +37,7 @@ rules:
     experiment_id: piControl
     source_id: AWI-CM-1-1-HR
     model_component: ocean
+    grid_label: gn
     inputs:
       - path: "./"
         pattern: "test_input"
@@ -53,6 +54,7 @@ rules:
     experiment_id: piControl
     source_id: AWI-CM-1-1-HR
     model_component: ocean
+    grid_label: gn
   - name: test_rule4
     cmor_variable: "thetao"
     pipelines: ["sleeper_pipeline"]
@@ -61,6 +63,7 @@ rules:
     experiment_id: piControl
     source_id: AWI-CM-1-1-HR
     model_component: ocean
+    grid_label: gn
     inputs:
       - path: "/a/b/c"
         pattern: ".*"

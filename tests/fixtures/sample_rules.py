@@ -14,6 +14,8 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             "experiment_id": "piControl",
             "output_directory": "./output",
             "source_id": "AWI-CM-1-1-HR",
+            "grid_label": "gn",
+            "model_component": "ocean",
             "variant_label": "r1i1p1f1",
             "inputs": [
                 {
@@ -37,6 +39,8 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
             "experiment_id": "piControl",
             "output_directory": "./output",
             "source_id": "AWI-CM-1-1-HR",
+            "grid_label": "gn",
+            "model_component": "ocean",
             "variant_label": "r1i1p1f1",
             "inputs": [
                 {

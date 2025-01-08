@@ -17,6 +17,7 @@ rules:
     #source_id: "FESOM"
     source_id: "AWI-CM-1-1-HR"
     model_component: "ocean"
+    grid_label: gn
     variant_label: "r1i1p1f1"
     inputs:
       - path: "REPLACE_ME/outdata/fesom"

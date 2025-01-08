@@ -1,8 +1,6 @@
 # global_attributes.py
 
-import json
 import re
-from pathlib import Path
 from datetime import datetime
 
 from .controlled_vocabularies import ControlledVocabularies
