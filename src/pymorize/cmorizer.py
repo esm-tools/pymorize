@@ -121,8 +121,8 @@ class CMORizer:
         self._post_init_create_data_request_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
-        self._post_init_data_request_variables()
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
+        self._post_init_populate_rules_with_data_request_variables()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -233,7 +233,7 @@ class CMORizer:
                 if rule.cmor_variable in tbl.variables:
                     rule.add_table(tbl.table_id)
 
-    def _post_init_data_request_variables(self):
+    def _post_init_populate_rules_with_data_request_variables(self):
         for drv in self.data_request.variables.values():
             rule_for_var = self.find_matching_rule(drv)
             if rule_for_var is None:
@@ -482,7 +482,7 @@ class CMORizer:
 
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
-        instance._post_init_data_request_variables()
+        instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         logger.debug("Object creation done!")
         return instance
