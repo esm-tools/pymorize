@@ -3,7 +3,6 @@ import re
 import typing
 import warnings
 
-# import questionary
 import yaml
 
 from . import pipeline
@@ -11,8 +10,6 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
-
-# import deprecation
 
 
 class Rule:
@@ -50,7 +47,7 @@ class Rule:
             InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])
         ]
         self.cmor_variable = cmor_variable
-        self._pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self.pipelines = pipelines or [pipeline.DefaultPipeline()]
         self.tables = tables or []
         self.data_request_variables = data_request_variables or []
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
@@ -65,16 +62,6 @@ class Rule:
         """Custom pickling of a Rule"""
         state = self.__dict__.copy()
         return state
-
-    @property
-    def pipelines(self):
-        """
-        Returns
-        -------
-        list
-            The pipelines that this Rule knows about.
-        """
-        return self._pipelines
 
     def get(self, key, default=None):
         """Gets an attribute from the Rule object
@@ -164,7 +151,7 @@ class Rule:
         for pl_name, pl in known_pipelines.items():
             logger.debug(f"{pl_name}: {pl}")
         matched_pipelines = list()
-        for pl in self._pipelines:
+        for pl in self.pipelines:
             logger.debug(f"Working on: {pl}")
             # Pipeline was already matched
             if isinstance(pl, pipeline.Pipeline):
@@ -175,7 +162,7 @@ class Rule:
             else:
                 logger.error(f"No known way to match the pipeline {pl}")
                 raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
-        self._pipelines = matched_pipelines
+        self.pipelines = matched_pipelines
         self._pipelines_are_mapped = True
 
     @classmethod

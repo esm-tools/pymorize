@@ -585,7 +585,7 @@ class CMORizer:
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
         logger.debug("Defining dynamically generated prefect workflow...")
 
-        @flow
+        @flow(name="CMORizer Process")
         def dynamic_flow():
             rule_results = []
             for rule in self.rules:
@@ -646,7 +646,7 @@ class CMORizer:
         return data
 
     @staticmethod
-    @task
+    @task(name="Process rule")
     def _process_rule(rule):
         logger.info(f"Starting to process rule {rule}")
         data = None
