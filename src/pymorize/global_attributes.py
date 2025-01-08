@@ -170,7 +170,7 @@ def _header_related(rule):
     header = rule.data_request_variable.table_header
     d["table_id"] = header.table_id
     d["mip_era"] = header.mip_era
-    d["realm"] = header.modeling_realm
+    d["realm"] = header.realm
     d["frequency"] = drv.frequency
     d["Conventions"] = header.Conventions
     d["product"] = header.product

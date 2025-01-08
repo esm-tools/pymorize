@@ -71,7 +71,7 @@ def test_global_attributes_has_expected_attributes(added_attributes, expected_pa
     header = {
         "table_id": "Omon",
         "mip_era": "CMIP6",
-        "modeling_realm": "ocnBgchem",
+        "realm": "ocnBgchem",
         "Conventions": "CF-1.7 CMIP-6.2",
         "product": "model-output",
         "data_specs_version": "01.00.33",
