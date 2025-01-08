@@ -11,7 +11,7 @@ import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from everett.manager import generate_uppercase_key, get_runtime_config
-from prefect import flow, task
+from prefect import flow, task, get_run_logger
 from prefect.futures import wait
 from rich.progress import track
 
@@ -615,19 +615,27 @@ class CMORizer:
         logger.success("Processing completed.")
         return data
 
-    def _process_rule(self, rule):
-        logger.info(f"Starting to process rule {rule}")
-        # Match up the pipelines:
-        # FIXME(PG): This might also be a place we need to consider copies...
-        rule.match_pipelines(self.pipelines)
-        data = None
-        if not len(rule.pipelines) > 0:
-            logger.error("No pipeline defined, something is wrong!")
-        for pipeline in rule.pipelines:
-            logger.info(f"Running {str(pipeline)}")
-            data = pipeline.run(data, rule)
+    @flow
+    def check_prefect(self):
+        logger = get_run_logger()
+        try:
+            self._caching_check()
+        except Exception:
+            logger.critical("Problem with caching in Prefect detected...")
+
+    @flow
+    def _caching_check(self):
+        """Checks if workflows are possible to be cached"""
+        data = {}
+        for rule in self.rules:
+            # del rule._pymorize_cfg
+            # del rule.data_request_variable
+            data[rule.name] = self._caching_single_rule(rule)
         return data
 
+    @staticmethod
     @task
-    def _process_rule_prefect(self, rule):
-        return self._process_rule(rule)
+    def _caching_single_rule(rule):
+        logger.info(f"Starting to try caching on {rule}")
+        data = f"Cached call of {rule.name}"
+        return data
