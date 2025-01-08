@@ -589,7 +589,7 @@ class CMORizer:
         def dynamic_flow():
             rule_results = []
             for rule in self.rules:
-                rule_results.append(self._process_rule_prefect.submit(rule))
+                rule_results.append(self._process_rule.submit(rule))
             wait(rule_results)
             return rule_results
 
@@ -643,4 +643,16 @@ class CMORizer:
     def _caching_single_rule(rule):
         logger.info(f"Starting to try caching on {rule}")
         data = f"Cached call of {rule.name}"
+        return data
+
+    @staticmethod
+    @task
+    def _process_rule(rule):
+        logger.info(f"Starting to process rule {rule}")
+        data = None
+        if not len(rule.pipelines) > 0:
+            logger.error("No pipeline defined, something is wrong!")
+        for pipeline in rule.pipelines:
+            logger.info(f"Running {str(pipeline)}")
+            data = pipeline.run(data, rule)
         return data
