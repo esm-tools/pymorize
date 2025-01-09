@@ -331,9 +331,7 @@ class CMORizer:
     def _rules_depluralize_drvs(self):
         """Ensures that only one data request variable is assigned to each rule"""
         for rule in self.rules:
-            assert len(rule.data_request_variables) == 1
-            rule.data_request_variable = rule.data_request_variables[0]
-            del rule.data_request_variables
+            rule.depluralize_drvs()
 
     def _post_init_create_pipelines(self):
         pipelines = []
