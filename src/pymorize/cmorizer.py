@@ -245,7 +245,7 @@ class CMORizer:
                 rule_for_var.data_request_variables.append(drv)
         # FIXME: This needs a better name...
         # Cluster might need to be copied:
-        with DaskContext(self._cluster):
+        with DaskContext.set_cluster(self._cluster):
             self._rules_expand_drvs()
             self._rules_depluralize_drvs()
 
@@ -556,24 +556,20 @@ class CMORizer:
                     logger.warning(filepath)
 
     def process(self, parallel=None):
-        with DaskContext(self._cluster):
-            # We encapsulate the flow in a context manager to ensure that the
-            # Dask cluster is available in the singleton, which could be used
-            # during unpickling to reattach it to a Pipeline.
-            logger.debug("Process start!")
-            self._match_pipelines_in_rules()
-            if parallel is None:
-                parallel = self._pymorize_cfg.get("parallel", True)
-            if parallel:
-                logger.debug("Parallel processing...")
-                # FIXME(PG): This is mixed up, hard-coding to prefect for now...
-                workflow_backend = self._pymorize_cfg.get(
-                    "pipeline_orchestrator", "prefect"
-                )
-                logger.debug(f"...with {workflow_backend}...")
-                return self.parallel_process(backend=workflow_backend)
-            else:
-                return self.serial_process()
+        logger.debug("Process start!")
+        self._match_pipelines_in_rules()
+        if parallel is None:
+            parallel = self._pymorize_cfg.get("parallel", True)
+        if parallel:
+            logger.debug("Parallel processing...")
+            # FIXME(PG): This is mixed up, hard-coding to prefect for now...
+            workflow_backend = self._pymorize_cfg.get(
+                "pipeline_orchestrator", "prefect"
+            )
+            logger.debug(f"...with {workflow_backend}...")
+            return self.parallel_process(backend=workflow_backend)
+        else:
+            return self.serial_process()
 
     def parallel_process(self, backend="prefect"):
         if backend == "prefect":
@@ -601,7 +597,11 @@ class CMORizer:
         logger.debug("...done!")
 
         logger.debug("About to return dynamic_flow()...")
-        return dynamic_flow()
+        with DaskContext.set_cluster(self._cluster):
+            # We encapsulate the flow in a context manager to ensure that the
+            # Dask cluster is available in the singleton, which could be used
+            # during unpickling to reattach it to a Pipeline.
+            return dynamic_flow()
 
     def _parallel_process_dask(self, external_client=None):
         if external_client:
