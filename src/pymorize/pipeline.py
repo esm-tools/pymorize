@@ -65,8 +65,9 @@ class Pipeline:
             state["_steps"] = self._raw_steps
             del state["_raw_steps"]
             state["_steps_are_prefectized"] = False
-        # It makes no sense to pickle the cluster
-        del state["_cluster"]
+        if "_cluster" in state:
+            # It makes no sense to pickle the cluster
+            del state["_cluster"]
 
         return state
 
