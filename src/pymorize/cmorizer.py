@@ -244,8 +244,10 @@ class CMORizer:
             else:
                 rule_for_var.data_request_variables.append(drv)
         # FIXME: This needs a better name...
-        self._rules_expand_drvs()
-        self._rules_depluralize_drvs()
+        # Cluster might need to be copied:
+        with DaskContext(self._cluster):
+            self._rules_expand_drvs()
+            self._rules_depluralize_drvs()
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """
