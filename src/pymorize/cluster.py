@@ -50,6 +50,26 @@ def set_dashboard_link(cluster):
 class DaskContext:
     """
     Global singleton to store the current Dask cluster.
+
+    This class ensures that there is only one active Dask cluster at any given time.
+    It provides methods to set and retrieve the current cluster.
+
+    Examples
+    --------
+
+    Setting a Dask cluster:
+    >>> from dask.distributed import LocalCluster
+    >>> cluster = LocalCluster()
+    >>> with DaskContext.set_cluster(cluster):
+    ...     # Perform operations with the active cluster
+    ...     active_cluster = DaskContext.get_cluster()
+    ...     print(active_cluster)  # Outputs the current cluster
+
+    Retrieving the current Dask cluster:
+    >>> try:
+    ...     active_cluster = DaskContext.get_cluster()
+    ... except RuntimeError as e:
+    ...     print(e)  # Outputs "No active Dask cluster in context!"
     """
 
     _current_cluster = None
