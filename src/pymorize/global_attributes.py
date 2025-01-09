@@ -172,7 +172,7 @@ def _header_related(rule):
     d["frequency"] = drv.frequency
     d["Conventions"] = header.Conventions
     d["product"] = header.product
-    d["data_specs_version"] = header.data_specs_version
+    d["data_specs_version"] = str(header.data_specs_version)
     return d
 
 
