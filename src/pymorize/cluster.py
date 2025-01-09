@@ -64,12 +64,14 @@ class DaskContext:
     ...     # Perform operations with the active cluster
     ...     active_cluster = DaskContext.get_cluster()
     ...     print(active_cluster)  # Outputs the current cluster
+    LocalCluster(...)
 
     Retrieving the current Dask cluster:
     >>> try:
     ...     active_cluster = DaskContext.get_cluster()
     ... except RuntimeError as e:
-    ...     print(e)  # Outputs "No active Dask cluster in context!"
+    ...     print(e)
+    No active Dask cluster in context!
     """
 
     _current_cluster = None
