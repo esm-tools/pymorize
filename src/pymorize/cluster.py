@@ -57,10 +57,12 @@ class DaskContext:
     @classmethod
     @contextmanager
     def set_cluster(cls, cluster):
+        logger.info(f"Setting Dask cluster {cluster=} in context!")
         cls._current_cluster = cluster
         try:
             yield
         finally:
+            logger.info("Removing Dask cluster from context!")
             cls._current_cluster = None
 
     @classmethod
