@@ -1,6 +1,8 @@
 from prefect import flow, task
 from prefect.cache_policies import INPUTS, TASK_SOURCE
 
+from pymorize.data_request import DataRequest
+
 
 def test_prefect_can_serialize_rules(simple_rule):
     @task
@@ -180,5 +182,52 @@ def test_prefect_can_serialize_simplified_with_cache():
 
     pl = Pipeline()
     rule = Rule([pl])
+    cmorizer = CMORizer([rule], [pl])
+    cmorizer.run()
+
+
+def test_prefect_can_serialize_real_rule(fesom_2p6_esmtools_temp_rule_without_data):
+    rule = fesom_2p6_esmtools_temp_rule_without_data
+    data_request = DataRequest.from_tables_dir("cmip6-cmor-tables/Tables")
+    drv = data_request.get_variable_by_id(rule.cmor_variable)
+    rule.data_request_variable = drv
+    rule.data_request_variables.append(drv)
+
+    @task(cache_policy=TASK_SOURCE + INPUTS)
+    def my_step(data, rule):
+        return data
+
+    class Pipeline:
+
+        STEPS = [my_step]
+
+        @flow
+        def run(self, data, rule_spec):
+            for step in self.STEPS:
+                data = step(data, rule_spec)
+            return data
+
+    class CMORizer:
+        def __init__(self, rules, pipelines):
+            self.pipelines = pipelines
+            self.rules = rules
+
+        @flow
+        def run(self):
+            results = []
+            for rule in self.rules:
+                data = None
+                for pipeline in rule.pipelines:
+                    data = pipeline.run(data, rule)
+                results.append(data)
+            return results
+
+    class Rule:
+        def __init__(self, pipelines):
+            self.pipelines = pipelines
+
+    pl = Pipeline()
+    rule._pipelines = [pl]
+    breakpoint()
     cmorizer = CMORizer([rule], [pl])
     cmorizer.run()
