@@ -220,6 +220,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.caching.manual_checkpoint",
         "pymorize.global_attributes.set_global_attributes",
         "pymorize.generic.trigger_compute",
+        "pymorize.generic.version_attribute",
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
     )

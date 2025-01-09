@@ -252,3 +252,9 @@ def trigger_compute(data, rule_spec, *args, **kwargs):
         return data.compute()
     # Data doesn't have a compute method, do nothing
     return data
+
+
+def version_attribute(data, rule_spec, *args, **kwargs):
+    if data.attrs.get("version"):
+        data.attrs["version"] = str(data.attrs.get("version"))
+    return data
