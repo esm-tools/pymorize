@@ -251,6 +251,7 @@ class TestingPipeline(FrozenPipeline):
     STEPS = (
         "pymorize.generic.dummy_load_data",
         "pymorize.generic.dummy_logic_step",
+        "pymorize.generic.version_attribute",
         "pymorize.generic.dummy_save_data",
     )
 

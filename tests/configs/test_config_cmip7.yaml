@@ -20,6 +20,7 @@ pipelines:
     steps:
       - "pymorize.generic.dummy_load_data"
       - "pymorize.units.handle_unit_conversion"
+      - "pymorize.generic.version_attribute"
       - "pymorize.generic.dummy_save_data"
   - name: "sleeper_pipeline"
     steps:
