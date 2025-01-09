@@ -1,5 +1,4 @@
 import pytest
-import xarray as xr
 
 from pymorize.global_attributes import set_global_attributes
 
