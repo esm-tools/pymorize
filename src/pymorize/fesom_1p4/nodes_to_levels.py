@@ -93,7 +93,6 @@ def interpolate_dataarray(ds_in, mesh, indices):
     Returns:
         xarray.Dataset: Dataset with interpolated values.
     """
-    data_var = ds_in.data
     variable = ds_in.name
 
     # Apply interpolation per time step

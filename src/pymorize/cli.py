@@ -11,6 +11,8 @@ from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
+from pymorize.fesom_1p4.nodes_to_levels import convert
+
 from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
 from .filecache import fc
@@ -141,7 +143,7 @@ def scripts():
     return 0
 
 
-################################################################################ ################################################################################
+################################################################################
 ################################################################################
 
 ################################################################################
@@ -230,7 +232,6 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
 ################################################################################
 # COMMANDS FOR scripts
 ################################################################################
-from pymorize.fesom_1p4.nodes_to_levels import convert
 
 
 @scripts.group()
