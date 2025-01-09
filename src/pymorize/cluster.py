@@ -2,6 +2,8 @@
 This module contains the functions to manage the Dask cluster.
 """
 
+from contextlib import contextmanager
+
 import dask
 from dask.distributed import LocalCluster
 from dask_jobqueue import SLURMCluster
@@ -43,3 +45,26 @@ def set_dashboard_link(cluster):
             dask.config.set({"distributed.dashboard.link": default_dashboard_link})
         else:
             raise e
+
+
+class DaskContext:
+    """
+    Global singleton to store the current Dask cluster.
+    """
+
+    _current_cluster = None
+
+    @classmethod
+    @contextmanager
+    def set_cluster(cls, cluster):
+        cls._current_cluster = cluster
+        try:
+            yield
+        finally:
+            cls._current_cluster = None
+
+    @classmethod
+    def get_cluster(cls):
+        if cls._current_cluster is None:
+            raise RuntimeError("No active Dask cluster in context!")
+        return cls._current_cluster

@@ -12,6 +12,7 @@ from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
 from .caching import generate_cache_key  # noqa: F401
+from .cluster import DaskContext
 from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 
@@ -76,7 +77,8 @@ class Pipeline:
         if self._workflow_backend == "prefect":
             self._prefectize_steps()
         logger.info("Restoring from pickled state!")
-        logger.info("You may want to assign a cluster to this pipeline")
+        # logger.info("You may want to assign a cluster to this pipeline")
+        self._cluster = DaskContext.get_cluster()
 
     def assign_cluster(self, cluster):
         logger.debug("Assigning cluster to this pipeline")

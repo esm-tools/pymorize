@@ -11,7 +11,7 @@ import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from everett.manager import generate_uppercase_key, get_runtime_config
-from prefect import flow, task, get_run_logger
+from prefect import flow, get_run_logger, task
 from prefect.futures import wait
 from rich.progress import track
 
@@ -19,6 +19,7 @@ from .cluster import (
     CLUSTER_ADAPT_SUPPORT,
     CLUSTER_MAPPINGS,
     CLUSTER_SCALE_SUPPORT,
+    DaskContext,
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
@@ -594,7 +595,11 @@ class CMORizer:
         logger.debug("...done!")
 
         logger.debug("About to return dynamic_flow()...")
-        return dynamic_flow()
+        with DaskContext(self._cluster):
+            # We encapsulate the flow in a context manager to ensure that the
+            # Dask cluster is available in the singleton, which could be used
+            # during unpickling to reattach it to a Pipeline.
+            return dynamic_flow()
 
     def _parallel_process_dask(self, external_client=None):
         if external_client:
