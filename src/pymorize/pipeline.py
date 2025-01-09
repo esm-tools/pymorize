@@ -120,9 +120,7 @@ class Pipeline:
         return data
 
     def _run_prefect(self, data, rule_spec):
-        logger.debug(
-            f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
-        )
+        logger.debug("Dynamically creating workflow with DaskTaskRunner...")
         cmor_name = rule_spec.get("cmor_name")
         rule_name = rule_spec.get("name", cmor_name)
         if self._cluster is None:
