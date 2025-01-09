@@ -102,7 +102,7 @@ setup(
     },
     include_package_data=True,
     package_data={
-        "pymorize": ["data/*.yaml"],
+        "pymorize": ["data/*.yaml", "data/cmip7/all_var_info.json"],
     },
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
