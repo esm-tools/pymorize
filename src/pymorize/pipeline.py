@@ -78,7 +78,10 @@ class Pipeline:
             self._prefectize_steps()
         logger.info("Restoring from pickled state!")
         # logger.info("You may want to assign a cluster to this pipeline")
-        self._cluster = DaskContext.get_cluster()
+        try:
+            self._cluster = DaskContext.get_cluster()
+        except RuntimeError:
+            logger.warning("No cluster available to assign to this pipeline")
 
     def assign_cluster(self, cluster):
         logger.debug("Assigning cluster to this pipeline")
@@ -131,7 +134,7 @@ class Pipeline:
             )
             dask_scheduler_address = None
         else:
-            dask_scheduler_address = self._cluster.scheduler
+            dask_scheduler_address = self._cluster.scheduler.address
 
         @flow(
             flow_run_name=f"{self.name} - {rule_name}",
