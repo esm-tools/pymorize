@@ -2,6 +2,13 @@
 ``pymorize`` Using auxiliary files
 ==================================
 
+At times, your post-processing will require additional files beyond the actual data.
+For example, say your are analyzing FESOM output, and need to know the computational mesh
+in order to calculate transport across a particular edge. In Python, the common way to do this
+is to use the ``pyfesom2`` library to load the mesh. For a ``Rule`` to be aware of the mesh, you
+can use auxiliary files.
+
+
 You can add additional files to your ``Rule`` objects by specifying them in the
 ``aux`` element of the rule. These files are loaded when the ``Rule`` object is
 initialized, and can be accessed in your steps.
