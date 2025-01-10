@@ -77,7 +77,6 @@ pipelines:
       - "pymorize.global_attributes.set_global_attributes"
       - "pymorize.generic.trigger_compute"
       - "pymorize.generic.show_data"
-      - "pymorize.generic.version_attribute"
       - "pymorize.files.save_dataset"
 
 # Settings for using dask-distributed

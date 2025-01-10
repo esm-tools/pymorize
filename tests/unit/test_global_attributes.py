@@ -12,7 +12,6 @@ required_attributes = {
     ("experiment_id", True),
     ("forcing_index", True),
     ("frequency", True),
-    # ("further_info_url", True),  # set on license, not explicitly req.
     ("grid", True),
     ("grid_label", True),
     ("initialization_index", True),

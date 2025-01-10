@@ -220,7 +220,6 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.caching.manual_checkpoint",
         "pymorize.global_attributes.set_global_attributes",
         "pymorize.generic.trigger_compute",
-        "pymorize.generic.version_attribute",
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
     )
@@ -251,7 +250,6 @@ class TestingPipeline(FrozenPipeline):
     STEPS = (
         "pymorize.generic.dummy_load_data",
         "pymorize.generic.dummy_logic_step",
-        "pymorize.generic.version_attribute",
         "pymorize.generic.dummy_save_data",
     )
 
