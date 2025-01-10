@@ -1,3 +1,57 @@
+"""
+CMORizer Module
+===============
+
+This module provides the `CMORizer` class, which is responsible for managing the
+configuration and execution of CMOR (Climate Model Output Rewriter) processes.
+The CMORizer class supports multiple CMOR versions and integrates with Dask for
+parallel processing.
+
+Classes
+-------
+CMORizer
+    Manages the configuration and execution of CMOR processes.
+
+Functions
+---------
+from_dict(data)
+    Creates an instance of CMORizer from a dictionary.
+
+add_rule(rule)
+    Adds a rule to the CMORizer instance.
+
+add_pipeline(pipeline)
+    Adds a pipeline to the CMORizer instance.
+
+process(parallel=None)
+    Starts the processing of rules, either in parallel or serially.
+
+parallel_process(backend="prefect")
+    Processes rules in parallel using the specified backend.
+
+serial_process()
+    Processes rules serially.
+
+check_prefect()
+    Checks if workflows are possible to be cached in Prefect.
+
+_caching_check()
+    Checks if workflows are possible to be cached.
+
+_caching_single_rule(rule)
+    Tries caching on a single rule.
+
+_process_rule(rule)
+    Processes a single rule.
+
+Notes
+-----
+- The module integrates with Dask for parallel processing and supports adaptive
+  and fixed scaling modes.
+- The module uses YAML for configuration management and logging.
+- The module supports Prefect for workflow orchestration.
+"""
+
 import copy
 import getpass
 import os
