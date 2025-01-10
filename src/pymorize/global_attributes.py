@@ -70,7 +70,11 @@ tracking_id
 def _parse_variant_label(label: str) -> dict:
     """Extracts indices values from variant label.
     `label` must be of the form "r<int>i<int>p<int>f<int>".
-    Example: "r1i1p1f1"
+    Example
+    -------
+    >>> label = "r1i1p1f1"
+    >>> _parse_variant_label(label)
+    {"realization_index": 1, "initialization_index": 1, "physics_index": 1, "forcing_index": 1,}
     """
     pattern = re.compile(
         r"r(?P<realization_index>\d+)"
