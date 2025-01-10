@@ -195,13 +195,19 @@ class CMORizer:
         )
 
         dask_extras = 0
-        logger.info("Importing Dask Extras...")
+        messages = []
+        messages.append("Importing Dask Extras...")
         if self._pymorize_cfg.get("enable_flox", True):
             dask_extras += 1
-            logger.info("...flox...")
+            messages.append("...flox...")
             import flox  # noqa: F401
             import flox.xarray  # noqa: F401
-        logger.info(f"...done! Imported {dask_extras} libraries.")
+        messages.append(f"...done! Imported {dask_extras} libraries.")
+        if messages:
+            for message in messages:
+                logger.info(message)
+        else:
+            logger.info("No Dask extras specified...")
 
     def _post_init_create_data_request_tables(self):
         """
