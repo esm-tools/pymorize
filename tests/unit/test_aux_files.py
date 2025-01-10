@@ -39,4 +39,5 @@ def test_aux_files_attach_fesom_mesh(
         },
     ]
     attach_files_to_rule(rule)
+    print(f'PG DEBUG >>> {rule.aux["mesh"]}')
     assert isinstance(rule.aux["mesh"], fesom_mesh)
