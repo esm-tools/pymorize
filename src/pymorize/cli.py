@@ -102,6 +102,19 @@ def process(config_file):
 
 @cli.command()
 @click_loguru.init_logger()
+@click.argument("config_file", type=click.Path(exists=True))
+def prefect_check(config_file):
+    add_report_logger()
+    logger.info(f"Checking prefect with dummy flow using {config_file}")
+    with open(config_file, "r") as f:
+        cfg = yaml.safe_load(f)
+        cmorizer = CMORizer.from_dict(cfg)
+        client = Client(cmorizer._cluster)  # noqa: F841
+        cmorizer.check_prefect()
+
+
+@cli.command()
+@click_loguru.init_logger()
 def table_explorer():
     logger.info("Launching table explorer...")
     with resources.path("pymorize", "webapp.py") as webapp_path:
@@ -267,9 +280,26 @@ def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
 ################################################################################
 ################################################################################
 ################################################################################
-cli.add_command(validate)
-cli.add_command(develop)
+
+################################################################################
+# Imported subcommands
+################################################################################
+
 cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
+
+################################################################################
+
+################################################################################
+# Defined subcommands
+################################################################################
+
+cli.add_command(develop)
+cli.add_command(validate)
+cli.add_command(cache)
+
+################################################################################
+################################################################################
+################################################################################
 
 
 def main():

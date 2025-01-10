@@ -3,7 +3,6 @@ import re
 import typing
 import warnings
 
-# import questionary
 import yaml
 
 from . import pipeline
@@ -11,8 +10,6 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
-
-# import deprecation
 
 
 class Rule:
@@ -50,7 +47,7 @@ class Rule:
             InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])
         ]
         self.cmor_variable = cmor_variable
-        self._pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self.pipelines = pipelines or [pipeline.DefaultPipeline()]
         self.tables = tables or []
         self.data_request_variables = data_request_variables or []
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
@@ -65,16 +62,6 @@ class Rule:
         """Custom pickling of a Rule"""
         state = self.__dict__.copy()
         return state
-
-    @property
-    def pipelines(self):
-        """
-        Returns
-        -------
-        list
-            The pipelines that this Rule knows about.
-        """
-        return self._pipelines
 
     def get(self, key, default=None):
         """Gets an attribute from the Rule object
@@ -135,13 +122,6 @@ class Rule:
                 )
         return setattr(self, key, value)
 
-    def __repr__(self):
-        return (
-            f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, "
-            f"pipelines={self.pipelines}, tables={self.tables}, "
-            f"data_request_variables={self.data_request_variables})"
-        )
-
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
 
@@ -171,7 +151,7 @@ class Rule:
         for pl_name, pl in known_pipelines.items():
             logger.debug(f"{pl_name}: {pl}")
         matched_pipelines = list()
-        for pl in self._pipelines:
+        for pl in self.pipelines:
             logger.debug(f"Working on: {pl}")
             # Pipeline was already matched
             if isinstance(pl, pipeline.Pipeline):
@@ -182,7 +162,7 @@ class Rule:
             else:
                 logger.error(f"No known way to match the pipeline {pl}")
                 raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
-        self._pipelines = matched_pipelines
+        self.pipelines = matched_pipelines
         self._pipelines_are_mapped = True
 
     @classmethod
@@ -212,16 +192,6 @@ class Rule:
     def from_yaml(cls, yaml_str):
         """Wrapper around ``from_dict`` for initializing from YAML"""
         return cls.from_dict(yaml.safe_load(yaml_str))
-
-    # @deprecation.deprecated(details="This shouldn't be used, avoid it")
-    # def to_yaml(self):
-    #     return yaml.dump(
-    #         {
-    #             "inputs": [p.to_dict() for p in self.input_patterns],
-    #             "cmor_variable": self.cmor_variable,
-    #             "pipelines": [p.to_dict() for p in self.pipelines],
-    #         }
-    #     )
 
     def add_table(self, tbl):
         """Add a table to the rule"""
@@ -287,33 +257,3 @@ class Rule:
         assert len(self.data_request_variables) == 1
         self.data_request_variable = self.data_request_variables[0]
         del self.data_request_variables
-
-    # FIXME: Not used and broken+
-    # @classmethod
-    # def from_interface(cls, cmor_table=None):
-    #     """
-    #     Generates a Rule via a wizard-like interface
-
-    #     Parameters
-    #     ----------
-    #     cmor_table : dict, optional
-    #         A dictionary with the CMOR table. If provided, the user will be
-    #         prompted to select a CMOR variable from the table. Must contain a key
-    #         "variable_entry" with an iterable of CMOR variable names.
-    #     """
-    #     if cmor_table is None:
-    #         cmor_variable = questionary.text("CMOR variable: ").ask()
-    #     else:
-    #         cmor_variable = questionary.autocomplete(
-    #             "CMOR variable: ", cmor_table["variable_entry"]
-    #         ).ask()
-    #     input_patterns = []
-    #     while True:
-    #         input_patterns.append(questionary.text("Input pattern as regex: ").ask())
-    #         if input_patterns:
-    #             [logger.info(p) for p in input_patterns]
-    #         if not questionary.confirm(
-    #             f"Add another input pattern for {cmor_variable}?"
-    #         ).ask():
-    #             break
-    #     return cls(input_patterns=input_patterns, cmor_variable=cmor_variable)
