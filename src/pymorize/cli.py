@@ -1,3 +1,29 @@
+"""
+This module defines the command-line interface (CLI) for the Pymorize application using the Click framework.
+It includes commands for processing configuration files, validating configurations, and managing caches.
+The CLI is enhanced with logging capabilities provided by ClickLoguru and rich traceback support.
+
+Main components:
+- CLI group and commands: Defines the main CLI group and various commands such as ``process``,
+  ``prefect_check``, ``table_explorer``, etc.
+- Subcommands: Defines subcommands for ``develop``, ``validate``, and ``cache`` groups.
+- Logging: Integrates logging options and initialization using ClickLoguru.
+- Utilities: Includes utility functions like ``find_subcommands`` to discover CLI subcommands
+  from installed plugins.
+
+Features:
+- The CLI can be invoked from the command line to perform various tasks related to CMORization,
+  validation, and caching.
+- Subcommands can be dynamically discovered and added to the CLI.
+
+Example usage from the shell::
+
+    $ pymorize process config.yaml
+    $ pymorize validate config config.yaml
+    $ pymorize cache inspect_prefect_global
+
+"""
+
 import os
 import sys
 from importlib import resources
