@@ -35,7 +35,7 @@ def test_aux_files_attach_fesom_mesh(
         {
             "name": "mesh",
             "path": str(mesh),
-            "loader": "pyfesom2.load_mesh_data:load_mesh",
+            "loader": "pyfesom2.load_mesh_data.load_mesh",
         },
     ]
     attach_files_to_rule(rule)
