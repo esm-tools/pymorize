@@ -113,4 +113,4 @@ def attach_files_to_rule(rule):
     for aux_file_spec in rule.get("aux", []):
         aux_file = AuxiliaryFile.from_dict(aux_file_spec)
         loaded_aux[aux_file.name] = aux_file.load()
-    rule["aux"] = loaded_aux
+    rule.aux = loaded_aux
