@@ -15,6 +15,7 @@ from prefect import flow, get_run_logger, task
 from prefect.futures import wait
 from rich.progress import track
 
+from .aux_files import attach_files_to_rule
 from .cluster import (
     CLUSTER_ADAPT_SUPPORT,
     CLUSTER_MAPPINGS,
@@ -123,6 +124,7 @@ class CMORizer:
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
+        self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
         logger.debug("...post-init done!")
         ################################################################################
@@ -248,6 +250,11 @@ class CMORizer:
         with DaskContext.set_cluster(self._cluster):
             self._rules_expand_drvs()
             self._rules_depluralize_drvs()
+
+    def _post_init_populate_rules_with_aux_files(self):
+        """Attaches auxiliary files to the rules"""
+        for rule in self.rules():
+            attach_files_to_rule(rule)
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """
@@ -489,6 +496,7 @@ class CMORizer:
         instance._post_init_create_data_request()
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
+        instance._post_init_populate_rules_with_aux_files()
         logger.debug("Object creation done!")
         return instance
 
