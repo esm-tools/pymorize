@@ -253,7 +253,7 @@ class CMORizer:
 
     def _post_init_populate_rules_with_aux_files(self):
         """Attaches auxiliary files to the rules"""
-        for rule in self.rules():
+        for rule in self.rules:
             attach_files_to_rule(rule)
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
