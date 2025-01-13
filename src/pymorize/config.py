@@ -154,7 +154,7 @@ class PymorizeConfig:
             parser=_parse_bool, default="yes", doc="Whether to run in parallel."
         )
         parallel_backend = Option(default="dask", doc="Which parallel backend to use.")
-        pipeline_workflow_orcherstator = Option(
+        pipeline_workflow_orchestrator = Option(
             default="prefect",
             doc="Which workflow orchestrator to use for running pipelines",
             parser=ChoiceOf(
