@@ -1,5 +1,5 @@
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-python
-
+# For more information see: https://tinyurl.com/mr4y7r8n
+---
 name: Run Basic Tests
 on:
   push:
@@ -75,7 +75,9 @@ jobs:
           python -m pip install flake8 pytest
           python -m pip install isort
           python -m pip install yamllint
-          if ${{ matrix.python-version == '3.12' }}; then pip install --upgrade setuptools; fi
+          if ${{ matrix.python-version == '3.12' }}; then
+            pip install --upgrade setuptools
+          fi
       - name: Install package
         run: |
           python -m pip install .[dev]

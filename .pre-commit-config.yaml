@@ -1,3 +1,4 @@
+---
 default_language_version:
   python: python3.9
 repos:
@@ -22,12 +23,14 @@ repos:
     rev: '7.1.1'
     hooks:
       - id: flake8
-        # YAML stuff from https://earth.bsc.es/gitlab/digital-twins/de_340-2/workflow
+  # YAML stuff from https://earth.bsc.es/gitlab/digital-twins/de_340-2/workflow
   - repo: https://github.com/adrienverge/yamllint.git
-    rev: v1.35.1 # or higher tag
+    rev: v1.35.1  # or higher tag
     hooks:
       - id: yamllint
-        args: [-d, "{extends: default, rules: {line-length: {level: 'warning'}}}"]
+        args:
+          - "-d"
+          - "{extends: default, rules: {line-length: {level: 'warning'}}}"
 exclude: |
   (?x)  # Enable verbose regex
   (
@@ -36,3 +39,4 @@ exclude: |
       _version\.py|               # Exclude '_version.py'
       ^src/pymorize/data/cmip7/   # Exclude 'src/pymorize/data/cmip7/'
   )
+...
