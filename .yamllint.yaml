@@ -4,8 +4,8 @@ yaml-files:
   - '*.yml'
   - '.yamllint'
 ignore:
-  - cmip6-cmor-tables
-  - CMIP7_DReq_Software
+  - cmip6-cmor-tables/
+  - CMIP7_DReq_Software/
 rules:
   line-length:
     max: 170
