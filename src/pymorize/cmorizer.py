@@ -355,6 +355,10 @@ class CMORizer:
             if isinstance(p, Pipeline):
                 pipelines.append(p)
             elif isinstance(p, dict):
+                p["workflow_backend"] = p.get(
+                    "workflow_backend",
+                    self._pymorize_cfg("pipeline_workflow_orchestrator"),
+                )
                 pl = Pipeline.from_dict(p)
                 if self._cluster is not None:
                     pl.assign_cluster(self._cluster)

@@ -160,6 +160,7 @@ class PymorizeConfig:
             parser=ChoiceOf(
                 str,
                 choices=[
+                    "native",
                     "prefect",
                 ],
             ),

@@ -189,13 +189,16 @@ class Pipeline:
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
             return get_callable_by_name(data["uses"])(
-                name=data.get("name"), cache_expiration=data.get("cache_expiration")
+                name=data.get("name"),
+                cache_expiration=data.get("cache_expiration"),
+                workflow_backend=data.get("workflow_backend"),
             )
         if "steps" in data:
             return cls.from_callable_strings(
                 data["steps"],
                 name=data.get("name"),
                 cache_expiration=data.get("cache_expiration"),
+                workflow_backend=data.get("workflow_backend"),
             )
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
