@@ -499,6 +499,10 @@ class CMORizer:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
                 raise ValueError(PIPELINES_VALIDATOR.errors)
         for pipeline in data.get("pipelines", []):
+            pipeline["workflow_backend"] = pipeline.get(
+                "workflow_backend",
+                instance._pymorize_cfg("pipeline_workflow_orchestrator"),
+            )
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
 

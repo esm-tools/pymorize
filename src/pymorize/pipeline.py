@@ -22,17 +22,19 @@ class Pipeline:
         self,
         *args,
         name=None,
-        workflow_backend="prefect",
+        workflow_backend=None,
         cache_policy=None,
         dask_cluster=None,
         cache_expiration=None,
     ):
         self._steps = args
         self.name = name or randomname.get_name()
-        self._workflow_backend = workflow_backend
         self._cluster = dask_cluster
         self._prefect_cache_kwargs = {}
         self._steps_are_prefectized = False
+        if workflow_backend is None:
+            workflow_backend = "prefect"
+        self._workflow_backend = workflow_backend
         if cache_policy is None:
             self._cache_policy = TASK_SOURCE + INPUTS
             self._prefect_cache_kwargs["cache_policy"] = self._cache_policy
