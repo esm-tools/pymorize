@@ -1,4 +1,3 @@
----
 default_language_version:
   python: python3.9
 repos:
@@ -39,4 +38,3 @@ exclude: |
       _version\.py|               # Exclude '_version.py'
       ^src/pymorize/data/cmip7/   # Exclude 'src/pymorize/data/cmip7/'
   )
-...

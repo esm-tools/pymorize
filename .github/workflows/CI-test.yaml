@@ -1,5 +1,4 @@
 # For more information see: https://tinyurl.com/mr4y7r8n
----
 name: Run Basic Tests
 on:
   push:
@@ -97,4 +96,4 @@ jobs:
           black --check --extend-exclude 'cmip6-cmor-tables|CMIP7_DReq_Software|versioneer\.py|webapp\.py' .
       - name: yamllint
         run: |
-          yamllint -d "{extends: default, rules: {line-length: {level: 'warning'}}, ignore: ['cmip6-cmor-tables', 'CMIP7_DReq_Software']}" .
+          yamllint .
