@@ -27,9 +27,6 @@ repos:
     rev: v1.35.1  # or higher tag
     hooks:
       - id: yamllint
-        args:
-          - "-d"
-          - "{extends: default, rules: {line-length: {level: 'warning'}}}"
 exclude: |
   (?x)  # Enable verbose regex
   (
