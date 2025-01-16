@@ -1,9 +1,7 @@
 # global_attributes.py
 
 import re
-import pathlib
 from datetime import datetime
-from .controlled_vocabularies import ControlledVocabularies
 
 
 _parent_fields = (
