@@ -27,6 +27,7 @@ from .data_request.collection import DataRequest
 from .data_request.factory import create_factory
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
+from .controlled_vocabularies import ControlledVocabularies
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -124,6 +125,8 @@ class CMORizer:
         self._post_init_populate_rules_with_tables()
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
         self._post_init_populate_rules_with_data_request_variables()
+        self._post_init_create_controlled_vocabularies()
+        self._post_init_populate_global_attributes()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -248,6 +251,23 @@ class CMORizer:
         with DaskContext.set_cluster(self._cluster):
             self._rules_expand_drvs()
             self._rules_depluralize_drvs()
+
+    def _post_init_create_controlled_vocabularies(self):
+        """
+        Reads the controlled vocabularies from the directory tree rooted at
+        `<tables_dir>/CMIP6_CVs` and stores them in the `controlled_vocabularies`
+        attribute. This is done after the rules have been populated with the
+        tables and data request variables, which may be used to lookup the
+        controlled vocabularies.
+        """
+        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+        cv_dir = Path(table_dir) / "CMIP6_CVs"
+        self.controlled_vocabularies = ControlledVocabularies.new_from_dir(cv_dir)
+
+    def _post_init_populate_global_attributes(self):
+        for rule in self.rules:
+            for drv in rule.data_request_variables:
+                drv.set_global_attributes(self.controlled_vocabularies, rule)
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """

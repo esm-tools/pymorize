@@ -342,7 +342,17 @@ class CMIP6DataRequestVariable(DataRequestVariable):
             "cell_measures": self.cell_measures,
         }
 
-    def global_attrs(self, override_dict: dict = None) -> dict:
+    def get_global_attributes(self):
+        return self.ga.get_global_attributes(self.rule)
+
+    def set_global_attributes(self, cv, rule):
+        from ..global_attributes import GlobalAttributes
+
+        self.ga = GlobalAttributes(cv)
+        self.cv = cv
+        self.rule = rule
+
+    def global_attrs(self, rule, override_dict: dict = None) -> dict:
         """Return a dictionary of global attributes for a CMIP6 variable
 
         Parameters
