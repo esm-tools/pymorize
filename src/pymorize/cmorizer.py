@@ -266,8 +266,9 @@ class CMORizer:
 
     def _post_init_populate_global_attributes(self):
         for rule in self.rules:
+            rule_attrs = rule._global_attributes_set_on_rule()
             for drv in rule.data_request_variables:
-                drv.set_global_attributes(self.controlled_vocabularies, rule)
+                drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """

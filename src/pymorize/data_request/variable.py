@@ -343,13 +343,13 @@ class CMIP6DataRequestVariable(DataRequestVariable):
         }
 
     def get_global_attributes(self):
-        return self.ga.get_global_attributes(self.rule)
+        return self.ga.get_global_attributes(self.rule_attrs)
 
-    def set_global_attributes(self, cv, rule):
+    def set_global_attributes(self, cv, rule_attrs):
         from ..global_attributes import GlobalAttributes
 
         self.ga = GlobalAttributes(cv)
-        self.rule = rule
+        self.rule_attrs = rule_attrs
 
     def global_attrs(self, override_dict: dict = None) -> dict:
         """Return a dictionary of global attributes for a CMIP6 variable
