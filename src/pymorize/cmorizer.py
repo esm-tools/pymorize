@@ -23,11 +23,11 @@ from .cluster import (
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
+from .controlled_vocabularies import ControlledVocabularies
 from .data_request.collection import DataRequest
 from .data_request.factory import create_factory
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
-from .controlled_vocabularies import ControlledVocabularies
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline
@@ -266,7 +266,7 @@ class CMORizer:
 
     def _post_init_populate_global_attributes(self):
         for rule in self.rules:
-            rule_attrs = rule._global_attributes_set_on_rule()
+            rule_attrs = rule.global_attributes_set_on_rule()
             for drv in rule.data_request_variables:
                 drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
 

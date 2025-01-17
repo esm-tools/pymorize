@@ -3,7 +3,6 @@
 import re
 from datetime import datetime
 
-
 _parent_fields = (
     "branch_method",
     "branch_time_in_child",
@@ -99,10 +98,10 @@ class GlobalAttributes:
         d = {name: int(val) for name, val in d.groupdict().items()}
         return d
 
-    def _source_id_related(self, rule):
-        source_id = rule.source_id
+    def _source_id_related(self, rule: dict) -> dict:
+        source_id = rule.get("source_id")
         cv = self.cv["source_id"][source_id]
-        _inst_id = getattr(rule, "institution_id", None)
+        _inst_id = rule.get("institution_id", None)
         inst_id = cv["institution_id"]
         if _inst_id:
             assert _inst_id in inst_id
@@ -113,7 +112,7 @@ class GlobalAttributes:
                 )
             _inst_id = next(iter(inst_id))
         model_components = cv["model_component"]
-        model_component = getattr(rule, "model_component", None)
+        model_component = rule.get("model_component", None)
         if model_component:
             assert model_component in model_components
         else:
@@ -128,7 +127,7 @@ class GlobalAttributes:
         license_text = self.cv["license"]["license"]
         # make placeholders in license text
         license_text = re.sub(r"<.*?>", "{}", license_text)
-        further_info_url = getattr(rule, "further_info_url", None)
+        further_info_url = rule.get("further_info_url", None)
         if further_info_url is None:
             license_text = re.sub(r"\[.*?\]", "", license_text)
             license_text = license_text.format(_inst_id, license_id, license_url)
@@ -136,7 +135,7 @@ class GlobalAttributes:
             license_text = license_text.format(
                 _inst_id, license_id, license_url, further_info_url
             )
-        grid_label = getattr(rule, "grid_label", None)
+        grid_label = rule.get("grid_label", None)
         if grid_label is None:
             raise ValueError("Missing required attribute `grid_label`")
         return {
@@ -150,10 +149,10 @@ class GlobalAttributes:
             "license": license_text,
         }
 
-    def _experiment_id_related(self, rule):
-        exp_id = rule.experiment_id
+    def _experiment_id_related(self, rule: dict) -> dict:
+        exp_id = rule.get("experiment_id")
         cv = self.cv["experiment_id"][exp_id]
-        _activity_id = getattr(rule, "activity_id", None)
+        _activity_id = rule.get("activity_id", None)
         activity_id = cv["activity_id"]
         if _activity_id:
             assert _activity_id in activity_id
@@ -169,7 +168,7 @@ class GlobalAttributes:
             "source_type": " ".join(cv["required_model_components"]),
         }
 
-    def _header_related(self, rule):
+    def _header_related(self, rule: dict, table_header) -> dict:
         """
         Extracts header related global attributes from a DataRequestRule.
 
@@ -185,8 +184,8 @@ class GlobalAttributes:
             A dictionary of global attributes
         """
         d = {}
-        drv = rule.data_request_variable
-        header = rule.data_request_variable.table_header
+        drv = rule.get("data_request_variable")
+        header = table_header
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
         d["realm"] = header.realm
@@ -196,17 +195,17 @@ class GlobalAttributes:
         d["data_specs_version"] = str(header.data_specs_version)
         return d
 
-    def _creation_date(self, rule):
+    def _creation_date(self, rule) -> dict:
         # this needs to be discussed. For now setting it to today's datetime
         # file creation date or today
         return {"creation_date": str(datetime.today())}
 
-    def _tracking_id(self, rule):
+    def _tracking_id(self, rule) -> dict:
         # how to get proper tracking_id is yet to be determined
         # This is just the tracking prefix
         return {"tracking_id": "hdl:21.14100"}
 
-    def get_global_attributes(self, rule):
+    def get_global_attributes(self, rule, table_header):
         """
         Extracts all global attributes from a DataRequestRule.
 
@@ -221,10 +220,10 @@ class GlobalAttributes:
             A dictionary of global attributes.
         """
         d = {}
-        d["variable_id"] = rule.cmor_variable
-        d["variant_label"] = rule.variant_label
-        d.update(self._header_related(rule))
-        d.update(self._parse_variant_label(rule.variant_label))
+        d["variable_id"] = rule.get("cmor_variable")
+        d["variant_label"] = rule.get("variant_label")
+        d.update(self._header_related(rule, table_header))
+        d.update(self._parse_variant_label(rule.get("variant_label")))
         d.update(self._source_id_related(rule))
         d.update(self._experiment_id_related(rule))
         d.update(self._creation_date(rule))

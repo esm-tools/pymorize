@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from importlib.resources import files
 from typing import Optional
 
+from ..global_attributes import GlobalAttributes
 from .factory import MetaFactory
 
 
@@ -343,11 +344,9 @@ class CMIP6DataRequestVariable(DataRequestVariable):
         }
 
     def get_global_attributes(self):
-        return self.ga.get_global_attributes(self.rule_attrs)
+        return self.ga.get_global_attributes(self.rule_attrs, self.table_header)
 
     def set_global_attributes(self, cv, rule_attrs):
-        from ..global_attributes import GlobalAttributes
-
         self.ga = GlobalAttributes(cv)
         self.rule_attrs = rule_attrs
 

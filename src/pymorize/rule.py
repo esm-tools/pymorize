@@ -258,23 +258,16 @@ class Rule:
         self.data_request_variable = self.data_request_variables[0]
         del self.data_request_variables
 
-    def _global_attributes_set_on_rule(self):
+    def global_attributes_set_on_rule(self):
         attrs = (
             "source_id",
-            "institute_id",
-            "model_component",
-            "further_info_url",
             "grid_label",
-            "activity_id",
             "cmor_variable",
             "variant_label",
             "experiment_id",
+            "activity_id",  # optional
+            "institution_id",  # optional
+            "model_component",  # optional
+            "further_info_url",  # optional
         )
-
-        class RuleLike:
-            pass
-
-        rule_like = RuleLike()
-        for attr in attrs:
-            setattr(rule_like, attr, getattr(self, attr, None))
-        return rule_like
+        return {attr: getattr(self, attr, None) for attr in attrs}
