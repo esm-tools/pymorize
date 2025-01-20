@@ -101,16 +101,25 @@ class GlobalAttributes:
     def _source_id_related(self, rule: dict) -> dict:
         source_id = rule.get("source_id")
         cv = self.cv["source_id"][source_id]
-        _inst_id = rule.get("institution_id", None)
-        inst_id = cv["institution_id"]
-        if _inst_id:
-            assert _inst_id in inst_id
-        else:
-            if len(inst_id) > 1:
+        cv_institution_ids = cv["institution_id"]
+        user_institution_id = rule.get("institution_id")
+
+        if user_institution_id:
+            if user_institution_id not in cv_institution_ids:
                 raise ValueError(
-                    f"Provide institution_id. Mutiple values for institution_id found {inst_id}"
+                    f"Institution ID '{user_institution_id}' is not valid. "
+                    f"Allowed values: {cv_institution_ids}"
                 )
-            _inst_id = next(iter(inst_id))
+            selected_institution_id = user_institution_id
+        else:
+            # No user-provided institution_id; infer it
+            if len(cv_institution_ids) > 1:
+                raise ValueError(
+                    f"Multiple institution IDs found: {cv_institution_ids}. "
+                    "Please specify one in the rule."
+                )
+            selected_institution_id = cv_institution_ids[0]
+        _inst_id = selected_institution_id
         model_components = cv["model_component"]
         model_component = rule.get("model_component", None)
         if model_component:
