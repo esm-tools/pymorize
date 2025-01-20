@@ -77,7 +77,7 @@ class GlobalAttributes:
         -------
         >>> label = "r1i1p1f1"
         >>> _parse_variant_label(label)
-        {"realization_index": 1, "initialization_index": 1, "physics_index": 1, "forcing_index": 1,}
+        {'realization_index': 1, 'initialization_index': 1, 'physics_index': 1, 'forcing_index': 1,}
         """
         pattern = re.compile(
             r"r(?P<realization_index>\d+)"
