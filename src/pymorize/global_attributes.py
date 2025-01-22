@@ -98,12 +98,11 @@ class GlobalAttributes:
         d = {name: int(val) for name, val in d.groupdict().items()}
         return d
 
-    def _source_id_related(self, rule: dict) -> dict:
-        source_id = rule.get("source_id")
+    def _source_id_related(self, attrs_map_on_rule: dict) -> dict:
+        source_id = attrs_map_on_rule.get("source_id")
         cv = self.cv["source_id"][source_id]
         cv_institution_ids = cv["institution_id"]
-        user_institution_id = rule.get("institution_id")
-
+        user_institution_id = attrs_map_on_rule.get("institution_id")
         if user_institution_id:
             if user_institution_id not in cv_institution_ids:
                 raise ValueError(
@@ -119,49 +118,80 @@ class GlobalAttributes:
                     "Please specify one in the rule."
                 )
             selected_institution_id = cv_institution_ids[0]
-        _inst_id = selected_institution_id
         model_components = cv["model_component"]
-        model_component = rule.get("model_component", None)
-        if model_component:
-            assert model_component in model_components
+        user_model_component = attrs_map_on_rule.get("model_component", None)
+        if user_model_component:
+            if user_model_component not in model_components:
+                raise ValueError(
+                    f"Model component '{user_model_component}' is not valid. "
+                    f"Allowed values: {model_components}"
+                )
+            model_component = user_model_component
         else:
-            raise ValueError("Missing required attribute 'model_component'")
-        grid = model_components[model_component]["description"]
-        nominal_resolution = model_components[model_component][
-            "native_nominal_resolution"
-        ]
+            if len(model_components) > 1:
+                raise ValueError(
+                    f"Multiple model components found: {model_components}. "
+                    "Please specify one in the rule."
+                )
+            model_component = model_components[0]
+        native_nominal_resolution = model_components[model_component].get(
+            "native_nominal_resolution", None
+        )
+        # either native_nominal_resolution does not exists or it may be set to "none"
+        # in any case, user is expected to provide this information
+        if native_nominal_resolution in (None, "none"):
+            user_native_nominal_resolution = attrs_map_on_rule.get(
+                "native_nominal_resolution", None
+            )
+            if user_native_nominal_resolution:
+                native_nominal_resolution = user_native_nominal_resolution
+            else:
+                raise ValueError(
+                    "Missing required attribute `native_nominal_resolution`"
+                )
+        grid_description = model_components[model_component].get("description", None)
+        if grid_description in (None, "none"):
+            user_grid_description = attrs_map_on_rule.get("description", None)
+            if user_grid_description:
+                grid_description = user_grid_description
+            else:
+                raise ValueError(
+                    "Missing required attribute `description` (i.e. grid description)"
+                )
         license_id = cv["license_info"]["id"]
         license_url = self.cv["license"]["license_options"][license_id]["license_url"]
         license_id = self.cv["license"]["license_options"][license_id]["license_id"]
         license_text = self.cv["license"]["license"]
         # make placeholders in license text
         license_text = re.sub(r"<.*?>", "{}", license_text)
-        further_info_url = rule.get("further_info_url", None)
+        further_info_url = attrs_map_on_rule.get("further_info_url", None)
         if further_info_url is None:
             license_text = re.sub(r"\[.*?\]", "", license_text)
-            license_text = license_text.format(_inst_id, license_id, license_url)
+            license_text = license_text.format(
+                selected_institution_id, license_id, license_url
+            )
         else:
             license_text = license_text.format(
-                _inst_id, license_id, license_url, further_info_url
+                selected_institution_id, license_id, license_url, further_info_url
             )
-        grid_label = rule.get("grid_label", None)
+        grid_label = attrs_map_on_rule.get("grid_label", None)
         if grid_label is None:
             raise ValueError("Missing required attribute `grid_label`")
         return {
             "source_id": source_id,
             "source": f"{model_component} ({cv['release_year']})",
-            "institution_id": _inst_id,
-            "institution": self.cv["institution_id"][_inst_id],
-            "grid": grid,
+            "institution_id": selected_institution_id,
+            "institution": self.cv["institution_id"][selected_institution_id],
+            "grid": grid_description,
             "grid_label": grid_label,
-            "nominal_resolution": nominal_resolution,
+            "nominal_resolution": native_nominal_resolution,
             "license": license_text,
         }
 
-    def _experiment_id_related(self, rule: dict) -> dict:
-        exp_id = rule.get("experiment_id")
+    def _experiment_id_related(self, attrs_map_on_rule: dict) -> dict:
+        exp_id = attrs_map_on_rule.get("experiment_id")
         cv = self.cv["experiment_id"][exp_id]
-        _activity_id = rule.get("activity_id", None)
+        _activity_id = attrs_map_on_rule.get("activity_id", None)
         activity_id = cv["activity_id"]
         if _activity_id:
             assert _activity_id in activity_id
@@ -177,7 +207,7 @@ class GlobalAttributes:
             "source_type": " ".join(cv["required_model_components"]),
         }
 
-    def _header_related(self, rule: dict, table_header) -> dict:
+    def _header_related(self, attrs_map_on_rule: dict, table_header) -> dict:
         """
         Extracts header related global attributes from a DataRequestRule.
 
@@ -193,7 +223,7 @@ class GlobalAttributes:
             A dictionary of global attributes
         """
         d = {}
-        drv = rule.get("data_request_variable")
+        drv = attrs_map_on_rule.get("data_request_variable")
         header = table_header
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
@@ -212,9 +242,11 @@ class GlobalAttributes:
     def _tracking_id(self, rule) -> dict:
         # how to get proper tracking_id is yet to be determined
         # This is just the tracking prefix
+        # we are using random UUID as in
+        # https://github.com/FESOM/seamore/blob/7725366f7b68ea3824ac6baa500ea49531722b72/lib/global_attributes.rb#L90
         return {"tracking_id": "hdl:21.14100"}
 
-    def get_global_attributes(self, rule, table_header):
+    def get_global_attributes(self, attrs_map_on_rule, table_header):
         """
         Extracts all global attributes from a DataRequestRule.
 
@@ -229,14 +261,14 @@ class GlobalAttributes:
             A dictionary of global attributes.
         """
         d = {}
-        d["variable_id"] = rule.get("cmor_variable")
-        d["variant_label"] = rule.get("variant_label")
-        d.update(self._header_related(rule, table_header))
-        d.update(self._parse_variant_label(rule.get("variant_label")))
-        d.update(self._source_id_related(rule))
-        d.update(self._experiment_id_related(rule))
-        d.update(self._creation_date(rule))
-        d.update(self._tracking_id(rule))
+        d["variable_id"] = attrs_map_on_rule.get("cmor_variable")
+        d["variant_label"] = attrs_map_on_rule.get("variant_label")
+        d.update(self._header_related(attrs_map_on_rule, table_header))
+        d.update(self._parse_variant_label(attrs_map_on_rule.get("variant_label")))
+        d.update(self._source_id_related(attrs_map_on_rule))
+        d.update(self._experiment_id_related(attrs_map_on_rule))
+        d.update(self._creation_date(attrs_map_on_rule))
+        d.update(self._tracking_id(attrs_map_on_rule))
         d = {k: d[k] for k in sorted(d)}
         return d
 
