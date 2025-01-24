@@ -4,6 +4,8 @@ import typing
 import warnings
 
 import yaml
+import datetime
+import pathlib
 
 from . import pipeline
 from .data_request.table import DataRequestTable
@@ -270,4 +272,15 @@ class Rule:
             "model_component",  # optional
             "further_info_url",  # optional
         )
-        return {attr: getattr(self, attr, None) for attr in attrs}
+        # attribute `creation_date` is the time-stamp of inputs directory
+        afile = next(
+            f for file_collection in self.inputs for f in file_collection.files
+        )
+        if not isinstance(afile, pathlib.Path):
+            afile = pathlib.Path(afile)
+        time_format = "%Y-%m-%dT%H:%M:%SZ"
+        dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
+        creation_date = dir_timestamp.strftime(time_format)
+        result = {attr: getattr(self, attr, None) for attr in attrs}
+        result["creation_date"] = creation_date
+        return result

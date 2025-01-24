@@ -1,6 +1,8 @@
 # global_attributes.py
 
 import re
+import uuid
+from pathlib import Path
 from datetime import datetime
 
 _parent_fields = (
@@ -234,25 +236,32 @@ class GlobalAttributes:
         d["data_specs_version"] = str(header.data_specs_version)
         return d
 
-    def _creation_date(self, rule) -> dict:
-        # this needs to be discussed. For now setting it to today's datetime
-        # file creation date or today
-        return {"creation_date": str(datetime.today())}
+    def _creation_date(self, attrs_map_on_rule) -> dict:
+        """Extracts the creation date of the parent directory of inputs in the rule."""
+        return {"creation_date": attrs_map_on_rule.get("creation_date")}
 
-    def _tracking_id(self, rule) -> dict:
-        # how to get proper tracking_id is yet to be determined
-        # This is just the tracking prefix
-        # we are using random UUID as in
-        # https://github.com/FESOM/seamore/blob/7725366f7b68ea3824ac6baa500ea49531722b72/lib/global_attributes.rb#L90
-        return {"tracking_id": "hdl:21.14100"}
+    def _tracking_id(self, attrs_map_on_rule=None) -> dict:
+        """Generates unique identifier for the dataset.
 
-    def get_global_attributes(self, attrs_map_on_rule, table_header):
+        As described in CMIP6_global_attributes_filenames_CVs document,
+        `tracking_id` must be of the form “hdl:21.14100/<uuid>”. The
+        document also recommends using the OSSP utility which supports
+        a number of different DCE 1.1 variant UUID options.
+        However, python uuid.uuid4 produces a compatible UUID and so
+        it is used instead.
+
+        Document reference: https://tinyurl.com/npjwpxrp
+        seamore tool reference: https://tinyurl.com/2rnemxmb
+        """
+        return {"tracking_id": "hdl:21.14100/" + str(uuid.uuid4())}
+
+    def get_global_attributes(self, attrs_map_on_rule: dict, table_header):
         """
         Extracts all global attributes from a DataRequestRule.
 
         Parameters
         ----------
-        rule : DataRequestRule
+        attrs_map_on_rule : attributes set on DataRequestRule object
             The data request rule to extract the global attributes from.
 
         Returns
