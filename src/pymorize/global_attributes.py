@@ -1,9 +1,19 @@
-# global_attributes.py
+"""
+Global Attributes
+
+Controlled Vocabularies for CMIP6 define a set of required global attributes that must
+be set on a CMIP6 dataset. Setting some of the global attributes is relies on user input
+and setting others is done automatically by consulting the controlled vocabularies. Also,
+some of the global attributes are retrieved from the CMIP6 Table Header for a given variable.
+
+The required user input for global attributes are set on rule via the yaml configuration
+file.
+
+Use the `get_global_attributes` method on `DataRequestVariable` to get the global attributes.
+"""
 
 import re
 import uuid
-from pathlib import Path
-from datetime import datetime
 
 _parent_fields = (
     "branch_method",
@@ -15,50 +25,6 @@ _parent_fields = (
     "parent_time_units",
     "parent_variant_label",
 )
-
-
-"""
-attribute dependencies
-----------------------
-Table header
-------------
-data_specs_version
-Conventions
-mip_era
-realm
-product
-frequency
-
-CV
----
-source_id  <user input>
-    source
-    institution_id
-    license_info
-    model_component  # how to get model_component <user input>
-        native_nominal_resolution (nominal_resolution)
-        description (grid)
-experiment_id
-    activity_id
-    parent_experiment_id
-    sub_experiment_id
-
-User input
-----------
-table_id
-further_info_url
-institution
-variant_label
-    initialization_index
-    realization_index
-    forcing_index
-    physics_index
-
-system generated
-----------------
-creation_date
-tracking_id
-"""
 
 
 class GlobalAttributes:
