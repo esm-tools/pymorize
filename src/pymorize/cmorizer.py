@@ -15,6 +15,7 @@ from prefect import flow, get_run_logger, task
 from prefect.futures import wait
 from rich.progress import track
 
+from .aux_files import attach_files_to_rule
 from .cluster import (
     CLUSTER_ADAPT_SUPPORT,
     CLUSTER_MAPPINGS,
@@ -124,6 +125,7 @@ class CMORizer:
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
+        self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
         self._post_init_create_controlled_vocabularies()
         self._post_init_populate_global_attributes()
@@ -198,13 +200,19 @@ class CMORizer:
         )
 
         dask_extras = 0
-        logger.info("Importing Dask Extras...")
+        messages = []
+        messages.append("Importing Dask Extras...")
         if self._pymorize_cfg.get("enable_flox", True):
             dask_extras += 1
-            logger.info("...flox...")
+            messages.append("...flox...")
             import flox  # noqa: F401
             import flox.xarray  # noqa: F401
-        logger.info(f"...done! Imported {dask_extras} libraries.")
+        messages.append(f"...done! Imported {dask_extras} libraries.")
+        if messages:
+            for message in messages:
+                logger.info(message)
+        else:
+            logger.info("No Dask extras specified...")
 
     def _post_init_create_data_request_tables(self):
         """
@@ -269,6 +277,11 @@ class CMORizer:
             rule_attrs = rule.global_attributes_set_on_rule()
             for drv in rule.data_request_variables:
                 drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
+
+    def _post_init_populate_rules_with_aux_files(self):
+        """Attaches auxiliary files to the rules"""
+        for rule in self.rules:
+            attach_files_to_rule(rule)
 
     def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """
@@ -510,6 +523,7 @@ class CMORizer:
         instance._post_init_create_data_request()
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
+        instance._post_init_populate_rules_with_aux_files()
         logger.debug("Object creation done!")
         return instance
 
