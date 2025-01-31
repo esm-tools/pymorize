@@ -174,3 +174,12 @@ def rule_sos():
     return Rule(
         cmor_variable="sos",
     )
+
+@pytest.fixture
+def rule_with_controlled_vocabularies(rule_with_data_request, CV_dir):
+    from pymorize.controlled_vocabularies import ControlledVocabularies
+
+    r = rule_with_data_request
+    r.controlled_vocabularies = ControlledVocabularies.new_from_dir(CV_dir)
+
+    return r
