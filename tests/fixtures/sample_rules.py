@@ -205,6 +205,7 @@ def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir):
             rule.add_table(tbl.table_id)
     rule.dimensionless_unit_mappings = {}
     rule.aux = AuxiliaryFile(name="mesh", path="/some/mesh/file.nc")
-    rule.data_request_variable = data_request.get_variable(rule.cmor_variable)
-
+    rule.data_request_variable = data_request.variables.get(
+        f"Oday.{rule.cmor_variable}"
+    )
     return rule
