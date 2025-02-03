@@ -127,8 +127,8 @@ class CMORizer:
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
         self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
-        self._post_init_create_controlled_vocabularies()
-        self._post_init_populate_global_attributes()
+        #self._post_init_create_controlled_vocabularies()
+        #self._post_init_populate_global_attributes()
         logger.debug("...post-init done!")
         ################################################################################
 

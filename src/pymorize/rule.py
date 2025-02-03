@@ -12,6 +12,8 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
+from importlib.resources import files
+from jinja2 import Template
 
 
 class Rule:
@@ -285,23 +287,38 @@ class Rule:
         result["creation_date"] = creation_date
         return result
 
-    def get_global_attributes(self):
+    def get_global_attributes(self, cmor_version):
         """Return the global attributes for the rule"""
         if not hasattr(self, "controlled_vocabularies"):
             raise AttributeError(
                 "The rule does not have the controlled vocabularies attribute set."
             )
 
-        # TODO: this is hardcoded, move it somewhere else
-        required_global_attributes_key = "required_global_attributes"
+        # Template the global attributes mapping file
+        global_attributes_mapping_path = files("pymorize.data").joinpath(
+            f"global_attributes_mappings/{cmor_version}.yaml.j2"
+        )
+        with open(global_attributes_mapping_path) as file:
+            template = Template(file.read())
 
-        required_global_attributes = self.controlled_vocabularies.get(
-            required_global_attributes_key, {}
+        # (MA) TODO: move this to the rule -> rule.get_dict_from_attrs()
+        rule_dict = {
+            "controlled_vocabularies": self.controlled_vocabularies,
+            "data_request_variable": self.data_request_variable,
+            "source_id": self.source_id,
+            "model_component": self.model_component,
+        }
+
+        global_attributes = yaml.safe_load(template.render(rule_dict))
+
+        required_global_attributes = global_attributes.get(
+            "required_global_attributes"
         )
 
         if not required_global_attributes:
             raise ValueError(
-                f"Controlled vocabularies must contain the key {required_global_attributes_key}"
+                "There is no jinja2 path defined for required_global_attributes in "
+                f"{global_attributes_mapping_path}"
             )
 
         if not isinstance(required_global_attributes, list):
@@ -309,7 +326,24 @@ class Rule:
                 f"Controlled vocabularies key {required_global_attributes_key} must be a list"
             )
 
-        global_attributes = {}
-
+        missing_attrs = []
+        empty_attrs = []
         for attr in required_global_attributes:
-            pass
+            if attr not in global_attributes:
+                missing_attrs.append(attr)
+            elif not global_attributes[attr]:
+                empty_attrs.append(attr)
+
+        if missing_attrs:
+            raise ValueError(
+                f"Missing required global attributes: {', '.join(missing_attrs)}"
+            )
+
+        if empty_attrs:
+            raise ValueError(
+                f"Required global attributes are empty: {', '.join(empty_attrs)}"
+            )
+
+        del global_attributes["required_global_attributes"]
+
+        return global_attributes

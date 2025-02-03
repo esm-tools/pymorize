@@ -1,0 +1,34 @@
+# Mandatory definition for pymorize to check the required global attributes
+required_global_attributes: {{ controlled_vocabularies.required_global_attributes }}
+
+# Global attributes mapping (the root is the rule)
+Conventions:
+activity_id:
+creation_date:
+data_specs_version:
+experiment:
+experiment_id:
+forcing_index:
+frequency:
+further_info_url:
+grid:
+grid_label:
+initialization_index:
+institution:
+institution_id:
+license:
+mip_era:
+nominal_resolution: {{ controlled_vocabularies["source_id"][source_id]["model_component"][model_component]["native_nominal_resolution"] }}
+physics_index:
+product:
+realization_index:
+realm:
+source:
+source_id: {{ source_id }}
+source_type:
+sub_experiment:
+sub_experiment_id:
+table_id:
+tracking_id:
+variable_id:
+variant_label:

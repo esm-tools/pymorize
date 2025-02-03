@@ -1,6 +1,7 @@
 import pytest
 
 #from pymorize.global_attributes import set_global_attributes
+from pymorize.cmorizer import CMORizer
 
 # Name, expected pass
 required_attributes = {
@@ -89,7 +90,10 @@ def test_global_attributes_has_expected_attributes(
 #    ds_out = set_global_attributes(ds, rule)
 #    assert added_attributes in ds_out.attrs
 
-def test_global_attributes(rule_with_controlled_vocabularies):
-    rule = rule_with_controlled_vocabularies
-    rule.get_global_attributes()
+def test_global_attributes(rule_after_cmip6_cmorizer_init):
+    rule = rule_after_cmip6_cmorizer_init
+    cmor_version = "CMIP6"
 
+    global_attributes = rule.get_global_attributes(cmor_version)
+
+    # assert something here
