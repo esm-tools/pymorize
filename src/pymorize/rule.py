@@ -284,3 +284,32 @@ class Rule:
         result = {attr: getattr(self, attr, None) for attr in attrs}
         result["creation_date"] = creation_date
         return result
+
+    def get_global_attributes(self):
+        """Return the global attributes for the rule"""
+        if not hasattr(self, "controlled_vocabularies"):
+            raise AttributeError(
+                "The rule does not have the controlled vocabularies attribute set."
+            )
+
+        # TODO: this is hardcoded, move it somewhere else
+        required_global_attributes_key = "required_global_attributes"
+
+        required_global_attributes = self.controlled_vocabularies.get(
+            required_global_attributes_key, {}
+        )
+
+        if not required_global_attributes:
+            raise ValueError(
+                f"Controlled vocabularies must contain the key {required_global_attributes_key}"
+            )
+
+        if not isinstance(required_global_attributes, list):
+            raise ValueError(
+                f"Controlled vocabularies key {required_global_attributes_key} must be a list"
+            )
+
+        global_attributes = {}
+
+        for attr in required_global_attributes:
+            pass

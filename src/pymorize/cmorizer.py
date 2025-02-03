@@ -260,23 +260,23 @@ class CMORizer:
             self._rules_expand_drvs()
             self._rules_depluralize_drvs()
 
-    def _post_init_create_controlled_vocabularies(self):
-        """
-        Reads the controlled vocabularies from the directory tree rooted at
-        `<tables_dir>/CMIP6_CVs` and stores them in the `controlled_vocabularies`
-        attribute. This is done after the rules have been populated with the
-        tables and data request variables, which may be used to lookup the
-        controlled vocabularies.
-        """
-        table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        cv_dir = Path(table_dir) / "CMIP6_CVs"
-        self.controlled_vocabularies = ControlledVocabularies.new_from_dir(cv_dir)
+#    def _post_init_create_controlled_vocabularies(self):
+#        """
+#        Reads the controlled vocabularies from the directory tree rooted at
+#        `<tables_dir>/CMIP6_CVs` and stores them in the `controlled_vocabularies`
+#        attribute. This is done after the rules have been populated with the
+#        tables and data request variables, which may be used to lookup the
+#        controlled vocabularies.
+#        """
+#        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+#        cv_dir = Path(table_dir) / "CMIP6_CVs"
+#        self.controlled_vocabularies = ControlledVocabularies.new_from_dir(cv_dir)
 
-    def _post_init_populate_global_attributes(self):
-        for rule in self.rules:
-            rule_attrs = rule.global_attributes_set_on_rule()
-            for drv in rule.data_request_variables:
-                drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
+#    def _post_init_populate_global_attributes(self):
+#        for rule in self.rules:
+#            rule_attrs = rule.global_attributes_set_on_rule()
+#            for drv in rule.data_request_variables:
+#                drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
 
     def _post_init_populate_rules_with_aux_files(self):
         """Attaches auxiliary files to the rules"""

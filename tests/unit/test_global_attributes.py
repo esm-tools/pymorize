@@ -90,5 +90,6 @@ def test_global_attributes_has_expected_attributes(
 #    assert added_attributes in ds_out.attrs
 
 def test_global_attributes(rule_with_controlled_vocabularies):
-    rule_spec = rule_with_controlled_vocabularies
-    pass
+    rule = rule_with_controlled_vocabularies
+    rule.get_global_attributes()
+
