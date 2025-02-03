@@ -1,6 +1,9 @@
 import pytest
 
+from pymorize.aux_files import AuxiliaryFile
 from pymorize.config import PymorizeConfigManager
+from pymorize.data_request.collection import CMIP6DataRequest
+from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
 from pymorize.rule import Rule
 
@@ -174,3 +177,34 @@ def rule_sos():
     return Rule(
         cmor_variable="sos",
     )
+
+
+@pytest.fixture
+def rule_with_controlled_vocabularies(rule_with_data_request, CV_dir):
+    from pymorize.controlled_vocabularies import ControlledVocabularies
+
+    r = rule_with_data_request
+    r.controlled_vocabularies = ControlledVocabularies.new_from_dir(CV_dir)
+
+    return r
+
+
+@pytest.fixture
+def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir):
+    # Slimmed down version of what the CMORizer does.
+    # This is horrible. Building a Rule should not be this complicated :-(
+    rule = Rule(
+        name="temp",
+        cmor_variable="tos",
+        inputs=[{"path": "/some/files/containing/", "pattern": "var1.*.nc"}],
+    )
+    tables = CMIP6DataRequestTable.table_dict_from_directory(CMIP_Tables_Dir)
+    data_request = CMIP6DataRequest.from_directory(CMIP_Tables_Dir)
+    for tbl in tables.values():
+        if rule.cmor_variable in tbl.variables:
+            rule.add_table(tbl.table_id)
+    rule.dimensionless_unit_mappings = {}
+    rule.aux = AuxiliaryFile(name="mesh", path="/some/mesh/file.nc")
+    rule.data_request_variable = data_request.get_variable(rule.cmor_variable)
+
+    return rule
