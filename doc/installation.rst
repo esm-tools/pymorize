@@ -44,7 +44,7 @@ You can also install the latest version from the repository by running::
 
   pip install git+https://github.com/esm-tools/pymorize.git
 
-If you want to ensure an isolated install and make sure nothing conflicts with other packages you have, and you **do not want to change source code**, you can have a look at 
+If you want to ensure an isolated install and make sure nothing conflicts with other packages you have, and you **do not want to change source code**, you can have a look at
 `pipx <https://pipx.pypa.io/stable/>`_.
 
 From conda-forge

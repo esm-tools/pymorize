@@ -8,9 +8,9 @@ is defined in ``my_module.py`` and is named ``my_custom_step``, you can
 declare it like this:
 
 .. code-block:: yaml
-   
+
   pipelines:
-   - name: custom_pipeline 
+   - name: custom_pipeline
      steps:
         - custom_package.my_module.my_custom_step
 
@@ -31,7 +31,7 @@ file and import it in your pipeline configuration file:
 .. code-block:: yaml
 
   pipelines:
-   - name: custom_pipeline 
+   - name: custom_pipeline
      steps:
         - script:///albedo/home/pgierz/Code/playground/my_custom_step.py:my_custom_step
 

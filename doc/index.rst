@@ -11,7 +11,7 @@ Contents
 
 .. toctree::
    :maxdepth: 2
-  
+
    installation
    pymorize_building_blocks
    pymorize_cli
@@ -22,7 +22,9 @@ Contents
    including_custom_steps
    including_subcommand_plugins
    pymorize_configuration
+   pymorize_aux_files
    developer_guide
+   developer_setup
    API
 
 
