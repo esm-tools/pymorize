@@ -247,7 +247,7 @@ class GlobalAttributes:
         d = {k: d[k] for k in sorted(d)}
         return d
 
-    def set_global_attributes(self, ds, rule):
+    def set_global_attributes(self, ds, rule, table_header):
         """
         Set global attributes on a dataset based on the given rule.
 
@@ -263,6 +263,6 @@ class GlobalAttributes:
         ds : xr.Dataset
             The dataset with the global attributes set.
         """
-        d = self.get_global_attributes(rule)
+        d = self.get_global_attributes(rule, table_header)
         ds.attrs.update(d)
         return ds
