@@ -6,6 +6,7 @@ from pymorize.data_request.collection import CMIP6DataRequest
 from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
 from pymorize.rule import Rule
+from pymorize.controlled_vocabularies import ControlledVocabularies
 
 
 @pytest.fixture
@@ -128,6 +129,8 @@ def rule_with_mass_units():
 @pytest.fixture
 def rule_with_data_request():
     r = Rule(
+        name="temp",
+        source_id="AWI-CM-1-1-HR",
         inputs=[
             {
                 "path": "/some/files/containing/",
@@ -180,23 +183,19 @@ def rule_sos():
 
 
 @pytest.fixture
-def rule_with_controlled_vocabularies(rule_with_data_request, CV_dir):
-    from pymorize.controlled_vocabularies import ControlledVocabularies
-
-    r = rule_with_data_request
-    r.controlled_vocabularies = ControlledVocabularies.new_from_dir(CV_dir)
-
-    return r
-
-
-@pytest.fixture
-def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir):
+def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir, CV_dir):
     # Slimmed down version of what the CMORizer does.
     # This is horrible. Building a Rule should not be this complicated :-(
     rule = Rule(
         name="temp",
-        cmor_variable="tos",
+        experiment_id="piControl",
+        output_directory="./output",
+        source_id="AWI-CM-1-1-HR",
+        grid_label="gn",
+        model_component="ocean",
         inputs=[{"path": "/some/files/containing/", "pattern": "var1.*.nc"}],
+        cmor_variable="tos",
+        model_variable="temp",
     )
     tables = CMIP6DataRequestTable.table_dict_from_directory(CMIP_Tables_Dir)
     data_request = CMIP6DataRequest.from_directory(CMIP_Tables_Dir)
@@ -208,4 +207,5 @@ def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir):
     rule.data_request_variable = data_request.variables.get(
         f"Oday.{rule.cmor_variable}"
     )
+    rule.controlled_vocabularies = ControlledVocabularies.new_from_dir(CV_dir)
     return rule
