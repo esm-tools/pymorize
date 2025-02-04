@@ -81,6 +81,10 @@ setup(
             "yamllint",
         ],
         "doc": docs_require,
+        "fesom": [
+            # FIXME(PG): We should talk with Nikolay, this is not optimal...
+            "pyfesom2 @ git+https://github.com/fesom/pyfesom2.git@0.3.0",
+        ],
     },
     entry_points={
         "console_scripts": [
