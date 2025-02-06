@@ -269,11 +269,12 @@ class CMORizer:
         controlled vocabularies.
         """
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        cv_dir = Path(table_dir) / "CMIP6_CVs"
+        cv_dir = Path(table_dir) / "../CMIP6_CVs"
         self.controlled_vocabularies = ControlledVocabularies.new_from_dir(cv_dir)
 
     def _post_init_populate_global_attributes(self):
         for rule in self.rules:
+            # rule.global_attributes = GlobalAttributes(rule, self.cmor_version)
             rule_attrs = rule.global_attributes_set_on_rule()
             for drv in rule.data_request_variables:
                 drv.set_global_attributes(self.controlled_vocabularies, rule_attrs)
