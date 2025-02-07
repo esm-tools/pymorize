@@ -183,9 +183,17 @@ def rule_sos():
 
 
 @pytest.fixture
-def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir, CV_dir):
+def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
     # Slimmed down version of what the CMORizer does.
     # This is horrible. Building a Rule should not be this complicated :-(
+    #
+    # `inputs` requires:
+    #  - concrete `path` to exist
+    #  - a file to exist matching the `pattern`
+    d = tmp_path / "inputs"
+    d.mkdir(exist_ok=True)
+    nc = d / "var1.blah.blah.nc"
+    nc.touch()
     rule = Rule(
         name="temp",
         experiment_id="piControl",
@@ -193,7 +201,7 @@ def rule_after_cmip6_cmorizer_init(CMIP_Tables_Dir, CV_dir):
         source_id="AWI-CM-1-1-HR",
         grid_label="gn",
         model_component="ocean",
-        inputs=[{"path": "/some/files/containing/", "pattern": "var1.*.nc"}],
+        inputs=[{"path": d, "pattern": "var1.*.nc"}],
         cmor_variable="tos",
         model_variable="temp",
     )
