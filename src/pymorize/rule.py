@@ -1,11 +1,11 @@
 import copy
+import datetime
+import pathlib
 import re
 import typing
 import warnings
 
 import yaml
-import datetime
-import pathlib
 
 from . import pipeline
 from .data_request.table import DataRequestTable
@@ -282,5 +282,7 @@ class Rule:
         dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
         creation_date = dir_timestamp.strftime(time_format)
         result = {attr: getattr(self, attr, None) for attr in attrs}
+        result["table_header"] = self.data_request_variable.table_header
+        result["frequency"] = self.data_request_variable.frequency
         result["creation_date"] = creation_date
         return result

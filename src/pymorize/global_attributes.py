@@ -70,7 +70,7 @@ class GlobalAttributes:
         source_id = attrs_map_on_rule.get("source_id")
         cv = self.cv["source_id"][source_id]
         cv_institution_ids = cv["institution_id"]
-        user_institution_id = attrs_map_on_rule.get("institution_id")
+        user_institution_id = attrs_map_on_rule.get("institution_id", None)
         if user_institution_id:
             if user_institution_id not in cv_institution_ids:
                 raise ValueError(
@@ -175,7 +175,7 @@ class GlobalAttributes:
             "source_type": " ".join(cv["required_model_components"]),
         }
 
-    def _header_related(self, attrs_map_on_rule: dict, table_header) -> dict:
+    def _header_related(self, attrs_map_on_rule: dict) -> dict:
         """
         Extracts header related global attributes from a DataRequestRule.
 
@@ -191,12 +191,11 @@ class GlobalAttributes:
             A dictionary of global attributes
         """
         d = {}
-        drv = attrs_map_on_rule.get("data_request_variable")
-        header = table_header
+        header = attrs_map_on_rule["table_header"]
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
-        d["realm"] = header.realm
-        d["frequency"] = drv.frequency
+        d["realm"] = " ".join(header.realm) if header.realm else header.realm
+        d["frequency"] = attrs_map_on_rule.get("frequency")
         d["Conventions"] = header.Conventions
         d["product"] = header.product
         d["data_specs_version"] = str(header.data_specs_version)
@@ -238,7 +237,7 @@ class GlobalAttributes:
         d = {}
         d["variable_id"] = attrs_map_on_rule.get("cmor_variable")
         d["variant_label"] = attrs_map_on_rule.get("variant_label")
-        d.update(self._header_related(attrs_map_on_rule, table_header))
+        d.update(self._header_related(attrs_map_on_rule))
         d.update(self._parse_variant_label(attrs_map_on_rule.get("variant_label")))
         d.update(self._source_id_related(attrs_map_on_rule))
         d.update(self._experiment_id_related(attrs_map_on_rule))
