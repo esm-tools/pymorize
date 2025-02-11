@@ -199,6 +199,7 @@ def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
         experiment_id="piControl",
         output_directory="./output",
         source_id="AWI-CM-1-1-HR",
+        variant_label="r1i1p1f1",
         grid_label="gn",
         model_component="ocean",
         inputs=[{"path": d, "pattern": "var1.*.nc"}],

@@ -57,8 +57,8 @@ def test_global_attributes_has_expected_attributes(
 """
 
 
-#@pytest.mark.parametrize("added_attributes, expected_pass", required_attributes)
-#def test_global_attributes_has_expected_attributes(added_attributes, expected_pass):
+# @pytest.mark.parametrize("added_attributes, expected_pass", required_attributes)
+# def test_global_attributes_has_expected_attributes(added_attributes, expected_pass):
 #    class Fake:
 #        pass
 #
@@ -90,12 +90,13 @@ def test_global_attributes_has_expected_attributes(
 #    ds_out = set_global_attributes(ds, rule)
 #    assert added_attributes in ds_out.attrs
 
+
 def test_global_attributes(rule_after_cmip6_cmorizer_init):
     rule = rule_after_cmip6_cmorizer_init
-    cmor_version = "CMIP6"
-
+    # cmor_version = "CMIP6"
     rule_attrs = rule.global_attributes_set_on_rule()
-
-    global_attributes = GlobalAttributes(rule_attrs)
-
-    # assert something here
+    ga = GlobalAttributes(rule.controlled_vocabularies)
+    d = ga.get_global_attributes(rule_attrs, rule.data_request_variable.table_header)
+    for name, is_needed in required_attributes:
+        if is_needed:
+            assert name in d

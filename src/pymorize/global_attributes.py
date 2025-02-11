@@ -70,7 +70,7 @@ class GlobalAttributes:
         source_id = attrs_map_on_rule.get("source_id")
         cv = self.cv["source_id"][source_id]
         cv_institution_ids = cv["institution_id"]
-        user_institution_id = attrs_map_on_rule.get("institution_id")
+        user_institution_id = attrs_map_on_rule.get("institution_id", None)
         if user_institution_id:
             if user_institution_id not in cv_institution_ids:
                 raise ValueError(
@@ -191,12 +191,13 @@ class GlobalAttributes:
             A dictionary of global attributes
         """
         d = {}
-        drv = attrs_map_on_rule.get("data_request_variable")
+        # drv = attrs_map_on_rule.get("data_request_variable")
         header = table_header
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
         d["realm"] = header.realm
-        d["frequency"] = drv.frequency
+        # d["frequency"] = drv.frequency
+        d["frequency"] = attrs_map_on_rule.get("frequency")
         d["Conventions"] = header.Conventions
         d["product"] = header.product
         d["data_specs_version"] = str(header.data_specs_version)
@@ -266,3 +267,23 @@ class GlobalAttributes:
         d = self.get_global_attributes(rule, table_header)
         ds.attrs.update(d)
         return ds
+
+
+def set_global_attributes(ds, rule):
+    """
+    Set global attributes on a dataset based on the given rule.
+
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset to set the global attributes on.
+    rule : DataRequestRule
+        The data request rule to use to set the attributes.
+
+    Returns
+    -------
+    ds : xr.Dataset
+        The dataset with the global attributes set.
+    """
+    header = rule.drv.table_header
+    return GlobalAttributes().set_global_attributes(ds, rule)

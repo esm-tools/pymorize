@@ -272,6 +272,11 @@ class Rule:
             "model_component",  # optional
             "further_info_url",  # optional
         )
+        try:
+            self.data_request_variable
+        except AttributeError:
+            self.depluralize_drvs()
+        frequency = self.data_request_variable.frequency
         # attribute `creation_date` is the time-stamp of inputs directory
         afile = next(
             f for file_collection in self.inputs for f in file_collection.files
@@ -282,5 +287,6 @@ class Rule:
         dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
         creation_date = dir_timestamp.strftime(time_format)
         result = {attr: getattr(self, attr, None) for attr in attrs}
+        result["frequency"] = frequency
         result["creation_date"] = creation_date
         return result
