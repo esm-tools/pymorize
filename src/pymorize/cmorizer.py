@@ -41,7 +41,6 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 )
 """Path: The dimenionless unit mapping table, used to recreate meaningful units from
 dimensionless fractional values (e.g. 0.001 --> g/kg)"""
-# FIXME(PG): I don't know if this is a Path or not, so the documented type might be wrong
 
 
 class CMORizer:
