@@ -167,11 +167,17 @@ class GlobalAttributes:
             if len(activity_id) > 1:
                 raise ValueError(f"Mutiple activity_id found {activity_id}")
             _activity_id = next(iter(activity_id))
+        sub_experiment_id = " ".join(cv["sub_experiment_id"])
+        if sub_experiment_id == "none":
+            sub_experiment = "none"
+        else:
+            sub_experiment = sub_experiment_id.split()[0]
         return {
             "activity_id": _activity_id,
             "experiment_id": exp_id,
             "experiment": cv["experiment"],
-            "sub_experiment_id": " ".join(cv["sub_experiment_id"]),
+            "sub_experiment": sub_experiment,
+            "sub_experiment_id": sub_experiment_id,
             "source_type": " ".join(cv["required_model_components"]),
         }
 

@@ -26,7 +26,7 @@ required_attributes = {
     ("source", True),
     ("source_id", True),
     ("source_type", True),
-    # ("sub_experiment", False),  # need to figure this out
+    ("sub_experiment", False),
     ("sub_experiment_id", True),
     ("table_id", True),
     ("tracking_id", False),
@@ -42,5 +42,4 @@ def test_global_attributes(rule_after_cmip6_cmorizer_init):
     ga = GlobalAttributes(rule.controlled_vocabularies)
     d = ga.get_global_attributes(rule_attrs)
     for name, is_needed in required_attributes:
-        if is_needed:
-            assert name in d
+        assert name in d
