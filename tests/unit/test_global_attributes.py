@@ -96,7 +96,7 @@ def test_global_attributes(rule_after_cmip6_cmorizer_init):
     # cmor_version = "CMIP6"
     rule_attrs = rule.global_attributes_set_on_rule()
     ga = GlobalAttributes(rule.controlled_vocabularies)
-    d = ga.get_global_attributes(rule_attrs, rule.data_request_variable.table_header)
+    d = ga.get_global_attributes(rule_attrs)
     for name, is_needed in required_attributes:
         if is_needed:
             assert name in d

@@ -220,7 +220,7 @@ class GlobalAttributes:
         """
         return {"tracking_id": "hdl:21.14100/" + str(uuid.uuid4())}
 
-    def get_global_attributes(self, attrs_map_on_rule: dict, table_header):
+    def get_global_attributes(self, attrs_map_on_rule: dict) -> dict:
         """
         Extracts all global attributes from a DataRequestRule.
 
@@ -246,7 +246,7 @@ class GlobalAttributes:
         d = {k: d[k] for k in sorted(d)}
         return d
 
-    def set_global_attributes(self, ds, rule, table_header):
+    def set_global_attributes(self, ds, attrs_map_on_rule: dict):
         """
         Set global attributes on a dataset based on the given rule.
 
@@ -262,6 +262,6 @@ class GlobalAttributes:
         ds : xr.Dataset
             The dataset with the global attributes set.
         """
-        d = self.get_global_attributes(rule, table_header)
+        d = self.get_global_attributes(attrs_map_on_rule)
         ds.attrs.update(d)
         return ds
