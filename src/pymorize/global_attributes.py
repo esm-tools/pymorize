@@ -200,7 +200,7 @@ class GlobalAttributes:
         header = attrs_map_on_rule["table_header"]
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
-        d["realm"] = " ".join(header.realm) if header.realm else header.realm
+        d["realm"] = " ".join(header.realm) if isinstance(header.realm, list) else header.realm
         d["frequency"] = attrs_map_on_rule.get("frequency")
         d["Conventions"] = header.Conventions
         d["product"] = header.product
