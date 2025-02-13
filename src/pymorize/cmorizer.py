@@ -263,7 +263,7 @@ class CMORizer:
     def _post_init_create_controlled_vocabularies(self):
         """
         Reads the controlled vocabularies from the directory tree rooted at
-        `<tables_dir>/CMIP6_CVs` and stores them in the `controlled_vocabularies`
+        ``<tables_dir>/CMIP6_CVs`` and stores them in the ``controlled_vocabularies``
         attribute. This is done after the rules have been populated with the
         tables and data request variables, which may be used to lookup the
         controlled vocabularies.
