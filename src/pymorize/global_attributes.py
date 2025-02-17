@@ -15,6 +15,8 @@ Use the `get_global_attributes` method on `DataRequestVariable` to get the globa
 import re
 import uuid
 
+import xarray as xr
+
 _parent_fields = (
     "branch_method",
     "branch_time_in_child",
@@ -266,22 +268,22 @@ class GlobalAttributes:
         d = {k: d[k] for k in sorted(d)}
         return d
 
-    def set_global_attributes(self, ds, attrs_map_on_rule: dict):
-        """
-        Set global attributes on a dataset based on the given rule.
 
-        Parameters
-        ----------
-        ds : xr.Dataset
-            The dataset to set the global attributes on.
-        rule : DataRequestRule
-            The data request rule to use to set the attributes.
+def set_global_attributes(ds: xr.DataArray, rule):
+    """
+    Set global attributes on a dataset.
 
-        Returns
-        -------
-        ds : xr.Dataset
-            The dataset with the global attributes set.
-        """
-        d = self.get_global_attributes(attrs_map_on_rule)
-        ds.attrs.update(d)
-        return ds
+    Parameters
+    ----------
+    ds : xr.Dataset
+        The dataset to set the global attributes on.
+    rule : DataRequestRule
+        The rule to extract the global attributes from.
+    """
+    rule_attrs = rule.global_attributes_set_on_rule()
+    ga = GlobalAttributes(rule.controlled_vocabularies)
+    global_attributes = ga.get_global_attributes(rule_attrs)
+
+    ds.attrs.update(global_attributes)
+
+    return ds
