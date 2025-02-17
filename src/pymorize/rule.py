@@ -285,4 +285,5 @@ class Rule:
         result["table_header"] = self.data_request_variable.table_header
         result["frequency"] = self.data_request_variable.frequency
         result["creation_date"] = creation_date
+        result["modeling_realm"] = self.data_request_variable.modeling_realm
         return result

@@ -86,46 +86,58 @@ class GlobalAttributes:
                     "Please specify one in the rule."
                 )
             selected_institution_id = cv_institution_ids[0]
-        model_components = cv["model_component"]
-        user_model_component = attrs_map_on_rule.get("model_component", None)
-        if user_model_component:
-            if user_model_component not in model_components:
-                raise ValueError(
-                    f"Model component '{user_model_component}' is not valid. "
-                    f"Allowed values: {model_components}"
-                )
-            model_component = user_model_component
-        else:
-            if len(model_components) > 1:
-                raise ValueError(
-                    f"Multiple model components found: {model_components}. "
-                    "Please specify one in the rule."
-                )
-            model_component = model_components[0]
-        native_nominal_resolution = model_components[model_component].get(
-            "native_nominal_resolution", None
-        )
-        # either native_nominal_resolution does not exists or it may be set to "none"
-        # in any case, user is expected to provide this information
-        if native_nominal_resolution in (None, "none"):
-            user_native_nominal_resolution = attrs_map_on_rule.get(
-                "native_nominal_resolution", None
-            )
-            if user_native_nominal_resolution:
-                native_nominal_resolution = user_native_nominal_resolution
+        model_component = attrs_map_on_rule["modeling_realm"]
+        if len(model_component) > 1:
+            # can only accept a single value, check if user provided `model_component`
+            user_model_component = attrs_map_on_rule.get("model_component", None)
+            if user_model_component:
+                if user_model_component not in model_component:
+                    raise ValueError(
+                        f"model_component must be one of these: {', '.join(model_component)}."
+                        f"Given model_component {user_model_component}"
+                    )
+                model_component = user_model_component
             else:
                 raise ValueError(
-                    "Missing required attribute `native_nominal_resolution`"
+                    f"model_component must be exactly one of these: {', '.join(model_component)}."
                 )
+        else:
+            model_component = model_component[0]
+        model_components = cv["model_component"]
+        if "native_nominal_resolution" in model_components[model_component]:
+            native_nominal_resolution = model_components[model_component][
+                "native_nominal_resolution"
+            ]
+        if "native_ominal_resolution" in model_components[model_component]:
+            native_nominal_resolution = model_components[model_component][
+                "native_ominal_resolution"
+            ]
+        # native_nominal_resolution = model_components[model_component].get(
+        #    "native_nominal_resolution", None
+        # )
+        # either native_nominal_resolution does not exists or it may be set to "none"
+        # in any case, user is expected to provide this information
+        # if native_nominal_resolution in (None, "none"):
+        #    user_native_nominal_resolution = attrs_map_on_rule.get(
+        #        "native_nominal_resolution", None
+        #    )
+        #    if user_native_nominal_resolution:
+        #        native_nominal_resolution = user_native_nominal_resolution
+        #    else:
+        #        raise ValueError(
+        #            "Missing required attribute `native_nominal_resolution`"
+        #        )
+        # breakpoint()
         grid_description = model_components[model_component].get("description", None)
         if grid_description in (None, "none"):
             user_grid_description = attrs_map_on_rule.get("description", None)
             if user_grid_description:
                 grid_description = user_grid_description
             else:
-                raise ValueError(
-                    "Missing required attribute `description` (i.e. grid description)"
-                )
+                pass
+                # raise ValueError(
+                #    "Missing required attribute `description` (i.e. grid description)"
+                # )
         license_id = cv["license_info"]["id"]
         license_url = self.cv["license"]["license_options"][license_id]["license_url"]
         license_id = self.cv["license"]["license_options"][license_id]["license_id"]
@@ -200,7 +212,9 @@ class GlobalAttributes:
         header = attrs_map_on_rule["table_header"]
         d["table_id"] = header.table_id
         d["mip_era"] = header.mip_era
-        d["realm"] = " ".join(header.realm) if isinstance(header.realm, list) else header.realm
+        d["realm"] = (
+            " ".join(header.realm) if isinstance(header.realm, list) else header.realm
+        )
         d["frequency"] = attrs_map_on_rule.get("frequency")
         d["Conventions"] = header.Conventions
         d["product"] = header.product
