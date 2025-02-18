@@ -8,7 +8,7 @@ from typing import List
 import pendulum
 from semver.version import Version
 
-from pymorize.factory import MetaFactory
+from ..factory import MetaFactory
 
 from ..logging import logger
 from .variable import (
