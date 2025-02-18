@@ -26,9 +26,9 @@ from .cluster import (
 from .config import PymorizeConfig, PymorizeConfigManager
 from .controlled_vocabularies import ControlledVocabularies
 from .data_request.collection import DataRequest
-from .data_request.factory import create_factory
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
+from .factory import create_factory
 from .filecache import fc
 from .logging import logger
 from .pipeline import Pipeline

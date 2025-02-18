@@ -10,7 +10,7 @@ from pathlib import Path
 
 import requests
 
-from .data_request.factory import MetaFactory
+from .factory import MetaFactory
 
 
 class ControlledVocabularies(dict, metaclass=MetaFactory):

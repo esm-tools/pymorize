@@ -4,9 +4,9 @@ from pymorize.aux_files import AuxiliaryFile
 from pymorize.config import PymorizeConfigManager
 from pymorize.controlled_vocabularies import ControlledVocabularies
 from pymorize.data_request.collection import CMIP6DataRequest
-from pymorize.data_request.factory import create_factory
 from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
+from pymorize.factory import create_factory
 from pymorize.rule import Rule
 
 
