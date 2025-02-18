@@ -2,11 +2,12 @@ import pytest
 
 from pymorize.aux_files import AuxiliaryFile
 from pymorize.config import PymorizeConfigManager
+from pymorize.controlled_vocabularies import ControlledVocabularies
 from pymorize.data_request.collection import CMIP6DataRequest
+from pymorize.data_request.factory import create_factory
 from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
 from pymorize.rule import Rule
-from pymorize.controlled_vocabularies import ControlledVocabularies
 
 
 @pytest.fixture
@@ -216,5 +217,7 @@ def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
     rule.data_request_variable = data_request.variables.get(
         f"Oday.{rule.cmor_variable}"
     )
-    rule.controlled_vocabularies = ControlledVocabularies.new_from_dir(CV_dir)
+    controlled_vocabularies_factory = create_factory(ControlledVocabularies)
+    ControlledVocabulariesClass = controlled_vocabularies_factory.get("CMIP6")
+    rule.controlled_vocabularies = ControlledVocabulariesClass.from_directory(CV_dir)
     return rule

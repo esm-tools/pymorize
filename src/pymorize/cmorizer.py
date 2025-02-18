@@ -269,8 +269,13 @@ class CMORizer:
         controlled vocabularies.
         """
         table_dir = self._general_cfg["CMIP_Tables_Dir"]
-        cv_dir = Path(table_dir) / "../CMIP6_CVs"
-        self.controlled_vocabularies = ControlledVocabularies.new_from_dir(cv_dir)
+        controlled_vocabularies_factory = create_factory(ControlledVocabularies)
+        ControlledVocabulariesClass = controlled_vocabularies_factory.get(
+            self.cmor_version
+        )
+        self.controlled_vocabularies = ControlledVocabulariesClass.load(
+            table_dir=table_dir
+        )
 
     def _post_init_populate_rules_with_aux_files(self):
         """Attaches auxiliary files to the rules"""

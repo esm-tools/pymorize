@@ -6,11 +6,31 @@ import glob
 import json
 import os
 import re
+from pathlib import Path
 
 import requests
 
+from .data_request.factory import MetaFactory
 
-class ControlledVocabularies(dict):
+
+class ControlledVocabularies(dict, metaclass=MetaFactory):
+    @classmethod
+    def from_directory(cls, directory: str) -> "ControlledVocabularies":
+        """Create ControlledVocabularies from a directory of CV files"""
+        raise NotImplementedError
+
+    @classmethod
+    def load_from_git(cls, tag: str) -> "ControlledVocabularies":
+        """Load the ControlledVocabularies from the git repository"""
+        raise NotImplementedError
+
+    @classmethod
+    def load(cls, table_dir: str) -> "ControlledVocabularies":
+        """Load the ControlledVocabularies from another method"""
+        raise NotImplementedError
+
+
+class CMIP6ControlledVocabularies(ControlledVocabularies):
     """Controlled vocabularies for CMIP6"""
 
     def __init__(self, json_files):
@@ -32,15 +52,20 @@ class ControlledVocabularies(dict):
             self.update(d)
 
     @classmethod
-    def new_from_dir(cls, cmip6_cvs_dir):
+    def load(cls, table_dir=None):
+        cv_dir = Path(table_dir) / "CMIP6_CVs"
+        return cls.from_directory(cv_dir)
+
+    @classmethod
+    def from_directory(cls, directory):
         """Create a new ControlledVocabularies object from a directory of json files
 
         Parameters
         ----------
-        cmip6_cvs_dir : str
+        directory : str
             Path to the directory containing the json files
         """
-        json_files = glob.glob(os.path.join(cmip6_cvs_dir, "*.json"))
+        json_files = glob.glob(os.path.join(directory, "*.json"))
         return cls(json_files)
 
     def print_experiment_ids(self):
