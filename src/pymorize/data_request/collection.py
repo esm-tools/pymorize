@@ -7,7 +7,7 @@ from typing import Dict
 
 import deprecation
 
-from pymorize.factory import MetaFactory
+from ..factory import MetaFactory
 
 from ..utils import download_json_tables_from_url, list_files_in_directory
 from .table import CMIP6DataRequestTable, CMIP7DataRequestTable, DataRequestTable
