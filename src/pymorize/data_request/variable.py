@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from importlib.resources import files
 from typing import Optional
 
-from pymorize.factory import MetaFactory
+from ..factory import MetaFactory
 
 
 @dataclass
