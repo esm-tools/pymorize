@@ -26,7 +26,7 @@ class ControlledVocabularies(dict, metaclass=MetaFactory):
 
     @classmethod
     def load(cls, table_dir: str) -> "ControlledVocabularies":
-        """Load the ControlledVocabularies from another method"""
+        """Load the ControlledVocabularies using the default method"""
         raise NotImplementedError
 
 
@@ -53,6 +53,7 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
 
     @classmethod
     def load(cls, table_dir=None):
+        """Load the controlled vocabularies from the CMIP6_CVs directory"""
         cv_dir = Path(table_dir) / "CMIP6_CVs"
         return cls.from_directory(cv_dir)
 
@@ -144,3 +145,7 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
         obj = cls([])
         obj.update(data)
         return obj
+
+
+class CMIP7ControlledVocabularies(ControlledVocabularies):
+    pass

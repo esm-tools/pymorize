@@ -186,15 +186,19 @@ def rule_sos():
 @pytest.fixture
 def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
     # Slimmed down version of what the CMORizer does.
-    # This is horrible. Building a Rule should not be this complicated :-(
+    # This is somewhat of an integration test by itself.
     #
     # `inputs` requires:
     #  - concrete `path` to exist
     #  - a file to exist matching the `pattern`
+
+    # Set the temporary directory and nc file
     d = tmp_path / "inputs"
     d.mkdir(exist_ok=True)
     nc = d / "var1.blah.blah.nc"
     nc.touch()
+
+    # Initialize the rule
     rule = Rule(
         name="temp",
         experiment_id="piControl",
@@ -207,17 +211,24 @@ def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
         cmor_variable="tos",
         model_variable="temp",
     )
+
+    # Set the tables and data request
     tables = CMIP6DataRequestTable.table_dict_from_directory(CMIP_Tables_Dir)
     data_request = CMIP6DataRequest.from_directory(CMIP_Tables_Dir)
     for tbl in tables.values():
         if rule.cmor_variable in tbl.variables:
             rule.add_table(tbl.table_id)
+
+    # Set other attributes
     rule.dimensionless_unit_mappings = {}
     rule.aux = AuxiliaryFile(name="mesh", path="/some/mesh/file.nc")
     rule.data_request_variable = data_request.variables.get(
         f"Oday.{rule.cmor_variable}"
     )
+
+    # Set the controlled vocabularies
     controlled_vocabularies_factory = create_factory(ControlledVocabularies)
     ControlledVocabulariesClass = controlled_vocabularies_factory.get("CMIP6")
     rule.controlled_vocabularies = ControlledVocabulariesClass.from_directory(CV_dir)
+
     return rule

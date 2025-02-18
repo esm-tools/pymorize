@@ -52,23 +52,34 @@ global_attributes = {
 
 
 def test_global_attributes(rule_after_cmip6_cmorizer_init):
+    """Pseudo-integration test for the global attributes"""
+
+    # Set the fixture as the rule
     rule = rule_after_cmip6_cmorizer_init
-    # cmor_version = "CMIP6"
+
+    # Get the global attributes set on rule. Maybe move it somewhere else
     rule_attrs = rule.global_attributes_set_on_rule()
+
+    # Get the global attributes
     ga = GlobalAttributes(rule.controlled_vocabularies)
     d = ga.get_global_attributes(rule_attrs)
 
+    # This is here only for the purpose of debugging
     for key, value in global_attributes.items():
         if key not in d:
             print(f"key: {key} missing in d")
         if d[key] != value:
             print(f"key: {key}, value: {value}     {d[key]}")
 
+    # Remove GA that change on every run
     creation_date = d["creation_date"]
     del d["creation_date"]
     tracking_id = d["tracking_id"]
     del d["tracking_id"]
 
+    # Assert that the formats of creation_date and tracking_id are correct
     assert bool(re.match(creation_date_format, creation_date))
     assert bool(re.match(tracking_id_format, tracking_id))
+
+    # Assert that the rest of the global attributes are correct
     assert d == global_attributes
