@@ -206,6 +206,8 @@ def save_dataset(da: xr.DataArray, rule):
     if rule._pymorize_cfg("xarray_time_enable_set_axis"):
         time_axis_str = rule._pymorize_cfg("xarray_time_taxis_str")
         da[time_label].attrs["axis"] = time_axis_str
+    if rule._pymorize_cfg("xarray_time_remove_fill_vallue_attr"):
+        time_encoding["_FillValue"] = None
 
     file_timespan = getattr(rule, "file_timespan", None)
     if not needs_resampling(da, file_timespan):

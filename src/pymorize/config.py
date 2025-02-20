@@ -237,6 +237,11 @@ class PymorizeConfig:
             default="T",
             doc="Which axis to set for the time axis in xarray.",
         )
+        xarray_time_remove_fill_value_attr = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to remove the fill_value attribute from the time axis in xarray.",
+        )
 
 
 class PymorizeConfigManager(ConfigManager):
