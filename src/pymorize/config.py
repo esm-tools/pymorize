@@ -201,6 +201,22 @@ class PymorizeConfig:
                 ],
             ),
         )
+        xarray_time_dtype = Option(
+            default="float64",
+            doc="The dtype to use for time axis in xarray.",
+            parser=ChoiceOf(
+                str,
+                choices=[
+                    "float64",
+                    "datetime64[ns]",
+                ],
+            ),
+        )
+        xarray_time_unlimited = Option(
+            default="yes",
+            doc="Whether the time axis is unlimited in xarray.",
+            parser=_parse_bool,
+        )
 
 
 class PymorizeConfigManager(ConfigManager):
