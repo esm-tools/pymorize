@@ -50,3 +50,24 @@ def test_process(config):
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
+
+
+@pytest.mark.skipif(
+    shutil.which("sbatch") is None, reason="sbatch is not available on this host"
+)
+@pytest.mark.parametrize(
+    "config",
+    [
+        pytest.param("test_config_cmip6", id="CMIP6"),
+        pytest.param("test_config_cmip7", id="CMIP7"),
+    ],
+    indirect=True,
+)
+def test_process_native(config):
+    """Tests without prefect"""
+    logger.info(f"Processing {config}")
+    with open(config, "r") as f:
+        cfg = yaml.safe_load(f)
+    cfg["pymorize"]["pipeline_workflow_orchestrator"] = "native"
+    cmorizer = CMORizer.from_dict(cfg)
+    cmorizer.process()
