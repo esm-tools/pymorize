@@ -276,8 +276,7 @@ class Rule:
         afile = next(
             f for file_collection in self.inputs for f in file_collection.files
         )
-        if not isinstance(afile, pathlib.Path):
-            afile = pathlib.Path(afile)
+        afile = pathlib.Path(afile)
         time_format = "%Y-%m-%dT%H:%M:%SZ"
         dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
         creation_date = dir_timestamp.strftime(time_format)
