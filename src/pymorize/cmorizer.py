@@ -11,14 +11,16 @@ import xarray as xr  # noqa: F401
 import yaml
 from dask.distributed import Client
 from everett.manager import generate_uppercase_key, get_runtime_config
-from prefect import flow, task
+from prefect import flow, get_run_logger, task
 from prefect.futures import wait
 from rich.progress import track
 
+from .aux_files import attach_files_to_rule
 from .cluster import (
     CLUSTER_ADAPT_SUPPORT,
     CLUSTER_MAPPINGS,
     CLUSTER_SCALE_SUPPORT,
+    DaskContext,
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
@@ -39,7 +41,6 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 )
 """Path: The dimenionless unit mapping table, used to recreate meaningful units from
 dimensionless fractional values (e.g. 0.001 --> g/kg)"""
-# FIXME(PG): I don't know if this is a Path or not, so the documented type might be wrong
 
 
 class CMORizer:
@@ -121,8 +122,9 @@ class CMORizer:
         self._post_init_create_data_request_tables()
         self._post_init_create_data_request()
         self._post_init_populate_rules_with_tables()
-        self._post_init_read_dimensionless_unit_mappings()
-        self._post_init_data_request_variables()
+        self._post_init_populate_rules_with_dimensionless_unit_mappings()
+        self._post_init_populate_rules_with_aux_files()
+        self._post_init_populate_rules_with_data_request_variables()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -194,13 +196,19 @@ class CMORizer:
         )
 
         dask_extras = 0
-        logger.info("Importing Dask Extras...")
+        messages = []
+        messages.append("Importing Dask Extras...")
         if self._pymorize_cfg.get("enable_flox", True):
             dask_extras += 1
-            logger.info("...flox...")
+            messages.append("...flox...")
             import flox  # noqa: F401
             import flox.xarray  # noqa: F401
-        logger.info(f"...done! Imported {dask_extras} libraries.")
+        messages.append(f"...done! Imported {dask_extras} libraries.")
+        if messages:
+            for message in messages:
+                logger.info(message)
+        else:
+            logger.info("No Dask extras specified...")
 
     def _post_init_create_data_request_tables(self):
         """
@@ -233,7 +241,7 @@ class CMORizer:
                 if rule.cmor_variable in tbl.variables:
                     rule.add_table(tbl.table_id)
 
-    def _post_init_data_request_variables(self):
+    def _post_init_populate_rules_with_data_request_variables(self):
         for drv in self.data_request.variables.values():
             rule_for_var = self.find_matching_rule(drv)
             if rule_for_var is None:
@@ -243,10 +251,17 @@ class CMORizer:
             else:
                 rule_for_var.data_request_variables.append(drv)
         # FIXME: This needs a better name...
-        self._rules_expand_drvs()
-        self._rules_depluralize_drvs()
+        # Cluster might need to be copied:
+        with DaskContext.set_cluster(self._cluster):
+            self._rules_expand_drvs()
+            self._rules_depluralize_drvs()
 
-    def _post_init_read_dimensionless_unit_mappings(self):
+    def _post_init_populate_rules_with_aux_files(self):
+        """Attaches auxiliary files to the rules"""
+        for rule in self.rules:
+            attach_files_to_rule(rule)
+
+    def _post_init_populate_rules_with_dimensionless_unit_mappings(self):
         """
         Reads the dimensionless unit mappings from a configuration file and
         updates the rules with these mappings.
@@ -277,6 +292,10 @@ class CMORizer:
         # Add to rules:
         for rule in self.rules:
             rule.dimensionless_unit_mappings = dimensionless_unit_mappings
+
+    def _match_pipelines_in_rules(self, force=False):
+        for rule in self.rules:
+            rule.match_pipelines(self.pipelines, force=force)
 
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
@@ -335,6 +354,10 @@ class CMORizer:
             if isinstance(p, Pipeline):
                 pipelines.append(p)
             elif isinstance(p, dict):
+                p["workflow_backend"] = p.get(
+                    "workflow_backend",
+                    self._pymorize_cfg("pipeline_workflow_orchestrator"),
+                )
                 pl = Pipeline.from_dict(p)
                 if self._cluster is not None:
                     pl.assign_cluster(self._cluster)
@@ -475,13 +498,18 @@ class CMORizer:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
                 raise ValueError(PIPELINES_VALIDATOR.errors)
         for pipeline in data.get("pipelines", []):
+            pipeline["workflow_backend"] = pipeline.get(
+                "workflow_backend",
+                instance._pymorize_cfg("pipeline_workflow_orchestrator"),
+            )
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
 
         instance._post_init_populate_rules_with_tables()
         instance._post_init_create_data_request()
-        instance._post_init_data_request_variables()
-        instance._post_init_read_dimensionless_unit_mappings()
+        instance._post_init_populate_rules_with_data_request_variables()
+        instance._post_init_populate_rules_with_dimensionless_unit_mappings()
+        instance._post_init_populate_rules_with_aux_files()
         logger.debug("Object creation done!")
         return instance
 
@@ -550,6 +578,7 @@ class CMORizer:
 
     def process(self, parallel=None):
         logger.debug("Process start!")
+        self._match_pipelines_in_rules()
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
@@ -578,18 +607,22 @@ class CMORizer:
         # @flow(task_runner=DaskTaskRunner(address=self._cluster.scheduler_address))
         logger.debug("Defining dynamically generated prefect workflow...")
 
-        @flow
+        @flow(name="CMORizer Process")
         def dynamic_flow():
             rule_results = []
             for rule in self.rules:
-                rule_results.append(self._process_rule_prefect.submit(rule))
+                rule_results.append(self._process_rule.submit(rule))
             wait(rule_results)
             return rule_results
 
         logger.debug("...done!")
 
         logger.debug("About to return dynamic_flow()...")
-        return dynamic_flow()
+        with DaskContext.set_cluster(self._cluster):
+            # We encapsulate the flow in a context manager to ensure that the
+            # Dask cluster is available in the singleton, which could be used
+            # during unpickling to reattach it to a Pipeline.
+            return dynamic_flow()
 
     def _parallel_process_dask(self, external_client=None):
         if external_client:
@@ -613,11 +646,35 @@ class CMORizer:
         logger.success("Processing completed.")
         return data
 
-    def _process_rule(self, rule):
+    @flow
+    def check_prefect(self):
+        logger = get_run_logger()
+        try:
+            self._caching_check()
+        except Exception:
+            logger.critical("Problem with caching in Prefect detected...")
+
+    @flow
+    def _caching_check(self):
+        """Checks if workflows are possible to be cached"""
+        data = {}
+        for rule in self.rules:
+            # del rule._pymorize_cfg
+            # del rule.data_request_variable
+            data[rule.name] = self._caching_single_rule(rule)
+        return data
+
+    @staticmethod
+    @task
+    def _caching_single_rule(rule):
+        logger.info(f"Starting to try caching on {rule}")
+        data = f"Cached call of {rule.name}"
+        return data
+
+    @staticmethod
+    @task(name="Process rule")
+    def _process_rule(rule):
         logger.info(f"Starting to process rule {rule}")
-        # Match up the pipelines:
-        # FIXME(PG): This might also be a place we need to consider copies...
-        rule.match_pipelines(self.pipelines)
         data = None
         if not len(rule.pipelines) > 0:
             logger.error("No pipeline defined, something is wrong!")
@@ -625,7 +682,3 @@ class CMORizer:
             logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
-
-    @task
-    def _process_rule_prefect(self, rule):
-        return self._process_rule(rule)

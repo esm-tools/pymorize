@@ -2,6 +2,7 @@
 Pipeline of the data processing steps.
 """
 
+import copy
 from datetime import timedelta
 
 import randomname
@@ -11,6 +12,7 @@ from prefect.tasks import Task
 from prefect_dask import DaskTaskRunner
 
 from .caching import generate_cache_key  # noqa: F401
+from .cluster import DaskContext
 from .logging import add_to_report_log, logger
 from .utils import get_callable, get_callable_by_name
 
@@ -20,16 +22,19 @@ class Pipeline:
         self,
         *args,
         name=None,
-        workflow_backend="prefect",
+        workflow_backend=None,
         cache_policy=None,
         dask_cluster=None,
         cache_expiration=None,
     ):
         self._steps = args
         self.name = name or randomname.get_name()
-        self._workflow_backend = workflow_backend
         self._cluster = dask_cluster
         self._prefect_cache_kwargs = {}
+        self._steps_are_prefectized = False
+        if workflow_backend is None:
+            workflow_backend = "prefect"
+        self._workflow_backend = workflow_backend
         if cache_policy is None:
             self._cache_policy = TASK_SOURCE + INPUTS
             self._prefect_cache_kwargs["cache_policy"] = self._cache_policy
@@ -56,12 +61,37 @@ class Pipeline:
             r_val.append(f"[{i+1}/{len(self.steps)}] {step.__name__}")
         return "\n".join(r_val)
 
+    def __getstate__(self):
+        """Custom pickling of a Pipeline"""
+        state = self.__dict__.copy()
+        if self._steps_are_prefectized:
+            state["_steps"] = self._raw_steps
+            del state["_raw_steps"]
+            state["_steps_are_prefectized"] = False
+        if "_cluster" in state:
+            # It makes no sense to pickle the cluster
+            del state["_cluster"]
+
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+        if self._workflow_backend == "prefect":
+            self._prefectize_steps()
+        logger.info("Restoring from pickled state!")
+        # logger.info("You may want to assign a cluster to this pipeline")
+        try:
+            self._cluster = DaskContext.get_cluster()
+        except RuntimeError:
+            logger.warning("No cluster available to assign to this pipeline")
+
     def assign_cluster(self, cluster):
         logger.debug("Assigning cluster to this pipeline")
         self._cluster = cluster
 
     def _prefectize_steps(self):
         # Turn all steps into Prefect tasks:
+        raw_steps = copy.deepcopy(self._steps)
         prefect_tasks = []
         for i, step in enumerate(self._steps):
             logger.debug(
@@ -76,6 +106,8 @@ class Pipeline:
             )
 
         self._steps = prefect_tasks
+        self._steps_are_prefectized = True
+        self._raw_steps = raw_steps
 
     @property
     def steps(self):
@@ -95,9 +127,7 @@ class Pipeline:
         return data
 
     def _run_prefect(self, data, rule_spec):
-        logger.debug(
-            f"Dynamically creating workflow with DaskTaskRunner using {self._cluster=}..."
-        )
+        logger.debug("Dynamically creating workflow with DaskTaskRunner...")
         cmor_name = rule_spec.get("cmor_name")
         rule_name = rule_spec.get("name", cmor_name)
         if self._cluster is None:
@@ -106,7 +136,7 @@ class Pipeline:
             )
             dask_scheduler_address = None
         else:
-            dask_scheduler_address = self._cluster.scheduler
+            dask_scheduler_address = self._cluster.scheduler.address
 
         @flow(
             flow_run_name=f"{self.name} - {rule_name}",
@@ -161,13 +191,16 @@ class Pipeline:
         if "uses" in data:
             # FIXME(PG): This is bad. What if I need to pass arguments to the constructor?
             return get_callable_by_name(data["uses"])(
-                name=data.get("name"), cache_expiration=data.get("cache_expiration")
+                name=data.get("name"),
+                cache_expiration=data.get("cache_expiration"),
+                workflow_backend=data.get("workflow_backend"),
             )
         if "steps" in data:
             return cls.from_callable_strings(
                 data["steps"],
                 name=data.get("name"),
                 cache_expiration=data.get("cache_expiration"),
+                workflow_backend=data.get("workflow_backend"),
             )
         raise ValueError("Pipeline data must have 'uses' or 'steps' key")
 
