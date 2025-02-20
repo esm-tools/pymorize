@@ -17,6 +17,8 @@ import uuid
 
 import xarray as xr
 
+from .factory import MetaFactory, create_factory
+
 _parent_fields = (
     "branch_method",
     "branch_time_in_child",
@@ -29,7 +31,16 @@ _parent_fields = (
 )
 
 
-class GlobalAttributes:
+class GlobalAttributes(metaclass=MetaFactory):
+    @classmethod
+    def get_global_attributes(cls, attrs_map_on_rule: dict) -> dict:
+        """Get the global attributes for a dataset."""
+        raise NotImplementedError
+
+
+class CMIP6GlobalAttributes(GlobalAttributes):
+    """GlobalAttributes for CMIP6"""
+
     def __init__(self, cv):
         """
         Parameters
@@ -269,6 +280,12 @@ class GlobalAttributes:
         return d
 
 
+class CMIP7GlobalAttributes(GlobalAttributes):
+    """GlobalAttributes for CMIP7"""
+
+    pass
+
+
 def set_global_attributes(ds: xr.DataArray, rule):
     """
     Set global attributes on a dataset.
@@ -280,10 +297,16 @@ def set_global_attributes(ds: xr.DataArray, rule):
     rule : DataRequestRule
         The rule to extract the global attributes from.
     """
+    # Get the global attributes set on rule
     rule_attrs = rule.global_attributes_set_on_rule()
-    ga = GlobalAttributes(rule.controlled_vocabularies)
+
+    # Compute the other global attributes using the controlled vocabularies
+    global_attributes_factory = create_factory(GlobalAttributes)
+    GlobalAttributesClass = global_attributes_factory.get("CMIP6")
+    ga = GlobalAttributesClass(rule.controlled_vocabularies)
     global_attributes = ga.get_global_attributes(rule_attrs)
 
+    # Set the global attributes on the dataset
     ds.attrs.update(global_attributes)
 
     return ds

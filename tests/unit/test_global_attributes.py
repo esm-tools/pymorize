@@ -1,5 +1,6 @@
 import re
 
+from pymorize.factory import create_factory
 from pymorize.global_attributes import GlobalAttributes
 
 # Name, expected pass
@@ -61,7 +62,9 @@ def test_global_attributes(rule_after_cmip6_cmorizer_init):
     rule_attrs = rule.global_attributes_set_on_rule()
 
     # Get the global attributes
-    ga = GlobalAttributes(rule.controlled_vocabularies)
+    global_attributes_factory = create_factory(GlobalAttributes)
+    GlobalAttributesClass = global_attributes_factory.get("CMIP6")
+    ga = GlobalAttributesClass(rule.controlled_vocabularies)
     d = ga.get_global_attributes(rule_attrs)
 
     # This is here only for the purpose of debugging
