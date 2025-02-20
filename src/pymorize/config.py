@@ -217,6 +217,26 @@ class PymorizeConfig:
             doc="Whether the time axis is unlimited in xarray.",
             parser=_parse_bool,
         )
+        xarray_time_set_standard_name = Option(
+            default="yes",
+            doc="Whether to set the standard name for the time axis in xarray.",
+            parser=_parse_bool,
+        )
+        xarray_time_set_long_name = Option(
+            default="yes",
+            doc="Whether to set the long name for the time axis in xarray.",
+            parser=_parse_bool,
+        )
+        xarray_time_enable_set_axis = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to enable setting the axis for the time axis in xarray.",
+        )
+        xarray_time_taxis_str = Option(
+            parser=str,
+            default="T",
+            doc="Which axis to set for the time axis in xarray.",
+        )
 
 
 class PymorizeConfigManager(ConfigManager):

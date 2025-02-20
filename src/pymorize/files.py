@@ -197,6 +197,16 @@ def save_dataset(da: xr.DataArray, rule):
         )
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
+    # Not sure about this, maybe it needs to go above, before the is_scalar
+    # check
+    if rule._pymorize_cfg("xarray_time_set_standard_name"):
+        da[time_label].attrs["standard_name"] = "time"
+    if rule._pymorize_cfg("xarray_time_set_long_name"):
+        da[time_label].attrs["long_name"] = "time"
+    if rule._pymorize_cfg("xarray_time_enable_set_axis"):
+        time_axis_str = rule._pymorize_cfg("xarray_time_taxis_str")
+        da[time_label].attrs["axis"] = time_axis_str
+
     file_timespan = getattr(rule, "file_timespan", None)
     if not needs_resampling(da, file_timespan):
         filepath = create_filepath(da, rule)
