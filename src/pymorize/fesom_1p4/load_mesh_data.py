@@ -146,11 +146,14 @@ def load_mesh(path, abg=[50, 15, -90], get3d=True, usepickle=True, usejoblib=Fal
         print("The mesh will be saved to {}".format(pickle_file))
 
         mesh = fesom_mesh(path=path, abg=abg, get3d=get3d)
-        logging.info("Use pickle to save the mesh information")
-        print("Save mesh to binary format")
-        outfile = open(pickle_file, "wb")
-        pickle.dump(mesh, outfile)
-        outfile.close()
+        try:
+            logging.info("Use pickle to save the mesh information")
+            print("Save mesh to binary format")
+            outfile = open(pickle_file, "wb")
+            pickle.dump(mesh, outfile)
+            outfile.close()
+        except OSError:
+            logging.warning("Unable to save pickle as mesh cache, sorry...")
         return mesh
 
     elif not usepickle and not usejoblib:
