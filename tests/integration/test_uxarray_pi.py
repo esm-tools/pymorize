@@ -40,6 +40,19 @@ def test_process(pi_uxarray_config, pi_uxarray_data):
     cmorizer.process()
 
 
+def test_process_native(pi_uxarray_config, pi_uxarray_data):
+    logger.info(f"Processing {pi_uxarray_config}")
+    with open(pi_uxarray_config, "r") as f:
+        cfg = yaml.safe_load(f)
+    cfg["pymorize"]["pipeline_workflow_orchestrator"] = "native"
+    cfg["pymorize"]["dask_cluster"] = "local"
+    for rule in cfg["rules"]:
+        for input in rule["inputs"]:
+            input["path"] = input["path"].replace("REPLACE_ME", str(pi_uxarray_data))
+    cmorizer = CMORizer.from_dict(cfg)
+    cmorizer.process()
+
+
 def test_process_cmip7(pi_uxarray_config_cmip7, pi_uxarray_data):
     logger.info(f"Processing {pi_uxarray_config_cmip7}")
     with open(pi_uxarray_config_cmip7, "r") as f:

@@ -354,6 +354,10 @@ class CMORizer:
             if isinstance(p, Pipeline):
                 pipelines.append(p)
             elif isinstance(p, dict):
+                p["workflow_backend"] = p.get(
+                    "workflow_backend",
+                    self._pymorize_cfg("pipeline_workflow_orchestrator"),
+                )
                 pl = Pipeline.from_dict(p)
                 if self._cluster is not None:
                     pl.assign_cluster(self._cluster)
@@ -494,6 +498,10 @@ class CMORizer:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
                 raise ValueError(PIPELINES_VALIDATOR.errors)
         for pipeline in data.get("pipelines", []):
+            pipeline["workflow_backend"] = pipeline.get(
+                "workflow_backend",
+                instance._pymorize_cfg("pipeline_workflow_orchestrator"),
+            )
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
 
