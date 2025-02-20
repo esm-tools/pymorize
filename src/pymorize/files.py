@@ -173,16 +173,9 @@ def save_dataset(da: xr.DataArray, rule):
     """
     time_dtype = rule._pymorize_cfg("xarray_time_dtype")
     time_unlimited = rule._pymorize_cfg("xarray_time_unlimited")
-    # FIXME(PG): This probably should be a separate function to make it cleaner...
+    extra_kwargs = {}
     if time_unlimited:
-        if not hasattr(da, "encoding"):
-            da.encoding = {}
-
-        if "unlimited_dims" not in da.encoding:
-            da.encoding["unlimited_dims"] = ["time"]
-        else:
-            if "time" not in da.encoding["unlimited_dims"]:
-                da.encoding["unlimited_dims"].append("time")
+        extra_kwargs.update({"unlimited_dims": ["time"]})
     time_encoding = {"dtype": time_dtype}
     time_encoding = {k: v for k, v in time_encoding.items() if v is not None}
     if not has_time_axis(da):
@@ -200,6 +193,7 @@ def save_dataset(da: xr.DataArray, rule):
             mode="w",
             format="NETCDF4",
             encoding={"time": time_encoding},
+            **extra_kwargs,
         )
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
@@ -211,6 +205,7 @@ def save_dataset(da: xr.DataArray, rule):
             mode="w",
             format="NETCDF4",
             encoding={"time": time_encoding},
+            **extra_kwargs,
         )
     groups = da.resample(time=file_timespan)
     paths = []
@@ -222,4 +217,5 @@ def save_dataset(da: xr.DataArray, rule):
         datasets,
         paths,
         encoding={"time": time_encoding},
+        **extra_kwargs,
     )
