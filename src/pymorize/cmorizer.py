@@ -485,6 +485,7 @@ class CMORizer:
                 "distributed": data.get("distributed", {}),
                 "jobqueue": data.get("jobqueue", {}),
             },
+            inherit_cfg=data.get("inherit", {}),
         )
         if "rules" in data:
             if not RULES_VALIDATOR.validate({"rules": data["rules"]}):
