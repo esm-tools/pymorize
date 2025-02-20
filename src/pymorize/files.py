@@ -173,7 +173,17 @@ def save_dataset(da: xr.DataArray, rule):
     """
     time_dtype = rule._pymorize_cfg("xarray_time_dtype")
     time_unlimited = rule._pymorize_cfg("xarray_time_unlimited")
-    time_encoding = {"dtype": time_dtype, "unlimited": time_unlimited}
+    # FIXME(PG): This probably should be a separate function to make it cleaner...
+    if time_unlimited:
+        if not hasattr(da, "encoding"):
+            da.encoding = {}
+
+        if "unlimited_dims" not in da.encoding:
+            da.encoding["unlimited_dims"] = ["time"]
+        else:
+            if "time" not in da.encoding["unlimited_dims"]:
+                da.encoding["unlimited_dims"].append("time")
+    time_encoding = {"dtype": time_dtype}
     time_encoding = {k: v for k, v in time_encoding.items() if v is not None}
     if not has_time_axis(da):
         filepath = create_filepath(da, rule)
