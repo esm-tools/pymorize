@@ -52,9 +52,6 @@ def test_process(config):
     cmorizer.process()
 
 
-@pytest.mark.skipif(
-    shutil.which("sbatch") is None, reason="sbatch is not available on this host"
-)
 @pytest.mark.parametrize(
     "config",
     [
@@ -64,10 +61,11 @@ def test_process(config):
     indirect=True,
 )
 def test_process_native(config):
-    """Tests without prefect"""
+    """Tests without prefect and without slurm dask"""
     logger.info(f"Processing {config}")
     with open(config, "r") as f:
         cfg = yaml.safe_load(f)
     cfg["pymorize"]["pipeline_workflow_orchestrator"] = "native"
+    cfg["pymorize"]["dask_cluster"] = "local"
     cmorizer = CMORizer.from_dict(cfg)
     cmorizer.process()
