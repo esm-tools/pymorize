@@ -3,6 +3,7 @@
 ################################################################################
 #
 # Original code by Dmitry Sidorenko, 2013
+# https://github.com/FESOM/pyfesom2
 #
 # Modifications:
 #   Nikolay Koldunov, 2016
