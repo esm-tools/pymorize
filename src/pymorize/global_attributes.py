@@ -14,6 +14,7 @@ Use the `get_global_attributes` method on `DataRequestVariable` to get the globa
 
 import re
 import uuid
+import datetime
 
 import xarray as xr
 
@@ -279,6 +280,24 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         d = {k: d[k] for k in sorted(d)}
         return d
 
+    def get_subdir_path(self, attrs_map_on_rule: dict) -> str:
+        global_attributes = self.get_global_attributes(attrs_map_on_rule)
+        mip_era = global_attributes["mip_era"]
+        activity_id = global_attributes["activity_id"]
+        institution_id = global_attributes["institution_id"]
+        source_id = global_attributes["source_id"]
+        experiment_id = global_attributes["experiment_id"]
+        member_id = global_attributes["member_id"]
+        sub_experiment_id = global_attributes["sub_experiment_id"]
+        if sub_experiment_id != "none":
+            member_id = f"{member_id}-{sub_experiment_id}"
+        table_id = global_attributes["table_id"]
+        variable_id = global_attributes["variable_id"]
+        grid_label = global_attributes["grid_label"]
+        version = f"v{datetime.datetime.today().strftime('%Y%m%d')}"
+        directory_path = f"{mip_era}/{activity_id}/{institution_id}/{source_id}/{experiment_id}/{member_id}/{table_id}/{variable_id}/{grid_label}/{version}"
+        return directory_path
+
 
 class CMIP7GlobalAttributes(GlobalAttributes):
     """GlobalAttributes for CMIP7"""
@@ -299,12 +318,7 @@ def set_global_attributes(ds: xr.DataArray, rule):
     """
     # Get the global attributes set on rule
     rule_attrs = rule.global_attributes_set_on_rule()
-
-    # Compute the other global attributes using the controlled vocabularies
-    global_attributes_factory = create_factory(GlobalAttributes)
-    GlobalAttributesClass = global_attributes_factory.get("CMIP6")
-    ga = GlobalAttributesClass(rule.controlled_vocabularies)
-    global_attributes = ga.get_global_attributes(rule_attrs)
+    global_attributes = rule.ga.get_global_attributes(rule_attrs)
 
     # Set the global attributes on the dataset
     ds.attrs.update(global_attributes)

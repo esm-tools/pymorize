@@ -36,6 +36,7 @@ from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .global_attributes import GlobalAttributes
 
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
@@ -128,6 +129,8 @@ class CMORizer:
         self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
         self._post_init_create_controlled_vocabularies()
+        self._post_init_create_global_attributes()
+        self._post_init_populate_rules_with_global_attributes()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -275,6 +278,16 @@ class CMORizer:
         self.controlled_vocabularies = ControlledVocabulariesClass.load(
             table_dir=table_dir
         )
+
+    def _post_init_create_global_attributes(self):
+
+        global_attributes_factory = create_factory(GlobalAttributes)
+        GlobalAttributesClass = global_attributes_factory.get(self.cmor_version)
+        self.ga = GlobalAttributesClass(self.controlled_vocabularies)
+
+    def _post_init_populate_rules_with_global_attributes(self):
+        for rule in self.rules:
+            rule.ga = self.ga
 
     def _post_init_populate_rules_with_aux_files(self):
         """Attaches auxiliary files to the rules"""
