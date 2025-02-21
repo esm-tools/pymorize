@@ -1,4 +1,6 @@
 import copy
+import datetime
+import pathlib
 import re
 import typing
 import warnings
@@ -257,3 +259,30 @@ class Rule:
         assert len(self.data_request_variables) == 1
         self.data_request_variable = self.data_request_variables[0]
         del self.data_request_variables
+
+    def global_attributes_set_on_rule(self):
+        attrs = (
+            "source_id",
+            "grid_label",
+            "cmor_variable",
+            "variant_label",
+            "experiment_id",
+            "activity_id",  # optional
+            "institution_id",  # optional
+            "model_component",  # optional
+            "further_info_url",  # optional
+        )
+        # attribute `creation_date` is the time-stamp of inputs directory
+        afile = next(
+            f for file_collection in self.inputs for f in file_collection.files
+        )
+        afile = pathlib.Path(afile)
+        time_format = "%Y-%m-%dT%H:%M:%SZ"
+        dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
+        creation_date = dir_timestamp.strftime(time_format)
+        result = {attr: getattr(self, attr, None) for attr in attrs}
+        result["table_header"] = self.data_request_variable.table_header
+        result["frequency"] = self.data_request_variable.frequency
+        result["creation_date"] = creation_date
+        result["modeling_realm"] = self.data_request_variable.modeling_realm
+        return result

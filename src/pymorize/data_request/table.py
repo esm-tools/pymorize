@@ -8,8 +8,9 @@ from typing import List
 import pendulum
 from semver.version import Version
 
+from ..factory import MetaFactory
+
 from ..logging import logger
-from .factory import MetaFactory
 from .variable import (
     CMIP6DataRequestVariable,
     CMIP7DataRequestVariable,
