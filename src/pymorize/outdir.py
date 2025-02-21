@@ -34,6 +34,9 @@ def create_cmor_directories(rule):
     source_id = global_attributes["source_id"]
     experiment_id = global_attributes["experiment_id"]
     member_id = global_attributes["member_id"]
+    sub_experiment_id = global_attributes["sub_experiment_id"]
+    if sub_experiment_id != "none":
+        member_id = f"{member_id}-{sub_experiment_id}"
     table_id = global_attributes["table_id"]
     variable_id = global_attributes["variable_id"]
     grid_label = global_attributes["grid_label"]
