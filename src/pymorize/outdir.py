@@ -19,7 +19,7 @@ from .factory import create_factory
 from .global_attributes import GlobalAttributes
 
 
-def create_cmor_directories(rule):
+def _cmor_directories(rule):
     rule_attrs = rule.global_attributes_set_on_rule()
 
     # Compute the other global attributes using the controlled vocabularies
@@ -42,10 +42,15 @@ def create_cmor_directories(rule):
     grid_label = global_attributes["grid_label"]
     version = f"v{datetime.datetime.today().strftime('%Y%m%d')}"
     directory_path = f"{mip_era}/{activity_id}/{institution_id}/{source_id}/{experiment_id}/{member_id}/{table_id}/{variable_id}/{grid_label}/{version}"
+    return directory_path
+
+
+def create_cmor_directories(rule):
+    directory_path = _cmor_directories(rule)
     output_directory = rule.output_directory
     cmor_directory = pathlib.Path(output_directory) / directory_path
     cmor_directory.mkdir(parents=True, exist_ok=True)
     # TODO:
     # need to replace the output directory set on the rule with the cmorized directory
     # is not allowed to overwrite attribute on rule object. need to figure out a way
-    return directory_path
+    return cmor_directory
