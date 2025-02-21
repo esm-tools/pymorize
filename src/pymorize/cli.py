@@ -11,6 +11,8 @@ from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
+from pymorize.fesom_1p4.nodes_to_levels import convert
+
 from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
 from .filecache import fc
@@ -149,7 +151,11 @@ def cache(verbose, quiet, logfile, profile_mem):
     return 0
 
 
-################################################################################
+@click.group()
+def scripts():
+    return 0
+
+
 ################################################################################
 ################################################################################
 
@@ -237,6 +243,22 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
 ################################################################################
 
 ################################################################################
+# COMMANDS FOR scripts
+################################################################################
+
+
+@scripts.group()
+def fesom1():
+    pass
+
+
+fesom1.add_command(convert, name="nodes-to-levels")
+
+################################################################################
+################################################################################
+################################################################################
+
+################################################################################
 # COMMANDS FOR cache
 ################################################################################
 
@@ -286,6 +308,7 @@ def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
 ################################################################################
 
 cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
+cli.add_command(scripts)
 
 ################################################################################
 
