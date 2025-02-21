@@ -16,6 +16,7 @@ examples:
 import datetime
 import pathlib
 from .factory import create_factory
+from .global_attributes import GlobalAttributes
 
 
 def create_cmor_directories(rule):
