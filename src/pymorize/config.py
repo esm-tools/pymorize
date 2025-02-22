@@ -164,6 +164,11 @@ class PymorizeConfig:
                 ],
             ),
         )
+        enable_output_subdirs = Option(
+            parser=_parse_bool,
+            default="no",
+            doc="Whether to create subdirectories under output_dir when saving data-sets.",
+        )
         prefect_task_runner = Option(
             default="thread_pool",
             doc="Which runner to use for Prefect flows.",
