@@ -23,6 +23,14 @@ def set_variable_attrs(
         raise TypeError("Input must be an xarray Dataset or DataArray")
 
     # Use the associated data_request_variable to set the variable attributes
+    missing_value = rule._pymorize_cfg("xarray_default_missing_value")
+    attrs = rule.data_request_variable.attrs
+    for attr in ["missing_value", "_FillValue"]:
+        if attrs[attr] is None:
+            attrs[attr] = missing_value
+    skip_setting_unit_attr = rule._pymorize_cfg("xarray_skip_unit_attr_from_drv")
+    if skip_setting_unit_attr:
+        attrs.pop("units", None)
     da.attrs.update(rule.data_request_variable.attrs)
 
     # Update the encoding for missing values:
