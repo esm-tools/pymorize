@@ -25,6 +25,12 @@ def set_variable_attrs(
     # Use the associated data_request_variable to set the variable attributes
     da.attrs.update(rule.data_request_variable.attrs)
 
+    # Update the encoding for missing values:
+    if "missing_value" in rule.data_request_variable.attrs:
+        da.encoding.update(
+            {"_FillValue": rule.data_request_variable.attrs["missing_value"]}
+        )
+
     if given_dtype == xr.Dataset:
         # Assume it was updated via reference
         # ds.variables[rule.model_variable] = da
