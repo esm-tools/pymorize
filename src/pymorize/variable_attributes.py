@@ -15,7 +15,7 @@ def set_variable_attrs(
     """Uses the Rule object's associated data_request_variable to set the variable attributes of the xarray object"""
     if isinstance(ds, xr.Dataset):
         given_dtype = xr.Dataset
-        da = xr.Dataset.variables[rule.model_variable]
+        da = ds[rule.model_variable]
     elif isinstance(ds, xr.DataArray):
         given_dtype = xr.DataArray
         da = ds
@@ -26,7 +26,8 @@ def set_variable_attrs(
     da.attrs.update(rule.data_request_variable.attrs)
 
     if given_dtype == xr.Dataset:
-        ds.variables[rule.model_variable] = da
+        # Assume it was updated via reference
+        # ds.variables[rule.model_variable] = da
         return ds
     elif given_dtype == xr.DataArray:
         return da
