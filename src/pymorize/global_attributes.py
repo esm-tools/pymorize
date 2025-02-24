@@ -18,7 +18,7 @@ import datetime
 
 import xarray as xr
 
-from .factory import MetaFactory, create_factory
+from .factory import MetaFactory
 
 _parent_fields = (
     "branch_method",
@@ -101,22 +101,6 @@ class CMIP6GlobalAttributes(GlobalAttributes):
                 )
             selected_institution_id = cv_institution_ids[0]
         model_component = attrs_map_on_rule["modeling_realm"]
-        if len(model_component) > 1:
-            # can only accept a single value, check if user provided `model_component`
-            user_model_component = attrs_map_on_rule.get("model_component", None)
-            if user_model_component:
-                if user_model_component not in model_component:
-                    raise ValueError(
-                        f"model_component must be one of these: {', '.join(model_component)}."
-                        f"Given model_component {user_model_component}"
-                    )
-                model_component = user_model_component
-            else:
-                raise ValueError(
-                    f"model_component must be exactly one of these: {', '.join(model_component)}."
-                )
-        else:
-            model_component = model_component[0]
         model_components = cv["model_component"]
         if "native_nominal_resolution" in model_components[model_component]:
             native_nominal_resolution = model_components[model_component][
@@ -126,32 +110,11 @@ class CMIP6GlobalAttributes(GlobalAttributes):
             native_nominal_resolution = model_components[model_component][
                 "native_ominal_resolution"
             ]
-        # native_nominal_resolution = model_components[model_component].get(
-        #    "native_nominal_resolution", None
-        # )
-        # either native_nominal_resolution does not exists or it may be set to "none"
-        # in any case, user is expected to provide this information
-        # if native_nominal_resolution in (None, "none"):
-        #    user_native_nominal_resolution = attrs_map_on_rule.get(
-        #        "native_nominal_resolution", None
-        #    )
-        #    if user_native_nominal_resolution:
-        #        native_nominal_resolution = user_native_nominal_resolution
-        #    else:
-        #        raise ValueError(
-        #            "Missing required attribute `native_nominal_resolution`"
-        #        )
-        # breakpoint()
         grid_description = model_components[model_component].get("description", None)
         if grid_description in (None, "none"):
             user_grid_description = attrs_map_on_rule.get("description", None)
             if user_grid_description:
                 grid_description = user_grid_description
-            else:
-                pass
-                # raise ValueError(
-                #    "Missing required attribute `description` (i.e. grid description)"
-                # )
         license_id = cv["license_info"]["id"]
         license_url = self.cv["license"]["license_options"][license_id]["license_url"]
         license_id = self.cv["license"]["license_options"][license_id]["license_id"]

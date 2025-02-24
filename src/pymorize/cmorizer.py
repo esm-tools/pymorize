@@ -129,6 +129,7 @@ class CMORizer:
         self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
         self._post_init_create_controlled_vocabularies()
+        self._post_init_populate_rules_with_controlled_vocabularies()
         self._post_init_create_global_attributes()
         self._post_init_populate_rules_with_global_attributes()
         logger.debug("...post-init done!")
@@ -278,6 +279,10 @@ class CMORizer:
         self.controlled_vocabularies = ControlledVocabulariesClass.load(
             table_dir=table_dir
         )
+
+    def _post_init_populate_rules_with_controlled_vocabularies(self):
+        for rule in self.rules:
+            rule.controlled_vocabularies = self.controlled_vocabularies
 
     def _post_init_create_global_attributes(self):
 
