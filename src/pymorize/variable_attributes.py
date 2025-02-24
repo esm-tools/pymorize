@@ -22,9 +22,8 @@ def set_variable_attrs(
     else:
         raise TypeError("Input must be an xarray Dataset or DataArray")
 
-    # NOTE(PG): Not sure about this yet...
-    for attr in vars(rule.data_request_variable):
-        da.attrs[attr] = getattr(rule.data_request_variable, attr)
+    # Use the associated data_request_variable to set the variable attributes
+    da.attrs.update(rule.data_request_variable.attrs)
 
     if given_dtype == xr.Dataset:
         ds.variables[rule.model_variable] = da
