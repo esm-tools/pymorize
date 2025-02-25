@@ -229,6 +229,6 @@ def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
     # Set the controlled vocabularies
     controlled_vocabularies_factory = create_factory(ControlledVocabularies)
     ControlledVocabulariesClass = controlled_vocabularies_factory.get("CMIP6")
-    rule.controlled_vocabularies = ControlledVocabulariesClass.from_directory(CV_dir)
+    rule.controlled_vocabularies = ControlledVocabulariesClass.from_path(CV_dir)
 
     return rule

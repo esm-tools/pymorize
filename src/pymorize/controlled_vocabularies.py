@@ -49,13 +49,19 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
 
     @classmethod
     def from_path(cls, path):
-        c = cls()
-        CVs_dir = pathlib.Path(path) / "CMIP6_CVs"
+        CVs_dir = pathlib.Path(path)
+        reference_file = "CMIP6_required_global_attributes.json"
+        dirlistings = [i.name for i in CVs_dir.iterdir()]
+        if reference_file not in dirlistings:
+            # May be `path` is pointing to parent of `CMIP6_CVs` directory
+            if "CMIP6_CVs" in dirlistings:
+                CVs_dir = CVs_dir / "CMIP6_CVs"
+            else:
+                raise ValueError(f"Could not find {reference_file} in {CVs_dir}")
         d = {}
         for _path in CVs_dir.glob("*.json"):
             d.update(json.loads(_path.read_text()))
-        c.update(d)
-        return c
+        return cls(d)
 
     @property
     def required_global_attributes(self):
@@ -129,10 +135,12 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
 
     def do_source(self, rule_dict: dict):
         # TODO: extend this to include all model components
+        model_component = self.do_realm(rule_dict)
         source_id = self.do_source_id(rule_dict)
         cv_source_id = self.cv["source_id"][source_id]
         release_year = cv_source_id["release_year"]
-        return f"{source_id} ({release_year})"
+        # return f"{source_id} ({release_year})"
+        return f"{model_component} ({release_year})"
 
     def do_institution_id(self, rule_dict: dict):
         source_id = self.do_source_id(rule_dict)
@@ -157,6 +165,12 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
         return self.cv["institution_id"][institution_id]
 
     def do_realm(self, rule_dict: dict):
+        # `realm`` from table header turns out to be incorrect in some of the cases.
+        # So instead read it from the user input to ensure the correct value
+        #
+        # header = rule_dict["table_header"]
+        # return header.realm
+        #
         return rule_dict["model_component"]
 
     def do_grid_label(self, rule_dict: dict):
