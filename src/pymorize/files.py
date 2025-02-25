@@ -133,7 +133,9 @@ def create_filepath(ds, rule):
     # check if output sub-directory is needed
     enable_output_subdirs = rule._pymorize_cfg.get("enable_output_subdirs", False)
     if enable_output_subdirs:
-        subdirs = rule.ga.get_subdir_path(rule.global_attributes_set_on_rule())
+        subdirs = rule.controlled_vocabularies.subdir_path(
+            rule.global_attributes_set_on_rule()
+        )
         out_dir = f"{out_dir}/{subdirs}"
     filepath = f"{out_dir}/{name}_{table_id}_{institution}-{source_id}_{experiment_id}_{label}_{grid}_{time_range}.nc"
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
