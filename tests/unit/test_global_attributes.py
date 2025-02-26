@@ -1,6 +1,7 @@
 import re
 
 from pymorize.factory import create_factory
+from pymorize.controlled_vocabularies import ControlledVocabularies
 from pymorize.global_attributes import GlobalAttributes
 
 # Name, expected pass
@@ -52,20 +53,24 @@ global_attributes = {
 }
 
 
-def test_global_attributes(rule_after_cmip6_cmorizer_init):
+def test_global_attributes(CV_dir, rule_after_cmip6_cmorizer_init):
     """Pseudo-integration test for the global attributes"""
 
     # Set the fixture as the rule
     rule = rule_after_cmip6_cmorizer_init
 
+    ControlledVocabularies_factory = create_factory(ControlledVocabularies)
+    ControlledVocabulariesClass = ControlledVocabularies_factory.get("CMIP6")
+    cv = ControlledVocabulariesClass.load(CV_dir)
+    # breakpoint()
     # Get the global attributes set on rule. Maybe move it somewhere else
     rule_attrs = rule.global_attributes_set_on_rule()
-
+    GlobalAttributes_factory = create_factory(GlobalAttributes)
+    GlobalAttributesClass = GlobalAttributes_factory.get("CMIP6")
+    ga = GlobalAttributesClass(rule.data_request_variable, cv, rule_attrs)
     # Get the global attributes
-    global_attributes_factory = create_factory(GlobalAttributes)
-    GlobalAttributesClass = global_attributes_factory.get("CMIP6")
-    ga = GlobalAttributesClass(rule.controlled_vocabularies)
-    d = ga.get_global_attributes(rule_attrs)
+
+    d = ga.global_attributes()
 
     # This is here only for the purpose of debugging
     for key, value in global_attributes.items():

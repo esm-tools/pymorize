@@ -37,6 +37,7 @@ from .timeaverage import _frequency_from_approx_interval
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
+
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
 )
@@ -129,6 +130,7 @@ class CMORizer:
         self._post_init_populate_rules_with_data_request_variables()
         self._post_init_create_controlled_vocabularies()
         self._post_init_populate_rules_with_controlled_vocabularies()
+        self._post_init_create_global_attributes_on_rules()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -273,9 +275,7 @@ class CMORizer:
         ControlledVocabulariesClass = controlled_vocabularies_factory.get(
             self.cmor_version
         )
-        self.controlled_vocabularies = ControlledVocabulariesClass.load(
-            table_dir=table_dir
-        )
+        self.controlled_vocabularies = ControlledVocabulariesClass.load(table_dir)
 
     def _post_init_populate_rules_with_controlled_vocabularies(self):
         for rule in self.rules:
@@ -527,6 +527,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         instance._post_init_populate_rules_with_aux_files()
+        instance._post_init_create_global_attributes_on_rules()
         logger.debug("Object creation done!")
         return instance
 
@@ -699,3 +700,7 @@ class CMORizer:
             logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
+
+    def _post_init_create_global_attributes_on_rules(self):
+        for rule in self.rules:
+            rule.create_global_attributes()
