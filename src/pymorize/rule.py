@@ -12,6 +12,7 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
+from .global_attributes import GlobalAttributes
 
 
 class Rule:
@@ -281,8 +282,10 @@ class Rule:
         dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
         creation_date = dir_timestamp.strftime(time_format)
         result = {attr: getattr(self, attr, None) for attr in attrs}
-        result["table_header"] = self.data_request_variable.table_header
-        result["frequency"] = self.data_request_variable.frequency
         result["creation_date"] = creation_date
-        result["modeling_realm"] = self.data_request_variable.modeling_realm
         return result
+
+    def create_global_attributes(self):
+        self.ga = GlobalAttributes(
+            self.drv, self.cv, self.global_attributes_set_on_rule()
+        )

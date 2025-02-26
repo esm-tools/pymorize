@@ -2,6 +2,7 @@ import re
 
 from pymorize.factory import create_factory
 from pymorize.controlled_vocabularies import ControlledVocabularies
+from pymorize.global_attributes import GlobalAttributes
 
 # Name, expected pass
 creation_date_format = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"
@@ -58,14 +59,18 @@ def test_global_attributes(CV_dir, rule_after_cmip6_cmorizer_init):
     # Set the fixture as the rule
     rule = rule_after_cmip6_cmorizer_init
 
-    # Get the global attributes set on rule. Maybe move it somewhere else
-    rule_attrs = rule.global_attributes_set_on_rule()
-
-    # Get the global attributes
     ControlledVocabularies_factory = create_factory(ControlledVocabularies)
     ControlledVocabulariesClass = ControlledVocabularies_factory.get("CMIP6")
     cv = ControlledVocabulariesClass.from_path(CV_dir)
-    d = cv.global_attributes(rule_attrs)
+
+    # Get the global attributes set on rule. Maybe move it somewhere else
+    rule_attrs = rule.global_attributes_set_on_rule()
+    GlobalAttributes_factory = create_factory(GlobalAttributes)
+    GlobalAttributesClass = GlobalAttributes_factory.get("CMIP6")
+    ga = GlobalAttributesClass(rule.drv, cv, rule_attrs)
+    # Get the global attributes
+
+    d = ga.global_attributes()
 
     # This is here only for the purpose of debugging
     for key, value in global_attributes.items():

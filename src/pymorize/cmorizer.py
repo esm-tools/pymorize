@@ -130,6 +130,7 @@ class CMORizer:
         self._post_init_populate_rules_with_data_request_variables()
         self._post_init_create_controlled_vocabularies()
         self._post_init_populate_rules_with_controlled_vocabularies()
+        self._post_init_create_global_attributes_on_rules()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -274,7 +275,7 @@ class CMORizer:
         ControlledVocabulariesClass = controlled_vocabularies_factory.get(
             self.cmor_version
         )
-        self.controlled_vocabularies = ControlledVocabulariesClass.from_path(table_dir)
+        self.controlled_vocabularies = ControlledVocabulariesClass.load(table_dir)
 
     def _post_init_populate_rules_with_controlled_vocabularies(self):
         for rule in self.rules:
@@ -526,6 +527,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         instance._post_init_populate_rules_with_aux_files()
+        instance._post_init_create_global_attributes_on_rules()
         logger.debug("Object creation done!")
         return instance
 
@@ -698,3 +700,7 @@ class CMORizer:
             logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
+
+    def _post_init_create_global_attributes_on_rules(self):
+        for rule in self.rules:
+            rule.create_global_attributes()
