@@ -41,7 +41,9 @@ global_attributes = {
     "physics_index": 1,
     "product": "model-output",
     "realization_index": 1,
-    "realm": "ocnBgchem",
+    # use `modeling_realm` from variable instead of `realm` in table header
+    # "realm": "ocnBgchem",
+    "realm": "ocean",
     "source": "ocean (2018)",
     "source_id": "AWI-CM-1-1-HR",
     "source_type": "AOGCM",
@@ -50,6 +52,7 @@ global_attributes = {
     "table_id": "Oday",
     "variable_id": "tos",
     "variant_label": "r1i1p1f1",
+    "further_info_url": "https://furtherinfo.es-doc.org/CMIP6.AWI.AWI-CM-1-1-HR.piControl.none.r1i1p1f1",
 }
 
 
