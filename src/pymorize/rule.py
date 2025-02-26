@@ -287,5 +287,5 @@ class Rule:
 
     def create_global_attributes(self):
         self.ga = GlobalAttributes(
-            self.drv, self.cv, self.global_attributes_set_on_rule()
+            self.data_request_variable, self.cv, self.global_attributes_set_on_rule()
         )

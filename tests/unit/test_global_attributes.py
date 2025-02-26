@@ -61,13 +61,13 @@ def test_global_attributes(CV_dir, rule_after_cmip6_cmorizer_init):
 
     ControlledVocabularies_factory = create_factory(ControlledVocabularies)
     ControlledVocabulariesClass = ControlledVocabularies_factory.get("CMIP6")
-    cv = ControlledVocabulariesClass.from_path(CV_dir)
-
+    cv = ControlledVocabulariesClass.load(CV_dir)
+    # breakpoint()
     # Get the global attributes set on rule. Maybe move it somewhere else
     rule_attrs = rule.global_attributes_set_on_rule()
     GlobalAttributes_factory = create_factory(GlobalAttributes)
     GlobalAttributesClass = GlobalAttributes_factory.get("CMIP6")
-    ga = GlobalAttributesClass(rule.drv, cv, rule_attrs)
+    ga = GlobalAttributesClass(rule.data_request_variable, cv, rule_attrs)
     # Get the global attributes
 
     d = ga.global_attributes()

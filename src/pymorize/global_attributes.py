@@ -137,20 +137,21 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         # `realm`` from table header turns out to be incorrect in some of the cases.
         # So instead read it from the user input to ensure the correct value
         #
-        # header = self.drv.table_header
-        # return header.realm
-        #
-        table_header = self.drv.table_header
-        model_component = table_header.model_component
+        # return self.drv.table_header.realm
+        model_component = self.rule_dict.get("model_component", None)
+        if model_component is None:
+            model_component = self.drv.model_component
+            if len(model_component.split()) > 1:
+                model_component = self.drv.table_header.realm
         return model_component
 
     def get_grid_label(self):
         return self.rule_dict["grid_label"]
 
     def get_grid(self):
-        source_id = self.get_source_id(self.rule_dict)
+        source_id = self.get_source_id()
         cv_source_id = self.cv["source_id"][source_id]
-        model_component = self.get_realm(self.rule_dict)
+        model_component = self.get_realm()
         grid_description = cv_source_id["model_component"][model_component][
             "description"
         ]
@@ -205,7 +206,7 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         return self.rule_dict["experiment_id"]
 
     def get_experiment(self):
-        experiment_id = self.get_experiment_id(self.rule_dict)
+        experiment_id = self.get_experiment_id()
         return self.cv["experiment_id"][experiment_id]["experiment"]
 
     def get_activity_id(self):
@@ -248,16 +249,13 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         return source_type
 
     def get_table_id(self):
-        header = self.drv.table_header
-        return header.table_id
+        return self.drv.table_header.table_id
 
     def get_mip_era(self):
-        header = self.drv.table_header
-        return header.mip_era
+        return self.drv.table_header.mip_era
 
     def get_frequency(self):
-        header = self.drv.table_header
-        return header.frequency
+        return self.drv.frequency
 
     def get_Conventions(self):
         header = self.drv.table_header
@@ -291,3 +289,6 @@ class CMIP6GlobalAttributes(GlobalAttributes):
             f"https://furtherinfo.es-doc.org/"
             f"{mip_era}.{institution_id}.{source_id}.{experiment_id}.{sub_experiment_id}.{variant_label}"
         )
+
+
+def set_global_attributes(ds, rule): ...
