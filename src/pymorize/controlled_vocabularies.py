@@ -54,7 +54,7 @@ class CMIP6ControlledVocabularies(ControlledVocabularies):
     @classmethod
     def load(cls, table_dir=None):
         """Load the controlled vocabularies from the CMIP6_CVs directory"""
-        cv_dir = Path(table_dir) / "CMIP6_CVs"
+        cv_dir = Path(table_dir) / "../CMIP6_CVs"
         return cls.from_directory(cv_dir)
 
     @classmethod

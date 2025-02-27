@@ -291,4 +291,5 @@ class CMIP6GlobalAttributes(GlobalAttributes):
 
 def set_global_attributes(ds, rule):
     """Set global attributes for the dataset"""
-    ...
+    ds.attrs.update(rule.ga.global_attributes())
+    return ds
