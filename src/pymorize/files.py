@@ -178,23 +178,63 @@ def save_dataset(da: xr.DataArray, rule):
     NOTE: prior to calling this function, call dask.compute() method,
     otherwise tasks will progress very slow.
     """
+    time_dtype = rule._pymorize_cfg("xarray_time_dtype")
+    time_unlimited = rule._pymorize_cfg("xarray_time_unlimited")
+    extra_kwargs = {}
+    if time_unlimited:
+        extra_kwargs.update({"unlimited_dims": ["time"]})
+    time_encoding = {"dtype": time_dtype}
+    time_encoding = {k: v for k, v in time_encoding.items() if v is not None}
     if not has_time_axis(da):
         filepath = create_filepath(da, rule)
-        return da.to_netcdf(filepath, mode="w", format="NETCDF4")
+        return da.to_netcdf(
+            filepath,
+            mode="w",
+            format="NETCDF4",
+        )
     time_label = get_time_label(da)
     if is_scalar(da[time_label]):
         filepath = create_filepath(da, rule)
-        return da.to_netcdf(filepath, mode="w", format="NETCDF4")
+        return da.to_netcdf(
+            filepath,
+            mode="w",
+            format="NETCDF4",
+            encoding={"time": time_encoding},
+            **extra_kwargs,
+        )
     if isinstance(da, xr.DataArray):
         da = da.to_dataset()
+    # Not sure about this, maybe it needs to go above, before the is_scalar
+    # check
+    if rule._pymorize_cfg("xarray_time_set_standard_name"):
+        da[time_label].attrs["standard_name"] = "time"
+    if rule._pymorize_cfg("xarray_time_set_long_name"):
+        da[time_label].attrs["long_name"] = "time"
+    if rule._pymorize_cfg("xarray_time_enable_set_axis"):
+        time_axis_str = rule._pymorize_cfg("xarray_time_taxis_str")
+        da[time_label].attrs["axis"] = time_axis_str
+    if rule._pymorize_cfg("xarray_time_remove_fill_value_attr"):
+        time_encoding["_FillValue"] = None
+
     file_timespan = getattr(rule, "file_timespan", None)
     if not needs_resampling(da, file_timespan):
         filepath = create_filepath(da, rule)
-        return da.to_netcdf(filepath, mode="w", format="NETCDF4")
+        return da.to_netcdf(
+            filepath,
+            mode="w",
+            format="NETCDF4",
+            encoding={"time": time_encoding},
+            **extra_kwargs,
+        )
     groups = da.resample(time=file_timespan)
     paths = []
     datasets = []
     for group_name, group_ds in groups:
         paths.append(create_filepath(group_ds, rule))
         datasets.append(group_ds)
-    return xr.save_mfdataset(datasets, paths)
+    return xr.save_mfdataset(
+        datasets,
+        paths,
+        encoding={"time": time_encoding},
+        **extra_kwargs,
+    )

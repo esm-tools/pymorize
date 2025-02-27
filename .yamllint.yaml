@@ -1,0 +1,16 @@
+extends: default
+yaml-files:
+  - '*.yaml'
+  - '*.yml'
+  - '.yamllint'
+ignore:
+  - cmip6-cmor-tables/
+  - CMIP7_DReq_Software/
+rules:
+  line-length:
+    max: 170
+    level: warning
+  document-start: disable
+  truthy: disable
+  comments:
+    min-spaces-from-content: 1

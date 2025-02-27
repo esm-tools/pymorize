@@ -42,7 +42,6 @@ DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
 )
 """Path: The dimenionless unit mapping table, used to recreate meaningful units from
 dimensionless fractional values (e.g. 0.001 --> g/kg)"""
-# FIXME(PG): I don't know if this is a Path or not, so the documented type might be wrong
 
 
 class CMORizer:
@@ -378,6 +377,10 @@ class CMORizer:
             if isinstance(p, Pipeline):
                 pipelines.append(p)
             elif isinstance(p, dict):
+                p["workflow_backend"] = p.get(
+                    "workflow_backend",
+                    self._pymorize_cfg("pipeline_workflow_orchestrator"),
+                )
                 pl = Pipeline.from_dict(p)
                 if self._cluster is not None:
                     pl.assign_cluster(self._cluster)
@@ -505,6 +508,7 @@ class CMORizer:
                 "distributed": data.get("distributed", {}),
                 "jobqueue": data.get("jobqueue", {}),
             },
+            inherit_cfg=data.get("inherit", {}),
         )
         if "rules" in data:
             if not RULES_VALIDATOR.validate({"rules": data["rules"]}):
@@ -518,6 +522,10 @@ class CMORizer:
             if not PIPELINES_VALIDATOR.validate({"pipelines": data["pipelines"]}):
                 raise ValueError(PIPELINES_VALIDATOR.errors)
         for pipeline in data.get("pipelines", []):
+            pipeline["workflow_backend"] = pipeline.get(
+                "workflow_backend",
+                instance._pymorize_cfg("pipeline_workflow_orchestrator"),
+            )
             pipeline_obj = Pipeline.from_dict(pipeline)
             instance.add_pipeline(pipeline_obj)
 
