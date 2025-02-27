@@ -13,6 +13,7 @@ general:
   mip: "CMIP"
   frequency: "mon"
   CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
+  CV_Dir: "./cmip6-cmor-tables/CMIP6_CVs"
 rules:
   - name: "temp_with_levels"
     experiment_id: "piControl"

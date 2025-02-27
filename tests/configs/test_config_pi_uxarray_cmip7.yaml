@@ -9,6 +9,7 @@ general:
   cmor_version: "CMIP7"
   mip: "CMIP"
   frequency: "mon"
+  CV_Dir: "./cmip6-cmor-tables/CMIP6_CVs"
   CMIP_Tables_Dir: "./CMIP7_DReq_Software/scripts/variable_info/"
 rules:
   - name: "temp"

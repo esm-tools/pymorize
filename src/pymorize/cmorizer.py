@@ -269,7 +269,7 @@ class CMORizer:
         tables and data request variables, which may be used to lookup the
         controlled vocabularies.
         """
-        table_dir = self._general_cfg["CMIP_Tables_Dir"]
+        table_dir = self._general_cfg["CV_Dir"]
         controlled_vocabularies_factory = create_factory(ControlledVocabularies)
         ControlledVocabulariesClass = controlled_vocabularies_factory.get(
             self.cmor_version

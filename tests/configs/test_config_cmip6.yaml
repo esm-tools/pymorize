@@ -13,6 +13,7 @@ general:
   mip: "CMIP"
   frequency: "mon"
   CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
+  CV_Dir: "./cmip6-cmor-tables/CMIP6_CVs"
 pipelines:
   - name: "test_pipeline"
     uses: "pymorize.pipeline.TestingPipeline"
