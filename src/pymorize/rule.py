@@ -11,8 +11,8 @@ from . import pipeline
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
+from .global_attributes import CMIP6GlobalAttributes
 from .logging import logger
-from .global_attributes import GlobalAttributes, CMIP6GlobalAttributes
 
 
 class Rule:

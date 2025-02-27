@@ -1,7 +1,7 @@
 import re
 
-from pymorize.factory import create_factory
 from pymorize.controlled_vocabularies import ControlledVocabularies
+from pymorize.factory import create_factory
 from pymorize.global_attributes import GlobalAttributes
 
 # Name, expected pass

@@ -37,7 +37,6 @@ from .timeaverage import _frequency_from_approx_interval
 from .utils import wait_for_workers
 from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
 
-
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
 )

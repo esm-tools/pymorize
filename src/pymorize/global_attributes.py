@@ -1,12 +1,12 @@
-import re
 import datetime
+import re
 import uuid
-from .factory import MetaFactory
 from abc import abstractmethod
+
+from .factory import MetaFactory
 
 
 class GlobalAttributes(metaclass=MetaFactory):
-
     @abstractmethod
     def global_attributes(self):
         raise NotImplementedError()
@@ -17,7 +17,6 @@ class GlobalAttributes(metaclass=MetaFactory):
 
 
 class CMIP7GlobalAttributes(GlobalAttributes):
-
     def global_attributes(self):
         raise NotImplementedError()
 
@@ -57,7 +56,7 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         variable_id = self.get_variable_id()
         grid_label = self.get_grid_label()
         version = f"v{datetime.datetime.today().strftime('%Y%m%d')}"
-        directory_path = f"{mip_era}/{activity_id}/{institution_id}/{source_id}/{experiment_id}/{member_id}/{table_id}/{variable_id}/{grid_label}/{version}"
+        directory_path = f"{mip_era}/{activity_id}/{institution_id}/{source_id}/{experiment_id}/{member_id}/{table_id}/{variable_id}/{grid_label}/{version}"  # noqa: E501
         return directory_path
 
     def _variant_label_components(self, label: str):
@@ -291,4 +290,6 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         )
 
 
-def set_global_attributes(ds, rule): ...
+def set_global_attributes(ds, rule):
+    """Set global attributes for the dataset"""
+    ...
