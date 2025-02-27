@@ -12,7 +12,7 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
-from .global_attributes import GlobalAttributes
+from .global_attributes import GlobalAttributes, CMIP6GlobalAttributes
 
 
 class Rule:
@@ -286,6 +286,9 @@ class Rule:
         return result
 
     def create_global_attributes(self):
-        self.ga = GlobalAttributes(
-            self.data_request_variable, self.cv, self.global_attributes_set_on_rule()
+        # TODO: fix auto selecting version specific GloalAttributes
+        self.ga = CMIP6GlobalAttributes(
+            self.data_request_variable,
+            self.controlled_vocabularies,
+            self.global_attributes_set_on_rule(),
         )
