@@ -278,13 +278,13 @@ class Rule:
                 f for file_collection in self.inputs for f in file_collection.files
             )
             afile = pathlib.Path(afile)
-            time_format = "%Y-%m-%dT%H:%M:%SZ"
             dir_timestamp = datetime.datetime.fromtimestamp(
                 afile.parent.stat().st_ctime
             )
         except FileNotFoundError:
             # No input files, so use the current time -- this is a fallback triggered for test cases
             dir_timestamp = datetime.datetime.now()
+        time_format = "%Y-%m-%dT%H:%M:%SZ"
         creation_date = dir_timestamp.strftime(time_format)
         result = {attr: getattr(self, attr, None) for attr in attrs}
         result["creation_date"] = creation_date
