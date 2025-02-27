@@ -535,6 +535,7 @@ class CMORizer:
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         instance._post_init_populate_rules_with_aux_files()
+        instance._post_init_populate_rules_with_controlled_vocabularies()
         instance._post_init_create_global_attributes_on_rules()
         logger.debug("Object creation done!")
         return instance
