@@ -3,6 +3,8 @@ import re
 import uuid
 from abc import abstractmethod
 
+import xarray as xr
+
 from .factory import MetaFactory
 
 
@@ -291,5 +293,7 @@ class CMIP6GlobalAttributes(GlobalAttributes):
 
 def set_global_attributes(ds, rule):
     """Set global attributes for the dataset"""
+    if isinstance(ds, xr.DataArray):
+        ds = ds.to_dataset()
     ds.attrs.update(rule.ga.global_attributes())
     return ds
