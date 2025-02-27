@@ -278,7 +278,13 @@ class Rule:
         )
         afile = pathlib.Path(afile)
         time_format = "%Y-%m-%dT%H:%M:%SZ"
-        dir_timestamp = datetime.datetime.fromtimestamp(afile.parent.stat().st_ctime)
+        parent_dir = afile.parent
+        if parent_dir.exists():
+            dir_timestamp = datetime.datetime.fromtimestamp(
+                afile.parent.stat().st_ctime
+            )
+        else:
+            dir_timestamp = datetime.datetime.now()
         creation_date = dir_timestamp.strftime(time_format)
         result = {attr: getattr(self, attr, None) for attr in attrs}
         result["creation_date"] = creation_date
