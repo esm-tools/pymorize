@@ -24,11 +24,13 @@ from .cluster import (
     set_dashboard_link,
 )
 from .config import PymorizeConfig, PymorizeConfigManager
+from .controlled_vocabularies import ControlledVocabularies
 from .data_request.collection import DataRequest
-from .data_request.factory import create_factory
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
+from .factory import create_factory
 from .filecache import fc
+from .global_attributes import GlobalAttributes
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
@@ -125,6 +127,9 @@ class CMORizer:
         self._post_init_populate_rules_with_dimensionless_unit_mappings()
         self._post_init_populate_rules_with_aux_files()
         self._post_init_populate_rules_with_data_request_variables()
+        self._post_init_create_controlled_vocabularies()
+        self._post_init_populate_rules_with_controlled_vocabularies()
+        self._post_init_create_global_attributes_on_rules()
         logger.debug("...post-init done!")
         ################################################################################
 
@@ -255,6 +260,25 @@ class CMORizer:
         with DaskContext.set_cluster(self._cluster):
             self._rules_expand_drvs()
             self._rules_depluralize_drvs()
+
+    def _post_init_create_controlled_vocabularies(self):
+        """
+        Reads the controlled vocabularies from the directory tree rooted at
+        ``<tables_dir>/CMIP6_CVs`` and stores them in the ``controlled_vocabularies``
+        attribute. This is done after the rules have been populated with the
+        tables and data request variables, which may be used to lookup the
+        controlled vocabularies.
+        """
+        table_dir = self._general_cfg["CV_Dir"]
+        controlled_vocabularies_factory = create_factory(ControlledVocabularies)
+        ControlledVocabulariesClass = controlled_vocabularies_factory.get(
+            self.cmor_version
+        )
+        self.controlled_vocabularies = ControlledVocabulariesClass.load(table_dir)
+
+    def _post_init_populate_rules_with_controlled_vocabularies(self):
+        for rule in self.rules:
+            rule.controlled_vocabularies = self.controlled_vocabularies
 
     def _post_init_populate_rules_with_aux_files(self):
         """Attaches auxiliary files to the rules"""
@@ -511,6 +535,8 @@ class CMORizer:
         instance._post_init_populate_rules_with_data_request_variables()
         instance._post_init_populate_rules_with_dimensionless_unit_mappings()
         instance._post_init_populate_rules_with_aux_files()
+        instance._post_init_populate_rules_with_controlled_vocabularies()
+        instance._post_init_create_global_attributes_on_rules()
         logger.debug("Object creation done!")
         return instance
 
@@ -683,3 +709,9 @@ class CMORizer:
             logger.info(f"Running {str(pipeline)}")
             data = pipeline.run(data, rule)
         return data
+
+    def _post_init_create_global_attributes_on_rules(self):
+        global_attributes_factory = create_factory(GlobalAttributes)
+        GlobalAttributesClass = global_attributes_factory.get(self.cmor_version)
+        for rule in self.rules:
+            rule.create_global_attributes(GlobalAttributesClass)

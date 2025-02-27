@@ -1,7 +1,12 @@
 import pytest
 
+from pymorize.aux_files import AuxiliaryFile
 from pymorize.config import PymorizeConfigManager
+from pymorize.controlled_vocabularies import ControlledVocabularies
+from pymorize.data_request.collection import CMIP6DataRequest
+from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
+from pymorize.factory import create_factory
 from pymorize.rule import Rule
 
 
@@ -13,7 +18,9 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             "name": "temp",
             "experiment_id": "piControl",
             "output_directory": "./output",
-            "source_id": "FESOM",
+            "source_id": "AWI-CM-1-1-HR",
+            "grid_label": "gn",
+            "model_component": "ocean",
             "variant_label": "r1i1p1f1",
             "inputs": [
                 {
@@ -59,7 +66,9 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
             "name": "temp",
             "experiment_id": "piControl",
             "output_directory": "./output",
-            "source_id": "FESOM",
+            "source_id": "AWI-CM-1-1-HR",
+            "grid_label": "gn",
+            "model_component": "ocean",
             "variant_label": "r1i1p1f1",
             "inputs": [
                 {
@@ -144,6 +153,8 @@ def rule_with_mass_units():
 @pytest.fixture
 def rule_with_data_request():
     r = Rule(
+        name="temp",
+        source_id="AWI-CM-1-1-HR",
         inputs=[
             {
                 "path": "/some/files/containing/",
@@ -190,6 +201,61 @@ def rule_with_data_request():
 
 @pytest.fixture
 def rule_sos():
+    from tests.utils.constants import TEST_ROOT
+
+    sos_path = TEST_ROOT / "data" / "dummy_data"
     return Rule(
         cmor_variable="sos",
+        inputs=[{"path": sos_path, "pattern": "sos.*.nc"}],
     )
+
+
+@pytest.fixture
+def rule_after_cmip6_cmorizer_init(tmp_path, CMIP_Tables_Dir, CV_dir):
+    # Slimmed down version of what the CMORizer does.
+    # This is somewhat of an integration test by itself.
+    #
+    # `inputs` requires:
+    #  - concrete `path` to exist
+    #  - a file to exist matching the `pattern`
+
+    # Set the temporary directory and nc file
+    d = tmp_path / "inputs"
+    d.mkdir(exist_ok=True)
+    nc = d / "var1.blah.blah.nc"
+    nc.touch()
+
+    # Initialize the rule
+    rule = Rule(
+        name="temp",
+        experiment_id="piControl",
+        output_directory="./output",
+        source_id="AWI-CM-1-1-HR",
+        variant_label="r1i1p1f1",
+        grid_label="gn",
+        model_component="ocean",
+        inputs=[{"path": d, "pattern": "var1.*.nc"}],
+        cmor_variable="tos",
+        model_variable="temp",
+    )
+
+    # Set the tables and data request
+    tables = CMIP6DataRequestTable.table_dict_from_directory(CMIP_Tables_Dir)
+    data_request = CMIP6DataRequest.from_directory(CMIP_Tables_Dir)
+    for tbl in tables.values():
+        if rule.cmor_variable in tbl.variables:
+            rule.add_table(tbl.table_id)
+
+    # Set other attributes
+    rule.dimensionless_unit_mappings = {}
+    rule.aux = AuxiliaryFile(name="mesh", path="/some/mesh/file.nc")
+    rule.data_request_variable = data_request.variables.get(
+        f"Oday.{rule.cmor_variable}"
+    )
+
+    # Set the controlled vocabularies
+    controlled_vocabularies_factory = create_factory(ControlledVocabularies)
+    ControlledVocabulariesClass = controlled_vocabularies_factory.get("CMIP6")
+    rule.controlled_vocabularies = ControlledVocabulariesClass.load(CV_dir)
+
+    return rule

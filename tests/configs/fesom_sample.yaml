@@ -15,12 +15,14 @@ pipelines:
 rules:
   - model_variable: w
     cmor_variable: wo
+    model_component: ocean
     input_patterns:
       - pattern1
       - pattern.*.nc
   - model_variable: u
     cmor_variable: uo
     cmor_table: CMIP6_Omon.json
+    model_component: ocean
     input_patterns:
       - /path/to/fesom/output/files/*_u.nc
     pipelines: [generic_pipe]
@@ -28,6 +30,7 @@ rules:
     model_units: PSU
     cmor_variable: so
     cmor_table: CMIP6_Omon.json
+    model_component: ocean
     input_patterns:
       - /path/to/fesom/output/files/*_salt.nc
     output_file: salt.nc
@@ -35,6 +38,8 @@ rules:
     model_units: m
     cmor_variable: zos
     cmor_table: CMIP6_Omon.json
+    model_component: ocean
+    grid_label: gn
     input_patterns:
       - /path/to/fesom/output/files/*_ssh.nc
     output_file: ssh.nc
@@ -42,6 +47,8 @@ rules:
     model_units: m/s
     cmor_variable: uo
     cmor_table: CMIP6_Omon.json
+    model_component: ocean
+    grid_label: gn
     input_patterns:
       - /path/to/fesom/output/files/*_u.nc
     output_file: u.nc
@@ -49,6 +56,8 @@ rules:
     model_units: degC
     cmor_variable: thetao
     cmor_table: CMIP6_Omon.json
+    model_component: ocean
+    grid_label: gn
     input_patterns:
       - /path/to/fesom/output/files/*_temp.nc
     output_file: temp.nc

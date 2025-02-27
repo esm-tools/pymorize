@@ -221,14 +221,18 @@ def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request, mock
         handle_unit_conversion(da, rule_spec)
 
 
-def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir, CV_dir):
     """Test the conversion of dimensionless units"""
     cmorizer = CMORizer(
         pymorize_cfg={
             "parallel": False,
             "enable_dask": False,
         },
-        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir, "cmor_version": "CMIP6"},
+        general_cfg={
+            "CMIP_Tables_Dir": CMIP_Tables_Dir,
+            "cmor_version": "CMIP6",
+            "CV_Dir": CV_dir,
+        },
         rules_cfg=[rule_sos],
     )
     da = xr.DataArray(10, name="sos", attrs={"units": "g/kg"})
@@ -239,14 +243,18 @@ def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
     assert np.equal(new_da.values, 10)
 
 
-def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir, CV_dir):
     """Test the conversion of dimensionless units"""
     cmorizer = CMORizer(
         pymorize_cfg={
             "parallel": False,
             "enable_dask": False,
         },
-        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir, "cmor_version": "CMIP6"},
+        general_cfg={
+            "CMIP_Tables_Dir": CMIP_Tables_Dir,
+            "cmor_version": "CMIP6",
+            "CV_Dir": CV_dir,
+        },
         rules_cfg=[rule_sos],
     )
     da = xr.DataArray(10, name="sos", attrs={"units": "g/g"})
