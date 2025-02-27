@@ -11,7 +11,6 @@ from . import pipeline
 from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
-from .global_attributes import CMIP6GlobalAttributes
 from .logging import logger
 
 
@@ -285,9 +284,8 @@ class Rule:
         result["creation_date"] = creation_date
         return result
 
-    def create_global_attributes(self):
-        # TODO: fix auto selecting version specific GloalAttributes
-        self.ga = CMIP6GlobalAttributes(
+    def create_global_attributes(self, GlobalAttributesClass):
+        self.ga = GlobalAttributesClass(
             self.data_request_variable,
             self.controlled_vocabularies,
             self.global_attributes_set_on_rule(),

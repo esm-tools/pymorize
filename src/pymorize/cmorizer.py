@@ -30,6 +30,7 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .factory import create_factory
 from .filecache import fc
+from .global_attributes import GlobalAttributes
 from .logging import logger
 from .pipeline import Pipeline
 from .rule import Rule
@@ -709,5 +710,7 @@ class CMORizer:
         return data
 
     def _post_init_create_global_attributes_on_rules(self):
+        global_attributes_factory = create_factory(GlobalAttributes)
+        GlobalAttributesClass = global_attributes_factory.get(self.cmor_version)
         for rule in self.rules:
-            rule.create_global_attributes()
+            rule.create_global_attributes(GlobalAttributesClass)

@@ -29,7 +29,6 @@ class CMIP6GlobalAttributes(GlobalAttributes):
         self.drv = drv
         self.cv = cv
         self.rule_dict = rule_dict
-        # self.version = cv.__class__.__name__.replace("ControlledVocabularies", "")
 
     @property
     def required_global_attributes(self):

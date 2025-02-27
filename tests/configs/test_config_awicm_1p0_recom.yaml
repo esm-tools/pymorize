@@ -18,7 +18,9 @@ rules:
     experiment_id: "piControl"
     output_directory: "./output"
     source_id: "FESOM"
+    grid_label: gn
     variant_label: "r1i1p1f1"
+    model_component: "ocean"
     inputs:
       - path: "REPLACE_ME/outdata/fesom"
         pattern: "thetao.fesom..*.nc"
