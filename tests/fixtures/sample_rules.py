@@ -178,8 +178,12 @@ def rule_with_data_request():
 
 @pytest.fixture
 def rule_sos():
+    from tests.utils.constants import TEST_ROOT
+
+    sos_path = TEST_ROOT / "data" / "dummy_data"
     return Rule(
         cmor_variable="sos",
+        inputs=[{"path": sos_path, "pattern": "sos.*.nc"}],
     )
 
 
