@@ -9,6 +9,10 @@ Conversion to-or-from a dimensionless quantity is ambiguous. In this case,
 provide a mapping of what this dimensionless quantity represents and that
 is used for the conversion. `data/dimensionless_mappings.yaml` contains some
 examples on how the mapping is written.
+
+`handle_unit_conversion` is the only function users care about as it handles
+the unit conversion of a DataArray according to a Rule. The rest of the functions
+in this module are support functions.
 """
 
 import re
@@ -17,11 +21,9 @@ from typing import Pattern, Union
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint
 import pint_xarray
-import xarray as xr
 from chemicals import periodic_table
 
 from .logging import logger
-from .rule import Rule
 
 ureg = pint_xarray.unit_registry
 
