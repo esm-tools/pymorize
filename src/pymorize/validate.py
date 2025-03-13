@@ -32,9 +32,7 @@ class DirectoryAwareValidator(Validator):
 
 
 class GeneralSectionValidator(DirectoryAwareValidator):
-    """
-    A Validator for the general section of the configuration file
-    """
+    """A Validator for the general section of the configuration file"""
 
 
 class PipelineSectionValidator(Validator):

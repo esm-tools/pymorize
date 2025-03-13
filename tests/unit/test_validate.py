@@ -1,11 +1,11 @@
 import pytest
 
-from pymorize.validate import PIPELINES_SCHEMA, PipelineValidator
+from pymorize.validate import PIPELINES_SCHEMA, PipelineSectionValidator
 
 
 @pytest.fixture
 def validator():
-    return PipelineValidator(PIPELINES_SCHEMA)
+    return PipelineSectionValidator(PIPELINES_SCHEMA)
 
 
 def test_initialize(validator):
