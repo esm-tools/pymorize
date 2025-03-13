@@ -81,6 +81,7 @@ class RuleSectionValidator(DirectoryAwareValidator):
 GENERAL_SCHEMA = {
     "general": {
         "type": "dict",
+        "allow_unknown": True,
         "schema": {
             "cmor_version": {
                 "type": "string",
