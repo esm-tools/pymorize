@@ -21,6 +21,7 @@ from typing import Pattern, Union
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
 import pint
 import pint_xarray
+import xarray as xr
 from chemicals import periodic_table
 
 from .logging import logger
@@ -150,8 +151,6 @@ def handle_scalar_units(da, from_unit, to):
         The unit of the input DataArray.
     to : str
         The unit to convert the DataArray to.
-    verbose : bool, optional
-        If True, prints error messages for debugging purposes. Defaults to False.
 
     Returns
     -------
@@ -250,5 +249,13 @@ def handle_unit_conversion(da, rule):
     xarray.DataArray
         The converted DataArray with the new unit.
     """
-    from_unit, to_unit, to_unit_alias = _get_units(da, rule)
-    return convert(da, from_unit, to_unit, to_unit_alias)
+    if isinstance(da, xr.Dataset):
+        model_variable = rule.model_variable
+        new_da = da[model_variable]
+        from_unit, to_unit, to_unit_alias = _get_units(new_da, rule)
+        converted_da = convert(new_da, from_unit, to_unit, to_unit_alias)
+        da[model_variable] = converted_da
+        return da
+    else:
+        from_unit, to_unit, to_unit_alias = _get_units(da, rule)
+        return convert(da, from_unit, to_unit, to_unit_alias)
