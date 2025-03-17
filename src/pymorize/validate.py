@@ -18,7 +18,7 @@ class PipelineValidator(Validator):
     * https://cerberus-sanhe.readthedocs.io/customize.html#class-based-custom-validators
     """
 
-    def _validate_is_qualname(self, is_qualname, field, value):
+    def _validate_is_qualname_or_script(self, is_qualname, field, value):
         """Test if a string is a Python qualname.
 
         The rule's arguments are validated against this schema:
@@ -28,17 +28,26 @@ class PipelineValidator(Validator):
         if is_qualname and not isinstance(value, str):
             self._error(field, "Must be a string")
         if is_qualname:
-            parts = value.split(".")
-            module_name, attr_name = ".".join(parts[:-1]), parts[-1]
-            try:
-                module = importlib.import_module(module_name)
-                if not hasattr(module, attr_name):
+            if value.startswith("script://"):
+                script_path = value.replace("script://", "")
+                try:
+                    pathlib.Path(script_path).expanduser().resolve()
+                except TypeError as e:
+                    self._error(field, f"{e.args[0]}. Must be a string")
+                if not pathlib.Path(script_path).expanduser().resolve().is_file():
+                    self._error(field, "Must be a valid file path")
+            else:
+                parts = value.split(".")
+                module_name, attr_name = ".".join(parts[:-1]), parts[-1]
+                try:
+                    module = importlib.import_module(module_name)
+                    if not hasattr(module, attr_name):
+                        self._error(field, "Must be a valid Python qualname")
+                except (ImportError, ModuleNotFoundError):
                     self._error(field, "Must be a valid Python qualname")
-            except (ImportError, ModuleNotFoundError):
-                self._error(field, "Must be a valid Python qualname")
 
     # Add a schema for the rule arguments
-    _validate_is_qualname.schema = {"type": "boolean"}
+    _validate_is_qualname_or_script.schema = {"type": "boolean"}
 
     def _validate(self, document):
         super()._validate(document)
@@ -77,7 +86,7 @@ PIPELINES_SCHEMA = {
                 "steps": {
                     "type": "list",
                     "excludes": "uses",
-                    "schema": {"type": "string", "is_qualname": True},
+                    "schema": {"type": "string", "is_qualname_or_script": True},
                 },
             },
         },
