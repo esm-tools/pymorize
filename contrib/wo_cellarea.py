@@ -25,10 +25,10 @@ import pymorize.fesom_1p4
 
 
 def nodes_to_levels(data, rule):
-    gridmesh = rule.get("grid_mesh")
-    if gridmesh is None:
+    mesh_path = rule.get("mesh_path")
+    if mesh_path is None:
         raise ValueError(
-            "Set `grid_mesh` path in yaml config."
+            "Set `mesh_path` path in yaml config."
             "Required for converting nodes to levels"
         )
     return pymorize.fesom_1p4.nodes_to_levels(data, rule)
