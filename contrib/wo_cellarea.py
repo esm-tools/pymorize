@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+"""
+Upward Ocean Mass Transport (wo)
+================================
+
+wo -> wmo cmorization
+
+Step.1 convert nodes to levels 
+  - wo (time, nodes_3d=3668773)
+  - griddes.cell_area(ncells=126859)
+  
+  Transform `wo` to (time, level, nodes_2d)
+  As nodes_2d and ncells have same dimensional values, cell_area can be applied
+
+Step.2 Apply cell_area calculations
+
+  `wo` * cell_area *  (reference density 𝜌0=1035 kg m−3)
+"""
+
+import cf_xarray.units
+import pint_xarray
+import xarray as xr
+import pymorize.fesom_1p4
+
+
+def nodes_to_levels(data, rule):
+    gridmesh = rule.get("grid_mesh")
+    if gridmesh is None:
+        raise ValueError(
+            "Set `grid_mesh` path in yaml config."
+            "Required for converting nodes to levels"
+        )
+    return pymorize.fesom_1p4.nodes_to_levels(data, rule)
+
+
+def cellarea(data, rule):
+    gridfile = rule.get("grid_file")
+    if gridfile is None:
+        raise ValueError(
+            "Set `grid_file` in yaml config."
+            "Required for grabing cell_area from grid file"
+        )
+    grid = xr.open_dataset(gridfile)
+    cellarea = grid["cell_area"]
+    density = pint_xarray.unit_registry.Quantity(1035, "kg / m**3")
+    return (data.pint.quantify() * cellarea.pint.quantify() * density).pint.dequantify()
