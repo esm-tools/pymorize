@@ -30,6 +30,7 @@ class PipelineValidator(Validator):
         if is_qualname:
             if value.startswith("script://"):
                 script_path = value.replace("script://", "")
+                script_path = script_path.reverse().split(":")[1].reverse()
                 try:
                     pathlib.Path(script_path).expanduser().resolve()
                 except TypeError as e:
