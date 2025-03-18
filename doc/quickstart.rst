@@ -11,7 +11,7 @@ Installation from source repository::
   cd pymorize
   pip install pymorize[<extras>]
 
-For more detials in installation options, please refer section installation_
+For more details in installation options, please refer section installation_
 
 Setting up a task to pymorize
 -----------------------------
