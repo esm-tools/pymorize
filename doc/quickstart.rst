@@ -180,5 +180,5 @@ to watch out for in the logs.
 Hopefully, this is good enough as a starting point for using this tool.
 
 As next steps checkout ``examples`` directory for ``sample.yaml`` file which
-contains more configuarion options and also ``pymorize.slurm`` file which is
+contains more configuration options and also ``pymorize.slurm`` file which is
 used for submitting the job to slurm
