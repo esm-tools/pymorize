@@ -57,7 +57,7 @@ def _get_units(da, rule):
     model_unit = rule.get("model_unit", None)
     from_unit = da.attrs.get("units", None)
     if model_unit is not None:
-        print(
+        logger.info(
             f"user defined units {model_unit!r} takes precedence"
             f" over units defined in dataset {from_unit!r}"
         )
@@ -72,7 +72,7 @@ def _get_units(da, rule):
         except KeyError:
             raise KeyError("Dimensionless unit not found in mappings")
         if to_unit_alias is not None:
-            print(
+            logger.info(
                 f"unit alias {to_unit_alias!r} used for representing {to_unit!r}."
                 f" see dimensionless variable map for variable {cmor_variable!r}"
             )
