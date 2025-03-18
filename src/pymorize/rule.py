@@ -224,7 +224,7 @@ class Rule:
         # requirements = [{"requirement_name": "cell_methods", "requirement_value": "time: mean"}, ]
         requirements = [dict(), dict()]
         for requirement in requirements:
-            rr = RuleRequirement.from_dict(**requirement)
+            rr = RuleRequirement.from_dict(requirement)
             req_satisfied = any(
                 rr.pipeline_fulfills_requirements(pl) for pl in self.pipelines
             )
