@@ -16,8 +16,8 @@ For more details in installation options, please refer section installation_
 Setting up a task to pymorize
 -----------------------------
 
-At the heart of pymorize is the yaml configuration file. It gathers all
-the information it needs to perform tasks from the configuration file.
+At the heart of ``pymorize`` is the yaml configuration file. ``pymorize`` gathers all
+the information it needs to perform CMORization of your data from this file.
 
 The yaml file has 4 sections:
 - ``general`` global settings that are applicable to all the rules
