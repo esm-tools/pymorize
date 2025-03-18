@@ -321,6 +321,10 @@ class CMORizer:
         for rule in self.rules:
             rule.match_pipelines(self.pipelines, force=force)
 
+    def _crosscheck_pipeines_in_rules(self):
+        for rule in self.rules:
+            rule.crosscheck_pipelines()
+
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
     ) -> Rule or None:
@@ -606,6 +610,7 @@ class CMORizer:
     def process(self, parallel=None):
         logger.debug("Process start!")
         self._match_pipelines_in_rules()
+        self._crosscheck_pipeines_in_rules()
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
