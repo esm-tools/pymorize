@@ -70,7 +70,7 @@ As an example task to cmorize ``CO2f`` variable, create a file called ``basic.ya
           - "pymorize.generic.get_variable"
           - "pymorize.units.handle_unit_conversion"
 
-Here is a breif description of each field in each section.
+Here is a brief description of each field in each section.
 
   .. code:: plaintext
 
