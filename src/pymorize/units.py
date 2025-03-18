@@ -1,18 +1,16 @@
 """
-Units
-=====
 This module deals with the auto-unit conversion in the cmorization process.
 In case the units in model files differ from CMIP Tables, this module attempts to
 convert them automatically.
 
 Conversion to-or-from a dimensionless quantity is ambiguous. In this case,
 provide a mapping of what this dimensionless quantity represents and that
-is used for the conversion. `data/dimensionless_mappings.yaml` contains some
+is used for the conversion. ``data/dimensionless_mappings.yaml`` contains some
 examples on how the mapping is written.
 
-`handle_unit_conversion` is the only function users care about as it handles
-the unit conversion of a DataArray according to a Rule. The rest of the functions
-in this module are support functions.
+:func:`.handle_unit_conversion` is the only function users care about as it handles
+the unit conversion of an :class:`xr.DataArray` according to a :class:`.Rule`. The rest
+of the functions in this module are support functions.
 """
 
 import re
@@ -25,11 +23,15 @@ import xarray as xr
 from chemicals import periodic_table
 
 from .logging import logger
+from .rule import Rule
 
 ureg = pint_xarray.unit_registry
 
 
-def _get_units(da, rule):
+def _get_units(
+    da: xr.DataArray,
+    rule: Rule,
+) -> tuple[str, str, str]:
     """
     Get the units from a DataArray and a Rule.
 
@@ -84,8 +86,11 @@ def _get_units(da, rule):
 
 
 def handle_chemicals(
-    s: Union[str, None], pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
-):
+    s: Union[str, None] = None,
+    pattern: Pattern = re.compile(
+        r"mol(?P<symbol>\w+)",
+    ),
+) -> None:
     """
     Handle units containing chemical symbols.
 
@@ -112,6 +117,11 @@ def handle_chemicals(
     ------
     ValueError
         If the chemical symbol is not recognized.
+
+    See Also
+    --------
+    ~chemicals.elements.periodic_table: Periodic table of elements
+    ~re.compile: `Python's regex syntax <https://docs.python.org/3/library/re.html#regular-expression-syntax>`_.
     """
     if s is None:
         return
@@ -134,7 +144,11 @@ def handle_chemicals(
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-def handle_scalar_units(da, from_unit, to):
+def handle_scalar_units(
+    da: xr.DataArray,
+    from_unit: str,
+    to: str,
+) -> xr.DataArray:
     """
     Convert a DataArray with scalar units from one unit to another.
 
@@ -180,7 +194,12 @@ def handle_scalar_units(da, from_unit, to):
         return new_da.pint.dequantify()
 
 
-def convert(da, from_unit, to_unit, to_unit_alias=None):
+def convert(
+    da: xr.DataArray,
+    from_unit: str,
+    to_unit: str,
+    to_unit_alias: Union[str, None] = None,
+) -> xr.DataArray:
     """
     Convert a DataArray from one unit to another.
 
@@ -229,7 +248,10 @@ def convert(da, from_unit, to_unit, to_unit_alias=None):
     return new_da
 
 
-def handle_unit_conversion(da, rule):
+def handle_unit_conversion(
+    da: xr.DataArray,
+    rule: Rule,
+) -> xr.DataArray:
     """
     Handle unit conversion of a DataArray according to a Rule.
 
