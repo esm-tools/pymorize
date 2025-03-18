@@ -27,7 +27,7 @@ The yaml file has 4 sections:
 
 For detailed description on this sections, please refer to pymorize_building_blocks_
 
-As an example task to cmorize ``CO2f`` variable, create a file called ``basic.yaml`` and populate with the following content
+As an example task to cmorize ``FESOM 1.4``'s ``CO2f`` variable, create a file called ``basic.yaml`` and populate with the following content
 
   .. code:: yaml
 
