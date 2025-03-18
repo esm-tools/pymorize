@@ -131,7 +131,7 @@ To run the task just run the following command
   ➜ pymorize process basic.yaml
 
 As the tool is working on the task, a lot of logging information is
-spitted out to the terminal screen. The same information is also written
+printed out to the terminal screen. The same information is also written
 to a log file in ``./logs`` directory. There are some useful information
 to watch out for in the logs.
 
