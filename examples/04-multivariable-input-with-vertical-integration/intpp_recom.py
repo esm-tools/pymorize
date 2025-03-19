@@ -27,10 +27,6 @@ def correct_target_units(data, rule):
     return data
 
 
-def vertical_integration(data, rule):
-    data = data.sum(dim="depth")
-    return data
-
 
 def manual_breakpoint(data, rule):
     breakpoint()
