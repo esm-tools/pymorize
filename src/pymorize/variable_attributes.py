@@ -3,10 +3,10 @@ Pipeline steps to attach metadata attributes to the xarrays
 """
 
 from typing import Union
-from .logging import logger
 
 import xarray as xr
 
+from .logging import logger
 from .rule import Rule
 
 
