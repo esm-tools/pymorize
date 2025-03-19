@@ -3,6 +3,7 @@ Pipeline steps to attach metadata attributes to the xarrays
 """
 
 from typing import Union
+from .logging import logger
 
 import xarray as xr
 
@@ -59,6 +60,9 @@ def set_variable_attrs(
     skip_setting_unit_attr = rule._pymorize_cfg("xarray_skip_unit_attr_from_drv")
     if skip_setting_unit_attr:
         attrs.pop("units", None)
+    logger.info("Setting the following attributes:")
+    for k, v in attrs.items():
+        logger.info("f * {k}: {v}")
     da.attrs.update(attrs)
 
     # Update the encoding for missing values:
