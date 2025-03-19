@@ -13,12 +13,15 @@ general:
   mip: "CMIP"
   frequency: "mon"
   CMIP_Tables_Dir: "./cmip6-cmor-tables/Tables"
+  CV_Dir: "./cmip6-cmor-tables/CMIP6_CVs"
 rules:
   - name: "temp_with_levels"
     experiment_id: "piControl"
     output_directory: "./output"
     source_id: "FESOM"
+    grid_label: gn
     variant_label: "r1i1p1f1"
+    model_component: "ocean"
     inputs:
       - path: "REPLACE_ME/outdata/fesom"
         pattern: "thetao.fesom..*.nc"

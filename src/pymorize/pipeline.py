@@ -250,6 +250,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.generic.get_variable",
         "pymorize.timeaverage.compute_average",
         "pymorize.units.handle_unit_conversion",
+        "pymorize.global_attributes.set_global_attributes",
         "pymorize.caching.manual_checkpoint",
         "pymorize.generic.trigger_compute",
         "pymorize.generic.show_data",

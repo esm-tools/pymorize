@@ -216,37 +216,43 @@ def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request, mock
     # Set the return value for the property
     mock_getter.return_value = "0.1"
     da = xr.DataArray(10, name="var1", attrs={"units": "g/kg"})
-
     with pytest.raises(KeyError, match="Dimensionless unit not found in mappings"):
         handle_unit_conversion(da, rule_spec)
 
 
-def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+def test_units_with_g_kg_to_0001_g_kg(rule_sos, CMIP_Tables_Dir, CV_dir):
     """Test the conversion of dimensionless units"""
     cmorizer = CMORizer(
         pymorize_cfg={
             "parallel": False,
             "enable_dask": False,
         },
-        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir, "cmor_version": "CMIP6"},
+        general_cfg={
+            "CMIP_Tables_Dir": CMIP_Tables_Dir,
+            "cmor_version": "CMIP6",
+            "CV_Dir": CV_dir,
+        },
         rules_cfg=[rule_sos],
     )
     da = xr.DataArray(10, name="sos", attrs={"units": "g/kg"})
-
     new_da = handle_unit_conversion(da, cmorizer.rules[0])
     assert new_da.attrs.get("units") == "0.001"
     # Check the magnitude of the data after conversion:
     assert np.equal(new_da.values, 10)
 
 
-def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir):
+def test_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir, CV_dir):
     """Test the conversion of dimensionless units"""
     cmorizer = CMORizer(
         pymorize_cfg={
             "parallel": False,
             "enable_dask": False,
         },
-        general_cfg={"CMIP_Tables_Dir": CMIP_Tables_Dir, "cmor_version": "CMIP6"},
+        general_cfg={
+            "CMIP_Tables_Dir": CMIP_Tables_Dir,
+            "cmor_version": "CMIP6",
+            "CV_Dir": CV_dir,
+        },
         rules_cfg=[rule_sos],
     )
     da = xr.DataArray(10, name="sos", attrs={"units": "g/g"})
@@ -267,6 +273,40 @@ def test_catch_unit_conversion_problem(rule_with_data_request, mocker):
     # Set the return value for the property
     mock_getter.return_value = "broken_kg m-2 s-1"
     da = xr.DataArray(10, name="var1", attrs={"units": "broken_kg m-2 s-1"})
-
-    with pytest.raises(ValueError, match="Unit conversion failed: Cannot parse units:"):
+    with pytest.raises(ValueError, match="Cannot parse units:"):
         handle_unit_conversion(da, rule_spec)
+
+
+def test_scalar_units_with_g_g_to_0001_g_kg(rule_sos, CMIP_Tables_Dir, CV_dir):
+    """Test the conversion of dimensionless units"""
+    cmorizer = CMORizer(
+        pymorize_cfg={
+            "parallel": False,
+            "enable_dask": False,
+        },
+        general_cfg={
+            "CMIP_Tables_Dir": CMIP_Tables_Dir,
+            "cmor_version": "CMIP6",
+            "CV_Dir": CV_dir,
+        },
+        rules_cfg=[rule_sos],
+    )
+    da = xr.DataArray(10, name="sos", attrs={"units": "1e3 g/g"})
+
+    new_da = handle_unit_conversion(da, cmorizer.rules[0])
+    assert new_da.attrs.get("units") == "0.001"
+    # Check the magnitude of the data after conversion:
+    assert np.equal(new_da.values, 10_000_000)
+
+
+def test_scalar_units_1000_kg_to_1000_kg(rule_with_data_request, mocker):
+    rule_spec = rule_with_data_request
+    mock_getter = mocker.patch.object(
+        type(rule_spec.data_request_variable), "units", new_callable=mocker.PropertyMock
+    )
+    # Set the return value for the property
+    mock_getter.return_value = "1e3 kg"
+    da = xr.DataArray(10, name="var1", attrs={"units": "1e3 kg"})
+    new_da = handle_unit_conversion(da, rule_spec)
+    assert np.equal(new_da.values, 10)
+    assert new_da.units == "1e3 kg"
