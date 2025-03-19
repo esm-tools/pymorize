@@ -36,7 +36,7 @@ from .pipeline import Pipeline
 from .rule import Rule
 from .timeaverage import _frequency_from_approx_interval
 from .utils import wait_for_workers
-from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 DIMENSIONLESS_MAPPING_TABLE = files("pymorize.data").joinpath(
     "dimensionless_mappings.yaml"
@@ -502,6 +502,9 @@ class CMORizer:
 
     @classmethod
     def from_dict(cls, data):
+        if "general" in data:
+            if not GENERAL_VALIDATOR.validate({"general": data["general"]}):
+                raise ValueError(GENERAL_VALIDATOR.errors)
         instance = cls(
             pymorize_cfg=data.get("pymorize", {}),
             general_cfg=data.get("general", {}),
