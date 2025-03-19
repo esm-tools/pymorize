@@ -12,7 +12,35 @@ from .rule import Rule
 def set_variable_attrs(
     ds: Union[xr.Dataset, xr.DataArray], rule: Rule
 ) -> Union[xr.Dataset, xr.DataArray]:
-    """Uses the Rule object's associated data_request_variable to set the variable attributes of the xarray object"""
+    """
+    Uses the Rule object's associated data_request_variable to set the variable
+    attributes of the xarray object.
+
+    Parameters
+    ----------
+    ds : Union[xr.Dataset, xr.DataArray]
+        The xarray Dataset or DataArray to which the variable attributes will be applied.
+    rule : Rule
+        The Rule object containing the data_request_variable with the attributes to be set.
+
+    Returns
+    -------
+    Union[xr.Dataset, xr.DataArray]
+        The xarray Dataset or DataArray with updated attributes.
+
+    Raises
+    ------
+    TypeError
+        If the input is not an xarray Dataset or DataArray.
+        If the given data type is not an xarray Dataset or DataArray.
+
+    Notes
+    -----
+    This function updates the attributes of the given xarray object based on the attributes
+    defined in the data_request_variable of the provided Rule object. It also handles the
+    setting of missing values and optionally skips setting the unit attribute based on the
+    configuration in the Rule object.
+    """
     if isinstance(ds, xr.Dataset):
         given_dtype = xr.Dataset
         da = ds[rule.model_variable]
