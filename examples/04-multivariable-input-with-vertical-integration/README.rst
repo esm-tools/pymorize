@@ -35,3 +35,16 @@ In pseudo-code::
   conversion_factor_mmolC_m2_d_to_molC_m2_s = 1/1e3/86400  # About 1.157407e-08
 
 We implement custom steps for the addition and vertical integration.
+
+
+**Preparing the example**
+
+You should run this example on ``DKRZ Levante``. Start by downloading the sample data::
+
+  $ ./download-example-data.sh
+
+This will extract 10 years of example data for the two variables in question.
+
+Next, we define some custom functions in ``intpp_recom.py``::
+
+.. include:: intpp_recom.py

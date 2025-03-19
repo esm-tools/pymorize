@@ -79,9 +79,9 @@ def _get_units(
                 f" see dimensionless variable map for variable {cmor_variable!r}"
             )
     if from_unit is None:
-        raise ValueError("Unit not defined")
+        raise ValueError(f"Unit not defined: {from_unit=}")
     if not (to_unit or to_unit_alias):
-        raise ValueError("Unit not defined")
+        raise ValueError(f"Unit not defined: {to_unit=}, {to_unit_alias=}")
     return from_unit, to_unit, to_unit_alias
 
 
