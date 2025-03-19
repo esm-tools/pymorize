@@ -59,13 +59,11 @@ def set_variable_attrs(
     skip_setting_unit_attr = rule._pymorize_cfg("xarray_skip_unit_attr_from_drv")
     if skip_setting_unit_attr:
         attrs.pop("units", None)
-    da.attrs.update(rule.data_request_variable.attrs)
+    da.attrs.update(attrs)
 
     # Update the encoding for missing values:
-    if "missing_value" in rule.data_request_variable.attrs:
-        da.encoding.update(
-            {"_FillValue": rule.data_request_variable.attrs["missing_value"]}
-        )
+    if "missing_value" in attrs:
+        da.encoding.update({"_FillValue": attrs["missing_value"]})
 
     if given_dtype == xr.Dataset:
         # Assume it was updated via reference
