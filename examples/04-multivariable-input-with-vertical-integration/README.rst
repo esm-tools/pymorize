@@ -45,6 +45,8 @@ You should run this example on ``DKRZ Levante``. Start by downloading the sample
 
 This will extract 10 years of example data for the two variables in question.
 
-Next, we define some custom functions in ``intpp_recom.py``::
+Next, we define some custom functions in ``intpp_recom.py``:
 
-.. include:: intpp_recom.py
+.. literalinclude:: ../examples/04-multivariable-input-with-vertical-integration/intpp_recom.py
+   :linenos:
+   :language: python
