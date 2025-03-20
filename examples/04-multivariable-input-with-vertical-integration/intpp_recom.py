@@ -18,12 +18,8 @@ def set_pp_units(data, rule):
     return data
 
 
-def correct_target_units(data, rule):
-    """The target units in the CMIP table do not specify that it should be moles of Carbon"""
-    # This is a bit of a misleading in the CMIP tables. There, it specifies that the target units should be
-    # mol m-2 s-1, but it doesn't say moles of which element. You can correct the "rule" as well, in this
-    # case:
-    rule.data_request_variable.units = "molC m-2 s-1"
+def vertical_integration(data, rule):
+    data = data.sum(dim="depth")
     return data
 
 

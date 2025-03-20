@@ -23,15 +23,14 @@ rules:
   - name: Primary Organic Carbon Production
     description: "Primary organic production. This example has several special cases!"
     inputs:
-      - path: "./model_runs/piControl_LUtrans1850/outdata/recom/" 
+      - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/04-multivariable-input-with-vertical-integration/model_runs/piControl_LUtrans1850/outdata/recom/" 
         pattern: diags3d01_.*.nc
-      - path: "./model_runs/piControl_LUtrans1850/outdata/recom/" 
+      - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/04-multivariable-input-with-vertical-integration/model_runs/piControl_LUtrans1850/outdata/recom/" 
         pattern: diags3d02_.*.nc
     grid_file: /pool/data/AWICM/FESOM1/MESHES/core/griddes.nc
     mesh_path: /pool/data/AWICM/FESOM1/MESHES/core
     cmor_variable: intpp
     model_variable: "pp"
-    to_unit: "molC m-2 s-1"
     output_directory: .
     variant_label: r1i1p1f1
     experiment_id: piControl

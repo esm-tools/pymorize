@@ -1,4 +1,4 @@
-#!/bin/bash -l
+#!/bin/bash
 #SBATCH --job-name=pymorize-controller  # <<< This is the main job, it will launch subjobs if you have Dask enabled.
 #SBATCH --account=ab0246                # <<< Adapt this to your computing account!
 #SBATCH --partition=compute
@@ -9,6 +9,10 @@ export PREFECT_SERVER_API_HOST=0.0.0.0
 # For more info about Prefect caching, see:
 # https://docs-3.prefect.io/v3/develop/settings-ref#local-storage-path
 export PREFECT_RESULTS_LOCAL_STORAGE_PATH=/scratch/a/${USER}/prefect
+
+module load python3
+source $(conda info --base)/etc/profile.d/conda.sh
 conda activate pymorize
-prefect server start &
-time pymorize process sample.yaml
+prefect server start -b
+time pymorize process multivariable_vertical_integration_example.yaml
+prefect server stop
