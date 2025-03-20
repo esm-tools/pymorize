@@ -5,7 +5,9 @@ test_cases = [
     (
         "area: depth: time: mean",
         [
-            [('DIMENSION', 'area'), ('ACTION', 'mean')], [('DIMENSION', 'depth'), ('ACTION', 'mean')], [('DIMENSION', 'time'), ('ACTION', 'mean')]
+            [('DIMENSION', 'area'), ('ACTION', 'mean')],
+            [('DIMENSION', 'depth'), ('ACTION', 'mean')],
+            [('DIMENSION', 'time'), ('ACTION', 'mean')]
         ]
     ),
     (
@@ -91,10 +93,12 @@ test_cases = [
     )
 ]
 
+
 @pytest.mark.parametrize("input_text,expected_output", test_cases)
 def test_cell_methods_parser(input_text, expected_output):
     result = parse_cell_methods(input_text)
     assert result == expected_output, f"\nInput: {input_text}\nExpected: {expected_output}\nGot: {result}"
+
 
 def test_lexer_tokens():
     lexer = CellMethodsLexer()
@@ -107,7 +111,7 @@ def test_lexer_tokens():
         'CONSTRAINT': ['within', 'over', 'where'],
         'SCOPE': ['(comment text)', '(top 100m only)']
     }
-    
+
     for token_type, values in test_tokens.items():
         for value in values:
             tokens = list(lexer.tokenize(value))
