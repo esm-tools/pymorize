@@ -6,10 +6,10 @@ Upward Ocean Mass Transport (wo)
 
 wo -> wmo cmorization
 
-Step.1 convert nodes to levels 
+Step.1 convert nodes to levels
   - wo (time, nodes_3d=3668773)
   - griddes.cell_area(ncells=126859)
-  
+
   Transform `wo` to (time, level, nodes_2d)
   As nodes_2d and ncells have same dimensional values, cell_area can be applied
 
@@ -18,7 +18,7 @@ Step.2 Apply cell_area calculations
   `wo` * cell_area *  (reference density 𝜌0=1035 kg m−3)
 """
 
-import cf_xarray.units
+import cf_xarray.units  # noqa: F401
 import pint_xarray
 import xarray as xr
 
