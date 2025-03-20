@@ -3,7 +3,7 @@ from sly import Lexer, Parser
 
 class CellMethodsLexer(Lexer):
     # set of token names
-    tokens = {DIMENSION, ACTION, REGION, CONSTRAINT, SCOPE, SELECTION}
+    tokens = {DIMENSION, ACTION, REGION, CONSTRAINT, SCOPE, SELECTION}  # noqa: F821
 
     # string containing ignored characters between token
     ignore = " \t"
@@ -15,21 +15,30 @@ class CellMethodsLexer(Lexer):
     REGION = r"[a-z_]+(?![a-z_])"  # Match words with underscores
     SELECTION = r"[a-z_]+(?![a-z_])"  # Match words with underscores
 
-    def DIMENSION(self, t):
+    def DIMENSION(self, t):  # noqa: F811
         t.value = t.value[:-1]
         return t
 
-    def REGION(self, t):
-        if t.value not in ('land', 'sea', 'sea_ice', 'snow', 'ice_sheet', 'grounded_ice_sheet', 'crops', 'ice_free_sea'):
-            t.type = 'SELECTION'
+    def REGION(self, t):  # noqa: F811
+        if t.value not in (
+            "land",
+            "sea",
+            "sea_ice",
+            "snow",
+            "ice_sheet",
+            "grounded_ice_sheet",
+            "crops",
+            "ice_free_sea",
+        ):
+            t.type = "SELECTION"
         return t
 
-    @_(r"\(.*?\)")
+    @_(r"\(.*?\)")  # noqa: F821
     def SCOPE(self, t):
         t.value = t.value[1:-1]
         return t
 
-    @_(r"\n+")
+    @_(r"\n+")  # noqa: F821
     def newline(self, t):
         self.lineno += t.value.count("\n")
 
@@ -40,102 +49,96 @@ class CellMethodsParser(Parser):
     def __init__(self):
         self.groups = []
 
-    @_('statements')
+    @_("statements")  # noqa: F821
     def program(self, p):
         return self.groups
 
-    @_('statement')
+    @_("statement")  # noqa: F821
     def statements(self, p):
         return p.statement
 
-    @_('statements statement')
-    def statements(self, p):
+    @_("statements statement")  # noqa: F821
+    def statements(self, p):  # noqa: F811
         return p.statements
 
-    @_('dimension action')
+    @_("dimension action")  # noqa: F821
     def statement(self, p):
+        current_group = [("DIMENSION", p.dimension), ("ACTION", p.action)]
+        self.groups.append(current_group)
+        return p
+
+    @_("dimension action SCOPE")  # noqa: F821
+    def statement(self, p):  # noqa: F811
         current_group = [
-            ('DIMENSION', p.dimension),
-            ('ACTION', p.action)
+            ("DIMENSION", p.dimension),
+            ("ACTION", p.action),
+            ("SCOPE", p.SCOPE),
         ]
         self.groups.append(current_group)
         return p
 
-    @_('dimension action SCOPE')
-    def statement(self, p):
+    @_("dimension action constraint region")  # noqa: F821
+    def statement(self, p):  # noqa: F811
         current_group = [
-            ('DIMENSION', p.dimension),
-            ('ACTION', p.action),
-            ('SCOPE', p.SCOPE)
+            ("DIMENSION", p.dimension),
+            ("ACTION", p.action),
+            ("CONSTRAINT", p.constraint),
+            ("REGION", p.region),
         ]
         self.groups.append(current_group)
         return p
 
-    @_('dimension action constraint region')
-    def statement(self, p):
+    @_("dimension action constraint region SCOPE")  # noqa: F821
+    def statement(self, p):  # noqa: F811
         current_group = [
-            ('DIMENSION', p.dimension),
-            ('ACTION', p.action),
-            ('CONSTRAINT', p.constraint),
-            ('REGION', p.region)
+            ("DIMENSION", p.dimension),
+            ("ACTION", p.action),
+            ("CONSTRAINT", p.constraint),
+            ("REGION", p.region),
+            ("SCOPE", p.SCOPE),
         ]
         self.groups.append(current_group)
         return p
 
-    @_('dimension action constraint region SCOPE')
-    def statement(self, p):
+    @_("dimension action constraint SELECTION")  # noqa: F821
+    def statement(self, p):  # noqa: F811
         current_group = [
-            ('DIMENSION', p.dimension),
-            ('ACTION', p.action),
-            ('CONSTRAINT', p.constraint),
-            ('REGION', p.region),
-            ('SCOPE', p.SCOPE)
+            ("DIMENSION", p.dimension),
+            ("ACTION", p.action),
+            ("CONSTRAINT", p.constraint),
+            ("SELECTION", p.SELECTION),
         ]
         self.groups.append(current_group)
         return p
 
-    @_('dimension action constraint SELECTION')
-    def statement(self, p):
-        current_group = [
-            ('DIMENSION', p.dimension),
-            ('ACTION', p.action),
-            ('CONSTRAINT', p.constraint),
-            ('SELECTION', p.SELECTION)
-        ]
-        self.groups.append(current_group)
-        return p
-
-    @_('dimensions ACTION')
-    def statement(self, p):
+    @_("dimensions ACTION")  # noqa: F821
+    def statement(self, p):  # noqa: F811
         for dimension in p.dimensions:
-            current_group = [
-                ('DIMENSION', dimension),
-                ('ACTION', p.ACTION)
-            ]
+            current_group = [("DIMENSION", dimension), ("ACTION", p.ACTION)]
             self.groups.append(current_group)
         return p
 
-    @_('dimension')
+    @_("dimension")  # noqa: F821
     def dimensions(self, p):
         return [p.dimension]
 
-    @_('dimensions dimension')
-    def dimensions(self, p):
+    @_("dimensions dimension")  # noqa: F821
+    def dimensions(self, p):  # noqa: F811
         return p.dimensions + [p.dimension]
 
-    @_('DIMENSION')
+    @_("DIMENSION")  # noqa: F821
     def dimension(self, p):
         return p.DIMENSION
 
-    @_('ACTION')
+    @_("ACTION")  # noqa: F821
     def action(self, p):
         return p.ACTION
 
-    @_('CONSTRAINT')
+    @_("CONSTRAINT")  # noqa: F821
     def constraint(self, p):
         return p.CONSTRAINT
 
-    @_('REGION')
+    @_("REGION")  # noqa: F821
     def region(self, p):
         return p.REGION
 
@@ -145,7 +148,8 @@ class XArrayTranslator:
     Represent parsed tree as human readable (pseudo code) xarray operations.
     Produces strings and not xarray objects.
     """
-    def __init__(self, da_name='da'):
+
+    def __init__(self, da_name="da"):
         self.da_name = da_name
 
     def translate_group(self, group):
@@ -156,33 +160,35 @@ class XArrayTranslator:
         operation = f"{self.da_name}"
 
         # Handle the main action
-        if 'ACTION' in tokens_dict:
-            action = tokens_dict['ACTION']
-            dim = tokens_dict.get('DIMENSION')
+        if "ACTION" in tokens_dict:
+            action = tokens_dict["ACTION"]
+            dim = tokens_dict.get("DIMENSION")
 
-            if 'CONSTRAINT' in tokens_dict:
-                constraint = tokens_dict['CONSTRAINT']
-                if constraint == 'within':
+            if "CONSTRAINT" in tokens_dict:
+                constraint = tokens_dict["CONSTRAINT"]
+                if constraint == "within":
                     # For 'within', we first group by the selection
-                    selection = tokens_dict.get('SELECTION')
+                    selection = tokens_dict.get("SELECTION")
                     if selection:
                         operation = f"{operation}.groupby('{selection}').{action}()"
-                elif constraint == 'over':
+                elif constraint == "over":
                     # For 'over', we apply the operation over the selection
-                    selection = tokens_dict.get('SELECTION')
+                    selection = tokens_dict.get("SELECTION")
                     if selection:
                         operation = f"{operation}.{action}(dim='{selection}')"
-                elif constraint == 'where':
+                elif constraint == "where":
                     # For 'where', we apply a mask before the operation
-                    region = tokens_dict.get('REGION')
+                    region = tokens_dict.get("REGION")
                     if region:
-                        operation = f"{operation}.where(mask=='{region}').{action}(dim='{dim}')"
+                        operation = (
+                            f"{operation}.where(mask=='{region}').{action}(dim='{dim}')"
+                        )
             else:
                 # Simple dimension reduction
                 operation = f"{operation}.{action}(dim='{dim}')"
 
             # Add any scope comments as a comment in the code
-            if 'SCOPE' in tokens_dict:
+            if "SCOPE" in tokens_dict:
                 operation = f"{operation}  # {tokens_dict['SCOPE']}"
 
         return operation
@@ -208,7 +214,7 @@ class XArrayTranslator:
                 # Last operation should be assigned to final result
                 operations.append(f"result = {intermediate}")
 
-        return '\n'.join(operations)
+        return "\n".join(operations)
 
 
 def parse_cell_methods(text):
@@ -219,8 +225,6 @@ def parse_cell_methods(text):
 
 def translate_to_xarray(text):
     """Convenience function to parse cell methods and translate to xarray operations."""
-    parser = CellMethodsParser()
-    lexer = CellMethodsLexer()
     translator = XArrayTranslator()
 
     parsed = parse_cell_methods(text)
@@ -231,6 +235,9 @@ if __name__ == "__main__":
     text = "area: mean where sea depth: sum where sea (top 100m only) time: mean"
     result = parse_cell_methods(text)
     from pprint import pprint
+
     pprint(result)
-    print("\nXArray translation (pseduo code, human readable strings. not xarray object):")
+    print(
+        "\nXArray translation (pseduo code, human readable strings. not xarray object):"
+    )
     print(translate_to_xarray(text))
