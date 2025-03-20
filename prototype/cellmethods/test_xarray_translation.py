@@ -38,6 +38,7 @@ test_cases = [
     )
 ]
 
+
 def test_translations():
     for input_text, expected in test_cases:
         result = translate_to_xarray(input_text)
@@ -45,6 +46,7 @@ def test_translations():
         print(f"\nInput: {input_text}")
         print("Generated xarray code:")
         print(result)
+
 
 if __name__ == "__main__":
     test_translations()
