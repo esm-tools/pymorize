@@ -1,0 +1,57 @@
+general:
+  name: "AWI-ESM-1-1-lr PI Control"
+  description: "CMOR configuration for AWIESM 1.1 LR"
+  maintainer: "pgierz"
+  email: "pgierz@awi.de"
+  cmor_version: "CMIP6"
+  mip: "CMIP"
+  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
+  CV_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/CMIP6_CVs/"
+pymorize:
+  # parallel: True
+  warn_on_no_rule: False
+  use_flox: True
+  dask_cluster: "slurm"
+  dask_cluster_scaling_mode: fixed
+  fixed_jobs: 1
+  # minimum_jobs: 8
+  # maximum_jobs: 30
+  # You can add your own path to the dimensionless mapping table
+  # If nothing is specified here, it will use the built-in one.
+rules:
+  - name: Dissolved Inorganic Carbon in Seawater
+    description: "dissic from REcoM, showing missing units in NetCDF"
+    inputs:
+      - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/03-incorrect-units-in-source-files/model_runs/piControl_LUtrans1850/outdata/recom/"
+        pattern: bgc02_recom_.*.nc
+    grid_file: /pool/data/AWICM/FESOM1/MESHES/core/griddes.nc
+    mesh_path: /pool/data/AWICM/FESOM1/MESHES/core
+    cmor_variable: dissic
+    model_variable: "bgc02"
+    model_unit: "mmol m-3"
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: AWI-CM-1-1-HR
+    model_component: ocnBgchem
+    grid_label: gn
+    pipelines:
+      - default
+  - name: Seawater Alkalinity
+    description: "talk from REcoM, showing missing units in NetCDF"
+    inputs:
+      - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/03-incorrect-units-in-source-files/model_runs/piControl_LUtrans1850/outdata/recom/"
+        pattern: bgc03_recom_.*.nc
+    grid_file: /pool/data/AWICM/FESOM1/MESHES/core/griddes.nc
+    mesh_path: /pool/data/AWICM/FESOM1/MESHES/core
+    cmor_variable: talk
+    model_variable: "bgc03"
+    model_unit: "mmol m-3"
+    output_directory: .
+    variant_label: r1i1p1f1
+    experiment_id: piControl
+    source_id: AWI-CM-1-1-HR
+    model_component: ocnBgchem
+    grid_label: gn
+    pipelines:
+      - default
