@@ -33,7 +33,7 @@ The actual input unit in both cases is :math:`\frac{mmol}{m^{3}}`, i.e. use ``mu
 Happily enough, ``pymorize`` provides an easy way to rectify this without needing to edit the source files with something like ``ncatted``. You
 can specify the correct units in the ``model_unit`` setting of the ``rule``. Here is an example of how to do that:
 
-.. literalinclude:: ../../examples/03-incorrect-units-in-source-files/incorrect_units.yaml
+.. literalinclude:: ../examples/03-incorrect-units-in-source-files/incorrect_units.yaml
    :language: yaml
    :linenos:
    :emphasize-lines: 31, 49
