@@ -8,7 +8,7 @@ from pathlib import Path
 
 def rm_file(fname):
     try:
-        fname.unlink(fname)
+        fname.unlink()
         print(f"Removed file: {fname}")
     except Exception as e:
         print(f"Error removing file {fname}: {e}")
