@@ -340,6 +340,8 @@ class CMIP6DataRequestVariable(DataRequestVariable):
             "units": self.units,
             "cell_methods": self.cell_methods,
             "cell_measures": self.cell_measures,
+            "_FillValue": getattr(self, "_FillValue", None),
+            "missing_value": getattr(self, "missing_value", None),
         }
 
     def global_attrs(self, override_dict: dict = None) -> dict:
