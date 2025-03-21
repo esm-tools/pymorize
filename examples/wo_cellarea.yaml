@@ -35,7 +35,7 @@ pipelines:
       - "pymorize.generic.get_variable"
       - "script:///work/ab0995/a270243/pymorize/contrib/wo_cellarea.py:nodes_to_levels"
       - "pymorize.timeaverage.compute_average"
-      - "script:///work/ab0995/a270243/pymorize/contrib/wo_cellarea.py:cellarea"
+      - "script:///work/ab0995/a270243/pymorize/contrib/wo_cellarea.py:weight_by_cellarea_and_density"
       - "pymorize.unity.handle_unit_conversion"
       - "pymorize.setgrid.setgrid"
       - "pymorize.global_attributes.set_global_attributes"
