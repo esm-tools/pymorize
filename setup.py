@@ -70,6 +70,7 @@ setup(
         "tqdm",
         "versioneer",
         "xarray",
+        "sly",
     ],
     extras_require={
         "dev": [
