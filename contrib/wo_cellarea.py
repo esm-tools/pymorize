@@ -35,7 +35,7 @@ def nodes_to_levels(data, rule):
     return pymorize.fesom_1p4.nodes_to_levels(data, rule)
 
 
-def cellarea(data, rule):
+def weight_by_cellarea_and_density(data, rule):
     gridfile = rule.get("grid_file")
     if gridfile is None:
         raise ValueError(
