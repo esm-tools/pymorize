@@ -40,7 +40,7 @@ def weight_by_cellarea_and_density(data, rule):
     if gridfile is None:
         raise ValueError(
             "Set `grid_file` in yaml config."
-            "Required for grabing cell_area from grid file"
+            "Required for getting cell_area information from the grid file"
         )
     grid = xr.open_dataset(gridfile)
     cellarea = grid["cell_area"]
