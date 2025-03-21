@@ -24,6 +24,7 @@ Contents
    including_subcommand_plugins
    pymorize_configuration
    pymorize_aux_files
+   cookbook
    developer_guide
    developer_setup
    API

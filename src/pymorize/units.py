@@ -53,7 +53,7 @@ def _get_units(
         The unit of the DataArray.
     to_unit : str
         The unit to convert the DataArray to.
-    to_unit_alias : str
+    to_unit_dimensionless_mapping : str
         The unit alias used for representing the to_unit.
     """
     model_unit = rule.get("model_unit", None)
@@ -65,24 +65,26 @@ def _get_units(
         )
         from_unit = model_unit
     to_unit = rule.data_request_variable.units
-    to_unit_alias = None
+    to_unit_dimensionless_mapping = None
     cmor_variable = rule.data_request_variable.variable_id
     dimless_mapping = rule.get("dimensionless_unit_mappings", {})
     if cmor_variable in dimless_mapping:
         try:
-            to_unit_alias = dimless_mapping.get(cmor_variable)[to_unit]
+            to_unit_dimensionless_mapping = dimless_mapping.get(cmor_variable)[to_unit]
         except KeyError:
             raise KeyError("Dimensionless unit not found in mappings")
-        if to_unit_alias is not None:
+        if to_unit_dimensionless_mapping is not None:
             logger.info(
-                f"unit alias {to_unit_alias!r} used for representing {to_unit!r}."
+                f"unit alias {to_unit_dimensionless_mapping!r} used for representing {to_unit!r}."
                 f" see dimensionless variable map for variable {cmor_variable!r}"
             )
     if from_unit is None:
-        raise ValueError("Unit not defined")
-    if not (to_unit or to_unit_alias):
-        raise ValueError("Unit not defined")
-    return from_unit, to_unit, to_unit_alias
+        raise ValueError(f"Unit not defined: {from_unit=}")
+    if not (to_unit or to_unit_dimensionless_mapping):
+        raise ValueError(
+            f"Unit not defined: {to_unit=}, {to_unit_dimensionless_mapping=}"
+        )
+    return from_unit, to_unit, to_unit_dimensionless_mapping
 
 
 def handle_chemicals(
@@ -198,7 +200,7 @@ def convert(
     da: xr.DataArray,
     from_unit: str,
     to_unit: str,
-    to_unit_alias: Union[str, None] = None,
+    to_unit_dimensionless_mapping: Union[str, None] = None,
 ) -> xr.DataArray:
     """
     Convert a DataArray from one unit to another.
@@ -215,7 +217,7 @@ def convert(
         The unit of the input DataArray.
     to_unit : str
         The unit to convert the DataArray to.
-    to_unit_alias : str, optional
+    to_unit_dimensionless_mapping : str, optional
         An alias for the target unit, if any. Defaults to None.
 
     Returns
@@ -230,7 +232,7 @@ def convert(
     """
 
     handle_chemicals(from_unit)
-    to = to_unit_alias or to_unit
+    to = to_unit_dimensionless_mapping or to_unit
     handle_chemicals(to)
 
     try:
@@ -274,10 +276,12 @@ def handle_unit_conversion(
     if isinstance(da, xr.Dataset):
         model_variable = rule.model_variable
         new_da = da[model_variable]
-        from_unit, to_unit, to_unit_alias = _get_units(new_da, rule)
-        converted_da = convert(new_da, from_unit, to_unit, to_unit_alias)
+        from_unit, to_unit, to_unit_dimensionless_mapping = _get_units(new_da, rule)
+        converted_da = convert(
+            new_da, from_unit, to_unit, to_unit_dimensionless_mapping
+        )
         da[model_variable] = converted_da
         return da
     else:
-        from_unit, to_unit, to_unit_alias = _get_units(da, rule)
-        return convert(da, from_unit, to_unit, to_unit_alias)
+        from_unit, to_unit, to_unit_dimensionless_mapping = _get_units(da, rule)
+        return convert(da, from_unit, to_unit, to_unit_dimensionless_mapping)
