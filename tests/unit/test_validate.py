@@ -1,11 +1,11 @@
 import pytest
 
-from pymorize.validate import PIPELINES_SCHEMA, PipelineValidator
+from pymorize.validate import PIPELINES_SCHEMA, PipelineSectionValidator
 
 
 @pytest.fixture
 def validator():
-    return PipelineValidator(PIPELINES_SCHEMA)
+    return PipelineSectionValidator(PIPELINES_SCHEMA)
 
 
 def test_initialize(validator):
@@ -14,13 +14,13 @@ def test_initialize(validator):
 
 def test_is_qualname(validator):
     # Test with valid qualname
-    validator._validate_is_qualname(True, "field", "os.path.join")
+    validator._validate_is_qualname_or_script(True, "field", "os.path.join")
 
 
 def test_is_qualname_error(validator):
     # Test with invalid qualname
     with pytest.raises(Exception):
-        validator._validate_is_qualname(True, "field", "non.existent.module")
+        validator._validate_is_qualname_or_script(True, "field", "non.existent.module")
 
 
 def test_validate(validator):

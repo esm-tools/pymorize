@@ -103,7 +103,9 @@ def create_cmor_directories(config: dict) -> dict:
     """
     # Directory structure =
     # <mip_era>/
-    #  <activity_id>/ # an exception for this exists in section "Directory structure template": "If multiple activities are listed in the global attribute, the first one is used in the directory structure."
+    #  <activity_id>/ # an exception for this exists in section "Directory structure
+    #                 # template": "If multiple activities are listed in the global
+    #                 # attribute, the first one is used in the directory structure."
     #   <institution_id>/
     #     <source_id>/
     #     <experiment_id>/

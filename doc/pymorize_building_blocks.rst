@@ -3,7 +3,7 @@ Usage: ``pymorize``'s Building Blocks
 =====================================
 
 The ``pymorize`` command line interface (CLI) and its main configuration file has a few basic concepts you should be familiar with before you start using it. This guide
-will give you a brief overview of these concepts. 
+will give you a brief overview of these concepts.
 
 Configuration
 -------------
@@ -31,7 +31,7 @@ The true heart of ``pymorize`` are so-called ``steps``, which are nothing more t
 that take a data as input and return a possible modified dataset as output:
 
   .. code-block:: python
-  
+
       def dummy_step(data, rule):
           # Do something with data
           data = ...
@@ -51,7 +51,7 @@ attached to the configuration via a ``uses`` directive. In the user configuratio
 like this:
 
   .. code-block:: yaml
-  
+
       # ... other configuration
       pipelines:
         - name: my_pipeline
@@ -62,7 +62,7 @@ Alternatively you can define your own pipeline by specifying the steps it should
 custom pipeline:
 
   .. code-block:: yaml
-  
+
       # ... other configuration
       pipelines:
         - name: my_pipeline
@@ -76,12 +76,12 @@ Rules
 -----
 
 Rules describe which files the program is aware of and how it should process them. Each rule
-specifies the files needed to produce **one single** particular CMOR output variable, and minimally has a name, 
+specifies the files needed to produce **one single** particular CMOR output variable, and minimally has a name,
 a CMOR variable, and a list of input patterns. The Rule is also connected to one or more pipelines.
 Here's an example of a rule:
 
   .. code-block:: yaml
-  
+
       # ... other configuration
       rules:
         - name: my_rule
@@ -103,7 +103,7 @@ Inheritance
 Rules can inherit global values. To do so, you should include them in the ``inherit`` section of the configuration file. Here is an example:
 
   .. code-block:: yaml
-  
+
       # ... other configuration
       inherit:
         frequency: mon
@@ -121,4 +121,3 @@ Rules can inherit global values. To do so, you should include them in the ``inhe
 The rule ``my_rule`` will inherit the frequency ``mon`` from the global configuration, and can be accessed in
 Python code as ``rule_spec.frequency``. This would be useful when you want global attributes applied to all the rules,
 such as institution ID, realization of the simulation, and so on.
-

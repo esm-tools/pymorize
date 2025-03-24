@@ -32,9 +32,8 @@ These sorts of examples should also be in the docstrings of your code!
 ## Checklist
 + [ ] I have tested the changes in this PR.
 + [ ] I have updated the documentation.
-+ [ ] If I have made a new step which requires new arguments, these are added to the `validate.py` file 
++ [ ] If I have made a new step which requires new arguments, these are added to the `validate.py` file
       so that the user can see documentation for the arguments.
 
 ## Copilot Summary
 If you have Github Co-Pilot, please include an automatically generated summary.
-

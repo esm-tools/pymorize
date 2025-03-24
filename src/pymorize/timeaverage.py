@@ -13,8 +13,9 @@ Functions
 _split_by_chunks(dataset: xr.DataArray) -> Tuple[Dict, xr.DataArray]:
     Split a large dataset into sub-datasets for each chunk.
 
-_get_time_method(table_id: str) -> str:
-    Determine the time method based on the table_id string.
+_get_time_method(frequency: str) -> str:
+    Determine the time method based on the frequency string from
+    rule.data_request_variable.frequency.
 
 _frequency_from_approx_interval(interval: str) -> str:
     Convert an interval expressed in days to a frequency string.
@@ -32,8 +33,10 @@ _IGNORED_CELL_METHODS : list
 
 """
 
+import functools
 import itertools
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -63,6 +66,8 @@ def _split_by_chunks(dataset: xr.DataArray):
     """
     chunk_slices = {}
     logger.info(f"{dataset.chunks=}")
+    if not dataset.chunks:
+        raise ValueError("Dataset has no chunks")
     if isinstance(dataset, xr.Dataset):
         chunker = dataset.chunks
     elif isinstance(dataset, xr.DataArray):
@@ -80,28 +85,26 @@ def _split_by_chunks(dataset: xr.DataArray):
         yield (selection, dataset[selection])
 
 
-def _get_time_method(table_id: str) -> str:
+def _get_time_method(frequency: str) -> str:
     """
-    Determine the time method based on the table_id string.
+    Determine the time method based on the frequency string from CMIP6 table for
+    a specific variable (rule.data_request_variable.frequency).
 
-    This function checks the ending of the table_id string and returns a corresponding time method.
-    If the table_id ends with 'Pt', it returns 'INSTANTANEOUS'.
-    If the table_id ends with 'C' or 'CM', it returns 'CLIMATOLOGY'.
-    In all other cases, it returns 'MEAN'.
+    The type of time method influences how the data is processed for time averaging.
 
     Parameters
     ----------
-    table_id : str
-        The table_id string to check.
+    frequency : str
+        The frequency string from CMIP6 tables (example: "mon").
 
     Returns
     -------
     str
         The corresponding time method ('INSTANTANEOUS', 'CLIMATOLOGY', or 'MEAN').
     """
-    if table_id.endswith("Pt"):
+    if frequency.endswith("Pt"):
         return "INSTANTANEOUS"
-    if table_id.endswith("C") or table_id.endswith("CM"):
+    if frequency.endswith("C") or frequency.endswith("CM"):
         return "CLIMATOLOGY"
     return "MEAN"
 
@@ -135,23 +138,19 @@ def _frequency_from_approx_interval(interval: str):
         ("year", lambda x: f"{x}YE", 365),
         ("month", lambda x: f"{x}ME", 30),
         ("day", lambda x: f"{x}D", 1),
-        ("hour", lambda x: f"{x}H", 24),
-        ("minute", lambda x: f"{x}min", 24 * 60),
-        ("second", lambda x: f"{x}s", 24 * 60 * 60),
-        ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
+        ("hour", lambda x: f"{x}H", 1 / 24),
+        ("minute", lambda x: f"{x}min", 1.0 / (24 * 60)),
+        ("second", lambda x: f"{x}s", 1.0 / (24 * 60 * 60)),
+        ("millisecond", lambda x: f"{x}ms", 1.0 / (24 * 60 * 60 * 1000)),
     ]
     try:
         interval = float(interval)
     except ValueError:
-        return interval
-    to_divide = {"decade", "year", "month", "day"}
+        raise ValueError(f"Invalid interval: {interval}")
+    isclose = functools.partial(np.isclose, rtol=1e-3)
     for name, func, val in notation:
-        if name in to_divide:
-            value = interval // val
-        else:
-            value = interval * val
-        if value >= 1:
-            value = round(value)
+        if (interval >= val) or isclose(interval, val):
+            value = round(interval / val)
             value = "" if value == 1 else value
             return func(value)
 
@@ -175,13 +174,18 @@ def _compute_file_timespan(da: xr.DataArray):
         The maximum timespan among all chunks of the data array.
 
     """
+    if "time" not in da.dims:
+        raise ValueError("missing the 'time' dimension")
+    # Check if "time" dimension is empty
+    if da.time.size == 0:
+        raise ValueError("no time values in this chunk")
     chunks = _split_by_chunks(da)
     tmp_file_timespan = []
     for i in range(3):
         try:
             subset_name, subset = next(chunks)
         except StopIteration:
-            pass
+            break
         else:
             logger.info(f"{subset_name=}")
             logger.info(f"{subset.time.data[-1]=}")
@@ -189,6 +193,8 @@ def _compute_file_timespan(da: xr.DataArray):
             tmp_file_timespan.append(
                 pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
             )
+    if not tmp_file_timespan:
+        raise ValueError("No chunks found")
     file_timespan = max(tmp_file_timespan)
     return file_timespan
 
@@ -197,9 +203,9 @@ def compute_average(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
 
-    This function takes a data array and a rule, computes the timespan of the data array, and then performs time averaging
-    based on the time method specified in the rule. The time methods can be ``"INSTANTANEOUS"``,
-    ``"MEAN"``, or ``"CLIMATOLOGY"``.
+    This function takes a data array and a rule, computes the timespan of the data
+    array, and then performs time averaging based on the time method specified in the
+    rule. The time methods can be ``"INSTANTANEOUS"``, ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
     Parameters
     ----------
@@ -214,15 +220,17 @@ def compute_average(da: xr.DataArray, rule):
         The time averaged data array.
     """
     file_timespan = _compute_file_timespan(da)
-    rule.file_timespan = file_timespan
+    rule.file_timespan = getattr(rule, "file_timespan", None) or pd.Timedelta(
+        file_timespan, unit="D"
+    )
     drv = rule.data_request_variable
-    approx_interval = drv.table.approx_interval
+    approx_interval = drv.table_header.approx_interval
     approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
     # attach the frequency_str to rule, it is referenced when creating file name
     rule.frequency_str = frequency_str
-    time_method = _get_time_method(drv.table.table_id)
+    time_method = _get_time_method(drv.frequency)
     rule.time_method = time_method
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
@@ -234,13 +242,13 @@ def compute_average(da: xr.DataArray, rule):
             logger.info(f"{offset=}")
             ds["time"] = ds.time.to_pandas() + offset
     elif time_method == "CLIMATOLOGY":
-        if drv.table.frequency == "monC":
+        if drv.frequency == "monC":
             ds = da.groupby("time.month").mean("time")
-        elif drv.table.frequency == "1hrCM":
+        elif drv.frequency == "1hrCM":
             ds = da.groupby("time.hour").mean("time")
         else:
             raise ValueError(
-                f"Unknown Climatology {drv.table.frequency} in Table {drv.table.table_id}"
+                f"Unknown Climatology {drv.frequency} in Table {drv.table_header.table_id}"
             )
     else:
         raise ValueError(f"Unknown time method: {time_method}")
