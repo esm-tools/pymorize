@@ -216,17 +216,30 @@ def rule_with_unsorted_data():
         cmor_variable="var1",
         pipelines=["pymorize.pipeline.TestingPipeline"],
         data_request_variables=[
-            CMIP6DataRequestVariable(
-                variable_id="var1",
-                unit="kg m-2 s-1",
-                description="Some description",
-                time_method="instant",
-                table="Some Table",
-                frequency="mon",
-                realms=["atmos"],
-                standard_name="some_standard_name",
-                cell_methods="time: mean",
-                cell_measures="area: areacella",
+            CMIP6DataRequestVariable.from_dict(
+                dict(
+                    variable_id="var1",
+                    units="kg m-2 s-1",
+                    comment="Some comment",
+                    description="Some description",
+                    dimensions="time lat lon",
+                    long_name="Some long name",
+                    time_method="instant",
+                    table="Some Table",
+                    frequency="mon",
+                    positive="up",
+                    out_name="var1",
+                    ok_max_mean_abs=999,
+                    ok_min_mean_abs=-999,
+                    type="real",
+                    modeling_realm="atmos",
+                    realms=["atmos"],
+                    standard_name="some_standard_name",
+                    cell_methods="time: mean",
+                    cell_measures="area: areacella",
+                    valid_max=1,
+                    valid_min=0,
+                )
             )
         ],
     )
