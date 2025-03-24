@@ -201,7 +201,7 @@ def rule_with_data_request():
 
 @pytest.fixture
 def rule_with_unsorted_data():
-    return Rule(
+    r = Rule(
         array_order=["time", "lat", "lon"],
         inputs=[
             {
@@ -243,6 +243,9 @@ def rule_with_unsorted_data():
             )
         ],
     )
+    r.data_request_variable = r.data_request_variables[0]
+
+    return r
 
 
 @pytest.fixture
