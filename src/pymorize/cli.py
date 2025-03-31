@@ -226,6 +226,26 @@ def config(config_file, verbose, quiet, logfile, profile_mem):
 @click_loguru.logging_options
 @click_loguru.init_logger()
 @click.argument("config_file", type=click.Path(exists=True))
+def pipeline_requirements(config_file, verbose, quiet, logfile, profile_mem):
+    logger.info(f"Processing {config_file}")
+    with open(config_file, "r") as f:
+        cfg = yaml.safe_load(f)
+        # We don't need dask just to check the pipelines
+        cfg["pymorize"] = cfg.get("pymorize", {})
+        cfg["pymorize"]["enable_dask"] = False
+        cmorizer = CMORizer.from_dict(cfg)
+        for rule in cmorizer.rules:
+            try:
+                rule.match_pipelines(cmorizer.pipelines)
+                rule.crosscheck_pipelines()
+            except Exception as e:
+                logger.error(f"Error in {rule.name}: {e}")
+
+
+@validate.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument("config_file", type=click.Path(exists=True))
 @click.argument("table_name", type=click.STRING)
 def table(config_file, table_name, verbose, quiet, logfile, profile_mem):
     logger.info(f"Processing {config_file}")

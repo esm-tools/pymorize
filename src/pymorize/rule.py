@@ -1,5 +1,6 @@
 import copy
 import datetime
+import inspect
 import pathlib
 import re
 import typing
@@ -12,6 +13,54 @@ from .data_request.table import DataRequestTable
 from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
+from .pipeline import Pipeline
+
+
+class RuleRequirement:
+    """Defines a requirement which steps must have tagged in order to be valid"""
+
+    def __init__(self, requirement_name: str, requirement_value: typing.Any):
+        """
+        Initialize a RuleRequirement object.
+
+        Parameters
+        ----------
+        requirement_name : str
+            The name of the requirement that the step must satisfy.
+        requirement_value : Any
+            The value of the requirement that the step must satisfy.
+        """
+        self.requirement_name = requirement_name
+        self.requirement_value = requirement_value
+
+    @classmethod
+    def from_dict(cls, d):
+        """Build a RuleRequirement object from a dictionary"""
+        return cls(**d)
+
+    def pipeline_fulfills_requirements(self, pipeline: Pipeline) -> bool:
+        """Check if a pipeline fulfills the requirements of the rule
+
+        Parameters
+        ----------
+        pipeline : Pipeline
+            The pipeline to check
+
+        Returns
+        -------
+        bool
+            True if the pipeline fulfills the requirements, False otherwise
+        """
+        for step in pipeline.steps:
+            step_src = inspect.getsource(step)
+            for line in step_src.split("\n"):
+                if f"_satisfies_{self.requirement_name}" in line:
+                    if str(self.requirement_value) in line:
+                        return True
+        return False
+
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.requirement_name}, {self.requirement_value})"
 
 
 class Rule:
@@ -166,6 +215,31 @@ class Rule:
                 raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
         self.pipelines = matched_pipelines
         self._pipelines_are_mapped = True
+
+    def crosscheck_pipelines(self):
+        """
+        Check that all pipelines are valid for the rule.
+
+        This method will raise a ValueError if any of the pipelines in the rule are not valid.
+        """
+        requirements = []
+        # FIXME: Dynamically get requirements based on CMOR variable. Something like this:
+        # Should be a list of dictionaries containing requirement specifications:
+        # requirements = [{"requirement_name": "cell_methods", "requirement_value": "time: mean"}, ]
+        if hasattr(self.data_request_variable, "cell_methods"):
+            requirements.append(
+                {
+                    "requirement_name": "cell_methods",
+                    "requirement_value": self.data_request_variable.cell_methods,
+                },
+            )
+        for requirement in requirements:
+            rr = RuleRequirement.from_dict(requirement)
+            req_satisfied = any(
+                rr.pipeline_fulfills_requirements(pl) for pl in self.pipelines
+            )
+            if not req_satisfied:
+                raise ValueError(f"Rule {self.name} does not satisfy requirement {rr}")
 
     @classmethod
     def from_dict(cls, data):

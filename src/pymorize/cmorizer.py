@@ -57,6 +57,7 @@ class CMORizer:
         rules_cfg=None,
         dask_cfg=None,
         inherit_cfg=None,
+        run_post_inits=True,
         **kwargs,
     ):
         ################################################################################
@@ -112,25 +113,26 @@ class CMORizer:
 
         ################################################################################
         # Post_Init:
-        if self._pymorize_cfg("enable_dask"):
-            logger.debug("Setting up dask configuration...")
-            self._post_init_configure_dask()
-            logger.debug("...done!")
-            logger.debug("Creating dask cluster...")
-            self._post_init_create_dask_cluster()
-            logger.debug("...done!")
-        self._post_init_create_pipelines()
-        self._post_init_create_rules()
-        self._post_init_create_data_request_tables()
-        self._post_init_create_data_request()
-        self._post_init_populate_rules_with_tables()
-        self._post_init_populate_rules_with_dimensionless_unit_mappings()
-        self._post_init_populate_rules_with_aux_files()
-        self._post_init_populate_rules_with_data_request_variables()
-        self._post_init_create_controlled_vocabularies()
-        self._post_init_populate_rules_with_controlled_vocabularies()
-        self._post_init_create_global_attributes_on_rules()
-        logger.debug("...post-init done!")
+        if run_post_inits:
+            if self._pymorize_cfg("enable_dask"):
+                logger.debug("Setting up dask configuration...")
+                self._post_init_configure_dask()
+                logger.debug("...done!")
+                logger.debug("Creating dask cluster...")
+                self._post_init_create_dask_cluster()
+                logger.debug("...done!")
+            self._post_init_create_pipelines()
+            self._post_init_create_rules()
+            self._post_init_create_data_request_tables()
+            self._post_init_create_data_request()
+            self._post_init_populate_rules_with_tables()
+            self._post_init_populate_rules_with_dimensionless_unit_mappings()
+            self._post_init_populate_rules_with_aux_files()
+            self._post_init_populate_rules_with_data_request_variables()
+            self._post_init_create_controlled_vocabularies()
+            self._post_init_populate_rules_with_controlled_vocabularies()
+            self._post_init_create_global_attributes_on_rules()
+            logger.debug("...post-init done!")
         ################################################################################
 
     def __del__(self):
@@ -320,6 +322,11 @@ class CMORizer:
     def _match_pipelines_in_rules(self, force=False):
         for rule in self.rules:
             rule.match_pipelines(self.pipelines, force=force)
+
+    def _crosscheck_pipelines_in_rules(self):
+        if self._pymorize_cfg.get("pipelines_enforce_requirements"):
+            for rule in self.rules:
+                rule.crosscheck_pipelines()
 
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
@@ -609,6 +616,7 @@ class CMORizer:
     def process(self, parallel=None):
         logger.debug("Process start!")
         self._match_pipelines_in_rules()
+        self._crosscheck_pipelines_in_rules()
         if parallel is None:
             parallel = self._pymorize_cfg.get("parallel", True)
         if parallel:
