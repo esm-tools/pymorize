@@ -209,6 +209,7 @@ RULES_SCHEMA = {
                 # aerosol, atmos, land, landIce, ocnBgchem, ocean, seaIce
                 "model_component": {"type": "string", "required": True},
                 "grid_label": {"type": "string", "required": True},
+                "array_order": {"type": "list", "required": False},
             },
         },
     },
