@@ -23,7 +23,7 @@ rules:
     description: "dissic from REcoM, showing missing units in NetCDF"
     inputs:
       - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/03-incorrect-units-in-source-files/model_runs/piControl_LUtrans1850/outdata/recom/"
-        pattern: bgc02_recom_.*.nc
+        pattern: bgc02_fesom_.*.nc
     grid_file: /pool/data/AWICM/FESOM1/MESHES/core/griddes.nc
     mesh_path: /pool/data/AWICM/FESOM1/MESHES/core
     cmor_variable: dissic
@@ -35,13 +35,11 @@ rules:
     source_id: AWI-CM-1-1-HR
     model_component: ocnBgchem
     grid_label: gn
-    pipelines:
-      - default
   - name: Seawater Alkalinity
     description: "talk from REcoM, showing missing units in NetCDF"
     inputs:
       - path: "/work/ab0246/a270077/SciComp/Projects/pymorize/examples/03-incorrect-units-in-source-files/model_runs/piControl_LUtrans1850/outdata/recom/"
-        pattern: bgc03_recom_.*.nc
+        pattern: bgc03_fesom_.*.nc
     grid_file: /pool/data/AWICM/FESOM1/MESHES/core/griddes.nc
     mesh_path: /pool/data/AWICM/FESOM1/MESHES/core
     cmor_variable: talk
@@ -53,5 +51,43 @@ rules:
     source_id: AWI-CM-1-1-HR
     model_component: ocnBgchem
     grid_label: gn
-    pipelines:
-      - default
+distributed:
+  worker:
+    memory:
+      target: 0.6 # Target 60% of worker memory usage
+      spill: 0.7 # Spill to disk when 70% of memory is used
+      pause: 0.8 # Pause workers if memory usage exceeds 80%
+      terminate: 0.95 # Terminate workers at 95% memory usage
+    resources:
+      CPU: 4 # Assign 4 CPUs per worker
+    death-timeout: 600 # Worker timeout if no heartbeat (seconds): Keep workers alive for 5 minutes
+# SLURM-specific settings for launching workers
+jobqueue:
+  slurm:
+    name: pymorize-worker
+    queue: compute # SLURM queue/partition to submit jobs
+    account: ab0246 # SLURM project/account name
+    cores: 4 # Number of cores per worker
+    memory: 128GB # Memory per worker
+    walltime: '00:30:00' # Maximum walltime per job
+    interface: ib0 # Network interface for communication
+    job-extra-directives: # Additional SLURM job options
+      - '--exclusive' # Run on exclusive nodes
+      - '--nodes=1'
+    # Worker template
+    worker-extra:
+      - "--nthreads"
+      - 4
+      - "--memory-limit"
+      - "128GB"
+      - "--lifetime"
+      - "25m"
+      - "--lifetime-stagger"
+      - "4m"
+    # How to launch workers and scheduler
+    job-cpu: 128
+    job-mem: 256GB
+    # worker-command: dask-worker
+    processes: 4 # Limited by memory per worker!
+    # scheduler-command: dask-scheduler
+
