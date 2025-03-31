@@ -222,6 +222,7 @@ class Rule:
         # FIXME: Dynamically get requirements based on CMOR variable. Something like this:
         # Should be a list of dictionaries containing requirement specifications:
         # requirements = [{"requirement_name": "cell_methods", "requirement_value": "time: mean"}, ]
+        breakpoint()
         requirements = [dict(), dict()]
         for requirement in requirements:
             rr = RuleRequirement.from_dict(requirement)
