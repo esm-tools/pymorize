@@ -59,6 +59,9 @@ class RuleRequirement:
                         return True
         return False
 
+    def __repr__(self):
+        return f"{self.__class__.__name__}({self.requirement_name}, {self.requirement_value})"
+
 
 class Rule:
     def __init__(
@@ -219,11 +222,17 @@ class Rule:
 
         This method will raise a ValueError if any of the pipelines in the rule are not valid.
         """
+        requirements = []
         # FIXME: Dynamically get requirements based on CMOR variable. Something like this:
         # Should be a list of dictionaries containing requirement specifications:
         # requirements = [{"requirement_name": "cell_methods", "requirement_value": "time: mean"}, ]
-        breakpoint()
-        requirements = [dict(), dict()]
+        if hasattr(self.data_request_variable, "cell_methods"):
+            requirements.append(
+                {
+                    "requirement_name": "cell_methods",
+                    "requirement_value": self.data_request_variable.cell_methods,
+                },
+            )
         for requirement in requirements:
             rr = RuleRequirement.from_dict(requirement)
             req_satisfied = any(
