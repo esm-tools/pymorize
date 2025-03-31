@@ -181,6 +181,11 @@ class PymorizeConfig:
                 ],
             ),
         )
+        pipelines_enforce_requirements = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to ensure that pipeline rules match up with their requirements",
+        )
         quiet = Option(
             default=False, doc="Whether to suppress output.", parser=_parse_bool
         )

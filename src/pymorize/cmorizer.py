@@ -324,8 +324,9 @@ class CMORizer:
             rule.match_pipelines(self.pipelines, force=force)
 
     def _crosscheck_pipelines_in_rules(self):
-        for rule in self.rules:
-            rule.crosscheck_pipelines()
+        if self._pymorize_cfg.get("pipelines_enforce_requirements"):
+            for rule in self.rules:
+                rule.crosscheck_pipelines()
 
     def find_matching_rule(
         self, data_request_variable: DataRequestVariable
