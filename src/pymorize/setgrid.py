@@ -25,6 +25,7 @@ from typing import Union
 
 import xarray as xr
 
+from .logging import logger
 from .rule import Rule
 
 
@@ -46,15 +47,19 @@ def setgrid(
     xr.Dataset
         The output dataarray or dataset with the grid information.
     """
+    logger.info("Starting setgrid step")
     gridfile = rule.get("grid_file")
+    logger.info(f"    * Using {gridfile=}")
     if gridfile is None:
         raise ValueError("Missing grid file. Please set 'grid_file' in the rule.")
     grid = xr.open_dataset(gridfile)
     required_dims = set(sum([gc.dims for _, gc in grid.coords.items()], ()))
+    logger.info(f"    * Determined required_dims as {required_dims=}")
     to_rename = {}
     can_merge = False
     for dim in required_dims:
         dimsize = grid.sizes[dim]
+        logger.info(f"Checking if {dim=} is in {da.sizes=}")
         if dim in da.sizes:
             can_merge = True
             if da.sizes[dim] != dimsize:
@@ -62,10 +67,14 @@ def setgrid(
                     f"Mismatch dimension sizes {dim} {dimsize} (grid) {da.sizes[dim]} (data)"
                 )
         else:
+            logger.info(f"{dim=} is not in {da.sizes=}")
+            logger.info(f"Need to check individual sizes...")
             for name, _size in da.sizes.items():
+                logger.info(f"{name=}, {_size=}")
                 if dimsize == _size:
                     can_merge = True
                     to_rename[name] = dim
+    logger.info(f"    * After inspection, {can_merge=}")
     if can_merge:
         if to_rename:
             da = da.rename(to_rename)
@@ -74,4 +83,8 @@ def setgrid(
         required_vars = [name for name in grid.variables.keys() if pattern.match(name)]
         new_grid = grid[required_vars]
         da = new_grid.merge(da)
+    else:
+        logger.warning(
+            "!!! SETGRID Step was requested by nothing to be merged! Check carefully!"
+        )
     return da
