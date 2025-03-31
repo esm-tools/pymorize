@@ -18,7 +18,7 @@ from .cmorizer import CMORizer
 from .filecache import fc
 from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
-from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -201,11 +201,21 @@ def config(config_file, verbose, quiet, logfile, profile_mem):
         if "rules" in cfg:
             rules = cfg["rules"]
             RULES_VALIDATOR.validate({"rules": rules})
-        if not PIPELINES_VALIDATOR.errors and not RULES_VALIDATOR.errors:
+        if "general" in cfg:
+            general = cfg["general"]
+            GENERAL_VALIDATOR.validate({"general": general})
+        if not any(
+            [
+                PIPELINES_VALIDATOR.errors,
+                RULES_VALIDATOR.errors,
+                GENERAL_VALIDATOR.errors,
+            ]
+        ):
             logger.success(
-                f"Configuration {config_file} is valid for both rules and pipelines!"
+                f"Configuration {config_file} is valid for general settings, rules, and pipelines!"
             )
         for key, error in {
+            **GENERAL_VALIDATOR.errors,
             **PIPELINES_VALIDATOR.errors,
             **RULES_VALIDATOR.errors,
         }.items():

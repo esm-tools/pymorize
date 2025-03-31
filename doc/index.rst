@@ -12,6 +12,7 @@ Contents
 .. toctree::
    :maxdepth: 2
 
+   quickstart
    installation
    pymorize_building_blocks
    pymorize_cli
@@ -23,6 +24,7 @@ Contents
    including_subcommand_plugins
    pymorize_configuration
    pymorize_aux_files
+   cookbook
    developer_guide
    developer_setup
    API

@@ -1,20 +1,23 @@
 """
-Units
-=====
 This module deals with the auto-unit conversion in the cmorization process.
 In case the units in model files differ from CMIP Tables, this module attempts to
 convert them automatically.
 
 Conversion to-or-from a dimensionless quantity is ambiguous. In this case,
 provide a mapping of what this dimensionless quantity represents and that
-is used for the conversion. `data/dimensionless_mappings.yaml` contains some
+is used for the conversion. ``data/dimensionless_mappings.yaml`` contains some
 examples on how the mapping is written.
+
+:func:`.handle_unit_conversion` is the only function users care about as it handles
+the unit conversion of an :class:`xr.DataArray` according to a :class:`.Rule`. The rest
+of the functions in this module are support functions.
 """
 
 import re
 from typing import Pattern, Union
 
 import cf_xarray.units  # noqa: F401 # pylint: disable=unused-import
+import pint
 import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
@@ -25,24 +28,97 @@ from .rule import Rule
 ureg = pint_xarray.unit_registry
 
 
-def handle_chemicals(
-    s: Union[str, None] = None, pattern: Pattern = re.compile(r"mol(?P<symbol>\w+)")
-):
-    """Registers known chemical elements definitions to global ``ureg`` (unit registry)
+def _get_units(
+    da: xr.DataArray,
+    rule: Rule,
+) -> tuple[str, str, str]:
+    """
+    Get the units from a DataArray and a Rule.
+
+    This function extracts the units from a DataArray and a Rule. If the Rule
+    contains a model_units entry, this takes precedence over the units defined
+    in the dataset. The function also handles dimensionless units by looking up
+    a unit alias in the dimensionless_unit_mappings dictionary of the Rule.
 
     Parameters
     ----------
-    s: str or None
-        string to search for chemical elements based upon the symbol, e.g. ``C`` for carbon.
-    pattern: re.Pattern
-        compiled regex pattern to search for chemical elements. This should contain a
-        `named group <https://docs.python.org/3/howto/regex.html#non-capturing-and-named-groups>`_ ``symbol``
-        to extract the symbol of the chemical element from a potentially larger string.
+    da : xarray.DataArray
+        The DataArray to extract the units from.
+    rule : dict
+        The Rule to extract the units from.
+
+    Returns
+    -------
+    from_unit : str
+        The unit of the DataArray.
+    to_unit : str
+        The unit to convert the DataArray to.
+    to_unit_dimensionless_mapping : str
+        The unit alias used for representing the to_unit.
+    """
+    model_unit = rule.get("model_unit", None)
+    from_unit = da.attrs.get("units", None)
+    if model_unit is not None:
+        logger.info(
+            f"user defined units {model_unit!r} takes precedence"
+            f" over units defined in dataset {from_unit!r}"
+        )
+        from_unit = model_unit
+    to_unit = rule.data_request_variable.units
+    to_unit_dimensionless_mapping = None
+    cmor_variable = rule.data_request_variable.variable_id
+    dimless_mapping = rule.get("dimensionless_unit_mappings", {})
+    if cmor_variable in dimless_mapping:
+        try:
+            to_unit_dimensionless_mapping = dimless_mapping.get(cmor_variable)[to_unit]
+        except KeyError:
+            raise KeyError("Dimensionless unit not found in mappings")
+        if to_unit_dimensionless_mapping is not None:
+            logger.info(
+                f"unit alias {to_unit_dimensionless_mapping!r} used for representing {to_unit!r}."
+                f" see dimensionless variable map for variable {cmor_variable!r}"
+            )
+    if from_unit is None:
+        raise ValueError(f"Unit not defined: {from_unit=}")
+    if not (to_unit or to_unit_dimensionless_mapping):
+        raise ValueError(
+            f"Unit not defined: {to_unit=}, {to_unit_dimensionless_mapping=}"
+        )
+    return from_unit, to_unit, to_unit_dimensionless_mapping
+
+
+def handle_chemicals(
+    s: Union[str, None] = None,
+    pattern: Pattern = re.compile(
+        r"mol(?P<symbol>\w+)",
+    ),
+) -> None:
+    """
+    Handle units containing chemical symbols.
+
+    If the unit string contains a chemical symbol (e.g. molNaCl), Pint will
+    raise an error because it does not know the definition of the chemical
+    symbol. This function attempts to detect chemical symbols in the unit
+    string and register a unit definition for it with the aid of chemicals
+    package.
+
+    Parameters
+    ----------
+    s : str
+        The unit string to parse.
+    pattern : re.Pattern, optional
+        The regular expression pattern to use for searching for chemical
+        symbols in the unit string. Defaults to a pattern that matches
+        "mol" followed by any number of word characters.
+
+    Returns
+    -------
+    None
 
     Raises
     ------
     ValueError
-        If the chemical element is not found in the periodic table.
+        If the chemical symbol is not recognized.
 
     See Also
     --------
@@ -51,19 +127,18 @@ def handle_chemicals(
     """
     if s is None:
         return
-    match = pattern.search(s)
-    if match:
-        d = match.groupdict()
-        try:
-            element = getattr(periodic_table, d["symbol"])
-        except AttributeError:
-            raise ValueError(
-                f"Unknown chemical element {d.groupdict()['symbol']} in {d.group()}"
-            )
-        else:
+    try:
+        ureg(s)
+    except pint.errors.UndefinedUnitError:
+        if match := pattern.search(s):
+            d = match.groupdict()
             try:
-                ureg(s)
-            except pint_xarray.pint.errors.UndefinedUnitError:
+                element = getattr(periodic_table, d["symbol"])
+            except AttributeError:
+                raise ValueError(
+                    f"Unknown chemical element {d['symbol']} in {match.group()}"
+                )
+            else:
                 logger.debug(f"Chemical element {element.name} detected in units {s}.")
                 logger.debug(
                     f"Registering definition: {match.group()} = {element.MW} * g"
@@ -71,127 +146,142 @@ def handle_chemicals(
                 ureg.define(f"{match.group()} = {element.MW} * g")
 
 
-def handle_unit_conversion(da: xr.DataArray, rule: Rule) -> xr.DataArray:
-    """Performs the unit-aware data conversion.
+def handle_scalar_units(
+    da: xr.DataArray,
+    from_unit: str,
+    to: str,
+) -> xr.DataArray:
+    """
+    Convert a DataArray with scalar units from one unit to another.
 
-    If `source_unit` is provided, it is used instead of the unit from DataArray.
+    This function handles the conversion of a `xarray.DataArray` containing
+    scalar units to another unit. The function uses the `pint` library for
+    unit conversion. If the initial quantification fails due to an undefined
+    unit, it attempts to assign and quantify the unit manually.
 
     Parameters
     ----------
-    da: ~xr.DataArray
-    unit: str
-        unit to convert data to
+    da : xarray.DataArray
+        The DataArray to be converted.
+    from_unit : str
+        The unit of the input DataArray.
+    to : str
+        The unit to convert the DataArray to.
 
     Returns
     -------
-    ~xr.DataArray
-        DataArray with units converted to `unit`.
+    xarray.DataArray
+        The converted DataArray with the new unit.
+
+    Raises
+    ------
+    ValueError
+        If the conversion between the specified units is not possible.
     """
-    if not isinstance(da, xr.DataArray):
-        raise TypeError(f"Expected xr.DataArray, got {type(da)}")
-
-    drv = rule.data_request_variable
-    dimless_mappings = rule.get("dimensionless_unit_mappings", {})
-
-    # Process model's unit (from_unit)
-    # --------------------------------
-    # (defined in the yaml file or in the original file)
-    model_unit = rule.get("model_unit")
-    from_unit = da.attrs.get("units")
-    # Overwrite model unit if defined in the yaml file
-    if model_unit is not None:
-        logger.info(
-            f"using user defined unit ({model_unit}) instead of ({from_unit}) from the "
-            "original file"
-        )
-        from_unit = model_unit
-    # Raise error if unit is not defined anywhere
-    if not from_unit:
-        logger.error(
-            "Unit not defined neither in the original file nor in the yaml "
-            "configuration file. Please, define the unit for your data under "
-            f"rules.{rule.name}.model_unit"
-        )
-        raise ValueError("Unit not defined")
-
-    # Process table's unit (to_unit)
-    # ------------------------------
-    to_unit = drv.units
-    cmor_variable_id = drv.variable_id
-    # Check for `to_unit` defined as `None`, `False`, empty string...
-    if not to_unit:
-        logger.error(
-            "Unit of CMOR variable '{cmor_variable_id}' not defined in the data "
-            f"request table/s {rule.tables}"
-        )
-        raise ValueError("Unit not defined")
-
-    # Check if the data request unit is a float
-    if unit_can_be_float(to_unit):
-        logger.debug(
-            f"Unit of CMOR variable '{cmor_variable_id}' can be a float: {to_unit}"
-        )
-        try:
-            _to_unit = dimless_mappings.get(cmor_variable_id, {})[to_unit]
-        except KeyError:
-            logger.error(
-                f"Dimensionless unit '{to_unit}' not found in mappings for "
-                f"CMOR variable '{cmor_variable_id}'"
-            )
-            raise KeyError("Dimensionless unit not found in mappings")
-        logger.info(
-            f"Converting units: ({da.name} -> {cmor_variable_id}) {from_unit} -> "
-            f"{to_unit}"
-        )
-    else:
-        _to_unit = to_unit
-        logger.info(
-            f"Converting units: ({da.name} -> {cmor_variable_id}) {from_unit} -> "
-            f"{_to_unit} ({to_unit})"
-        )
-
-    # Chemicals
-    # ---------
-    handle_chemicals(from_unit)
-    handle_chemicals(to_unit)
-
-    # Unit conversion
-    # ---------------
     try:
         new_da = da.pint.quantify(from_unit)
-        new_da = new_da.pint.to(_to_unit).pint.dequantify()
     except ValueError as e:
-        logger.error(
-            f"Unit conversion of '{cmor_variable_id}' from {from_unit} to {to_unit} "
-            f"({_to_unit}) failed: {e}"
-        )
-        raise ValueError(f"Unit conversion failed: {e}")
+        assert "scaling factor" in e.args[0]
+        _from = ureg(from_unit)
+        new_da = da.assign_attrs({"units": _from.units})
+        new_da = new_da.pint.quantify() * _from.magnitude
+    try:
+        return new_da.pint.to(to).pint.dequantify()
+    except ValueError as e:
+        assert "scaling factor" in e.args[0]
+        _to = ureg(to)
+        new_da = new_da.pint.to(_to.units)
+        new_da = new_da / _to.magnitude
+        new_da = new_da.assign_attrs({"units": _to.units})
+        return new_da.pint.dequantify()
 
-    # Reset final unit to the original value as defined in the cmor table
-    if new_da.attrs.get("units") != to_unit:
-        logger.debug(
-            "Pint auto-unit attribute setter different from requested unit string "
-            f"({new_da.attrs.get('units')} vs {to_unit}). Setting manually."
-        )
-        new_da.attrs["units"] = to_unit
 
-    # Ensure a units attribute is present
-    if "units" not in new_da.attrs:
-        logger.error("Units attribute not present in DataArray after conversion!")
-        raise AttributeError(
-            "Units attribute not present in DataArray after conversion!"
-        )
+def convert(
+    da: xr.DataArray,
+    from_unit: str,
+    to_unit: str,
+    to_unit_dimensionless_mapping: Union[str, None] = None,
+) -> xr.DataArray:
+    """
+    Convert a DataArray from one unit to another.
 
+    This function handles the conversion of a `xarray.DataArray` from one unit
+    to another, taking into account chemical symbols and scaling factor in units.
+    It uses the `pint` library for unit conversion and supports aliasing of target units.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The DataArray to be converted.
+    from_unit : str
+        The unit of the input DataArray.
+    to_unit : str
+        The unit to convert the DataArray to.
+    to_unit_dimensionless_mapping : str, optional
+        An alias for the target unit, if any. Defaults to None.
+
+    Returns
+    -------
+    xarray.DataArray
+        The converted DataArray with the new unit.
+
+    Raises
+    ------
+    ValueError
+        If the conversion between the specified units is not possible.
+    """
+
+    handle_chemicals(from_unit)
+    to = to_unit_dimensionless_mapping or to_unit
+    handle_chemicals(to)
+
+    try:
+        new_da = da.pint.quantify(from_unit).pint.to(to).pint.dequantify()
+    except ValueError as e:
+        if "scaling factor" in e.args[0]:
+            if str(ureg.Quantity(to).units) != "dimensionless":
+                new_da = handle_scalar_units(da, from_unit, to)
+            else:
+                raise e
+        else:
+            raise e
+    if new_da.units != to_unit:
+        new_da = new_da.assign_attrs({"units": to_unit})
     return new_da
 
 
-def unit_can_be_float(value):
-    try:
-        _ = float(value)
-        return True
-    except ValueError as e:
-        logger.debug(f"unit_can_be_float: {e}")
-        return False
-    except TypeError as e:
-        logger.debug(f"unit_can_be_float: {e}")
-        return False
+def handle_unit_conversion(
+    da: xr.DataArray,
+    rule: Rule,
+) -> xr.DataArray:
+    """
+    Handle unit conversion of a DataArray according to a Rule.
+
+    This function applies the necessary unit conversion to a DataArray based on
+    the units defined in the Rule. It takes into account user-defined units,
+    chemical symbols and dimensionless units.
+
+    Parameters
+    ----------
+    da : xarray.DataArray
+        The DataArray to be converted.
+    rule : dict
+        The Rule containing the units to convert to.
+
+    Returns
+    -------
+    xarray.DataArray
+        The converted DataArray with the new unit.
+    """
+    if isinstance(da, xr.Dataset):
+        model_variable = rule.model_variable
+        new_da = da[model_variable]
+        from_unit, to_unit, to_unit_dimensionless_mapping = _get_units(new_da, rule)
+        converted_da = convert(
+            new_da, from_unit, to_unit, to_unit_dimensionless_mapping
+        )
+        da[model_variable] = converted_da
+        return da
+    else:
+        from_unit, to_unit, to_unit_dimensionless_mapping = _get_units(da, rule)
+        return convert(da, from_unit, to_unit, to_unit_dimensionless_mapping)

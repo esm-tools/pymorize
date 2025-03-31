@@ -211,6 +211,16 @@ class PymorizeConfig:
                 ],
             ),
         )
+        xarray_default_missing_value = Option(
+            default=1.0e30,
+            doc="Which missing value to use for xarray. Default is 1e30.",
+            parser=float,
+        )
+        xarray_skip_unit_attr_from_drv = Option(
+            parser=_parse_bool,
+            default="yes",
+            doc="Whether to skip setting the unit attribute from the DataRequestVariable, this can be handled via Pint",
+        )
         xarray_time_dtype = Option(
             default="float64",
             doc="The dtype to use for time axis in xarray.",

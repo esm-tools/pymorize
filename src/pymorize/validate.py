@@ -9,7 +9,33 @@ import pathlib
 from cerberus import Validator
 
 
-class PipelineValidator(Validator):
+class DirectoryAwareValidator(Validator):
+    """
+    A Validator that can check if a field is a directory.
+    """
+
+    def _validate_is_directory(self, is_directory, field, value):
+        if is_directory:
+            try:
+                if glob.has_magic(value):
+                    self._error(field, "Must not contain glob characters")
+            except TypeError as e:
+                self._error(field, f"{e.args[0]}. Must be a string")
+            else:
+                try:
+                    pathlib.Path(value).expanduser().resolve()
+                except TypeError as e:
+                    self._error(field, f"{e.args[0]}. Must be a string")
+
+    # Add a schema for the rule arguments
+    _validate_is_directory.schema = {"type": "boolean"}
+
+
+class GeneralSectionValidator(DirectoryAwareValidator):
+    """A Validator for the general section of the configuration file"""
+
+
+class PipelineSectionValidator(Validator):
     """
     Validator for pipeline configuration.
 
@@ -30,6 +56,7 @@ class PipelineValidator(Validator):
         if is_qualname:
             if value.startswith("script://"):
                 script_path = value.replace("script://", "")
+                script_path = script_path.rsplit(":", 1)[0]
                 try:
                     pathlib.Path(script_path).expanduser().resolve()
                 except TypeError as e:
@@ -57,22 +84,40 @@ class PipelineValidator(Validator):
             )
 
 
-class RuleValidator(Validator):
-    def _validate_is_directory(self, is_directory, field, value):
-        if is_directory:
-            try:
-                if glob.has_magic(value):
-                    self._error(field, "Must not contain glob characters")
-            except TypeError as e:
-                self._error(field, f"{e.args[0]}. Must be a string")
-            else:
-                try:
-                    pathlib.Path(value).expanduser().resolve()
-                except TypeError as e:
-                    self._error(field, f"{e.args[0]}. Must be a string")
+class RuleSectionValidator(DirectoryAwareValidator):
+    """Validator for rules configuration."""
 
-    # Add a schema for the rule arguments
-    _validate_is_directory.schema = {"type": "boolean"}
+
+GENERAL_SCHEMA = {
+    "general": {
+        "type": "dict",
+        "allow_unknown": True,
+        "schema": {
+            "cmor_version": {
+                "type": "string",
+                "required": True,
+                "allowed": [
+                    "CMIP6",
+                    "CMIP7",
+                ],
+            },
+            "CV_Dir": {
+                "type": "string",
+                "required": True,
+                "is_directory": True,
+            },
+            "CMIP_Tables_Dir": {
+                "type": "string",
+                "required": True,
+                "is_directory": True,
+            },
+        },
+    },
+}
+"""dict : Schema for validating general configuration."""
+
+GENERAL_VALIDATOR = GeneralSectionValidator(GENERAL_SCHEMA)
+"""Validator : Validator for general configuration."""
 
 
 PIPELINES_SCHEMA = {
@@ -94,7 +139,7 @@ PIPELINES_SCHEMA = {
 }
 """dict : Schema for validating pipelines configuration."""
 
-PIPELINES_VALIDATOR = PipelineValidator(PIPELINES_SCHEMA)
+PIPELINES_VALIDATOR = PipelineSectionValidator(PIPELINES_SCHEMA)
 """Validator : Validator for pipelines configuration."""
 
 RULES_SCHEMA = {
@@ -169,4 +214,4 @@ RULES_SCHEMA = {
     },
 }
 """dict : Schema for validating rules configuration."""
-RULES_VALIDATOR = RuleValidator(RULES_SCHEMA)
+RULES_VALIDATOR = RuleSectionValidator(RULES_SCHEMA)
