@@ -68,7 +68,7 @@ def setgrid(
                 )
         else:
             logger.info(f"{dim=} is not in {da.sizes=}")
-            logger.info(f"Need to check individual sizes...")
+            logger.info("Need to check individual sizes...")
             for name, _size in da.sizes.items():
                 logger.info(f"{name=}, {_size=}")
                 if dimsize == _size:
