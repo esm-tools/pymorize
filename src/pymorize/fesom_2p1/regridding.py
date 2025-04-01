@@ -10,7 +10,7 @@ from pyfesom2.load_mesh_data import load_mesh
 from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator
 from scipy.spatial import cKDTree
 
-from .pipeline import FrozenPipeline
+from ..pipeline import FrozenPipeline
 
 
 def lon_lat_to_cartesian(lon, lat, R=6371000):
