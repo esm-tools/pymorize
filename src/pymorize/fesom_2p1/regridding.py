@@ -1,25 +1,16 @@
-import numpy as np
-import xarray as xr
-from pyfesom2.load_mesh_data import load_mesh
-
-from .pipeline import FrozenPipeline
-
-
-##############################################################################
-# The following is taken directly from pyfesom2, the version that can be
-# downloaded via PyPI is out of date and incorrect...
 import logging
 import os
-from collections import namedtuple
 
 import joblib
 import numpy as np
+import scipy
 import scipy.spatial.qhull as qhull
 import xarray as xr
-from numba import jit
+from pyfesom2.load_mesh_data import load_mesh
 from scipy.interpolate import CloughTocher2DInterpolator, LinearNDInterpolator
 from scipy.spatial import cKDTree
-import scipy
+
+from .pipeline import FrozenPipeline
 
 
 def lon_lat_to_cartesian(lon, lat, R=6371000):
