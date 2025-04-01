@@ -19,6 +19,7 @@ from .filecache import fc
 from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
 from .validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .prototype.cellmethods.cellmethods_parser import parse_cell_methods, translate_to_xarray
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -246,6 +247,37 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
         cfg = yaml.safe_load(f)
         cmorizer = CMORizer.from_dict(cfg)
         cmorizer.check_rules_for_output_dir(output_dir)
+
+
+@validate.command()
+@click_loguru.logging_options
+@click_loguru.init_logger()
+@click.argument("config_file", type=click.Path(exists=True))
+def cellmethods(config_file, verbose, quiet, logfile, profile_mem):
+    logger.info(f"Processing {config_file}")
+    with open(config_file, "r") as f:
+        cfg = yaml.safe_load(f)
+        cmorizer = CMORizer.from_dict(cfg)
+        seen_rules = set()
+        for rule in cmorizer.rules:
+            if rule.name in seen_rules:
+                continue
+            else:
+                seen_rules.add(rule.name)
+                cellmethod_text = rule.data_request_variable.cell_methods
+                if not cellmethod_text.strip():
+                    continue
+                else:
+                    tokengroups = parse_cell_methods(cellmethod_text)
+                    logger.info(f"Rule {rule.name!r}: Parsing cellmethods text...")
+                    logger.info(f"{cellmethod_text}")
+                    logger.info("Tokens:")
+                    for tok in tokengroups:
+                        logger.info(f"  {tok}")
+                    logger.info("xarray translation (Pseudo code)")
+                    codelines = translate_to_xarray(cellmethod_text)
+                    for line in codelines.splitlines():
+                        logger.info(f"  {line}")
 
 
 ################################################################################
