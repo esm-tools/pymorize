@@ -1,13 +1,15 @@
 import copy
+import datetime
+import pathlib
 import re
 import typing
 import warnings
 
-import deprecation
-# import questionary
 import yaml
 
-from . import data_request, pipeline
+from . import pipeline
+from .data_request.table import DataRequestTable
+from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
 
@@ -16,11 +18,12 @@ class Rule:
     def __init__(
         self,
         *,
-        inputs: typing.List[dict] = [],
+        name: str = None,
+        inputs: typing.List[dict] = None,
         cmor_variable: str,
-        pipelines: typing.List[pipeline.Pipeline] = [],
-        tables: typing.List[data_request.DataRequestTable] = [],
-        data_request_variables: typing.List[data_request.DataRequestVariable] = [],
+        pipelines: typing.List[pipeline.Pipeline] = None,
+        tables: typing.List[DataRequestTable] = None,
+        data_request_variables: typing.List[DataRequestVariable] = None,
         **kwargs,
     ):
         """
@@ -41,11 +44,14 @@ class Rule:
         data_request_variables : DataRequestVariable or None :
             The DataRequestVariables this rule should create
         """
-        self.inputs = [InputFileCollection.from_dict(inp_dict) for inp_dict in inputs]
+        self.name = name
+        self.inputs = [
+            InputFileCollection.from_dict(inp_dict) for inp_dict in (inputs or [])
+        ]
         self.cmor_variable = cmor_variable
-        self._pipelines = pipelines or [pipeline.DefaultPipeline()]
-        self.tables = tables
-        self.data_request_variables = data_request_variables
+        self.pipelines = pipelines or [pipeline.DefaultPipeline()]
+        self.tables = tables or []
+        self.data_request_variables = data_request_variables or []
         # NOTE(PG): I'm not sure I really like this part. It is too magical and makes the object's public API unclear.
         # Attach all keyword arguments to the object
         for key, value in kwargs.items():
@@ -54,15 +60,10 @@ class Rule:
         # Internal flags:
         self._pipelines_are_mapped = False
 
-    @property
-    def pipelines(self):
-        """
-        Returns
-        -------
-        list
-            The pipelines that this Rule knows about.
-        """
-        return self._pipelines
+    def __getstate__(self):
+        """Custom pickling of a Rule"""
+        state = self.__dict__.copy()
+        return state
 
     def get(self, key, default=None):
         """Gets an attribute from the Rule object
@@ -123,9 +124,6 @@ class Rule:
                 )
         return setattr(self, key, value)
 
-    def __repr__(self):
-        return f"Rule(inputs={self.inputs}, cmor_variable={self.cmor_variable}, pipelines={self.pipelines}, tables={self.tables}, data_request_variables={self.data_request_variables})"
-
     def __str__(self):
         return f"Rule for {self.cmor_variable} with input patterns {self.input_patterns} and pipelines {self.pipelines}"
 
@@ -155,7 +153,7 @@ class Rule:
         for pl_name, pl in known_pipelines.items():
             logger.debug(f"{pl_name}: {pl}")
         matched_pipelines = list()
-        for pl in self._pipelines:
+        for pl in self.pipelines:
             logger.debug(f"Working on: {pl}")
             # Pipeline was already matched
             if isinstance(pl, pipeline.Pipeline):
@@ -166,7 +164,7 @@ class Rule:
             else:
                 logger.error(f"No known way to match the pipeline {pl}")
                 raise TypeError(f"{pl} must be a string or a pipeline.Pipeline object!")
-        self._pipelines = matched_pipelines
+        self.pipelines = matched_pipelines
         self._pipelines_are_mapped = True
 
     @classmethod
@@ -185,6 +183,7 @@ class Rule:
             A dictionary containing the rule data.
         """
         return cls(
+            name=data.pop("name", None),
             inputs=data.pop("inputs"),
             cmor_variable=data.pop("cmor_variable"),
             pipelines=data.pop("pipelines", []),
@@ -195,16 +194,6 @@ class Rule:
     def from_yaml(cls, yaml_str):
         """Wrapper around ``from_dict`` for initializing from YAML"""
         return cls.from_dict(yaml.safe_load(yaml_str))
-
-    @deprecation.deprecated(details="This shouldn't be used, avoid it")
-    def to_yaml(self):
-        return yaml.dump(
-            {
-                "inputs": [p.to_dict for p in self.input_patterns],
-                "cmor_variable": self.cmor_variable,
-                "pipelines": [p.to_dict() for p in self.pipelines],
-            }
-        )
 
     def add_table(self, tbl):
         """Add a table to the rule"""
@@ -259,43 +248,51 @@ class Rule:
         for drv in self.data_request_variables:
             rule_clone = self.clone()
             drv_clone = drv.clone()
-            for drv_table, drv_freq, cell_methods, cell_measures in zip(
-                drv.tables, drv.frequencies, drv.cell_methods, drv.cell_measures
-            ):
-                drv_clone.tables = [drv_table]
-                drv_clone.frequencies = [drv_freq]
-                drv_clone.cell_methods = [cell_methods]
-                drv_clone.cell_measures = [cell_measures]
-                rule_clone.data_request_variables = [drv_clone]
-                clones.append(rule_clone)
+            # FIXME: This is bad. I need to extract one rule for each table,
+            # but the newer API doesn't work as cleanly here...
+            rule_clone.data_request_variables = [drv_clone]
+            clones.append(rule_clone)
         return clones
 
-    # FIXME: Not used and broken+
-    # @classmethod
-    # def from_interface(cls, cmor_table=None):
-    #     """
-    #     Generates a Rule via a wizard-like interface
+    def depluralize_drvs(self):
+        """Depluralizes Data Request Variables to just a single entry"""
+        assert len(self.data_request_variables) == 1
+        self.data_request_variable = self.data_request_variables[0]
+        del self.data_request_variables
 
-    #     Parameters
-    #     ----------
-    #     cmor_table : dict, optional
-    #         A dictionary with the CMOR table. If provided, the user will be
-    #         prompted to select a CMOR variable from the table. Must contain a key
-    #         "variable_entry" with an iterable of CMOR variable names.
-    #     """
-    #     if cmor_table is None:
-    #         cmor_variable = questionary.text("CMOR variable: ").ask()
-    #     else:
-    #         cmor_variable = questionary.autocomplete(
-    #             "CMOR variable: ", cmor_table["variable_entry"]
-    #         ).ask()
-    #     input_patterns = []
-    #     while True:
-    #         input_patterns.append(questionary.text("Input pattern as regex: ").ask())
-    #         if input_patterns:
-    #             [logger.info(p) for p in input_patterns]
-    #         if not questionary.confirm(
-    #             f"Add another input pattern for {cmor_variable}?"
-    #         ).ask():
-    #             break
-    #     return cls(input_patterns=input_patterns, cmor_variable=cmor_variable)
+    def global_attributes_set_on_rule(self):
+        attrs = (
+            "source_id",
+            "grid_label",
+            "cmor_variable",
+            "variant_label",
+            "experiment_id",
+            "activity_id",  # optional
+            "institution_id",  # optional
+            "model_component",  # optional
+            "further_info_url",  # optional
+        )
+        # attribute `creation_date` is the time-stamp of inputs directory
+        try:
+            afile = next(
+                f for file_collection in self.inputs for f in file_collection.files
+            )
+            afile = pathlib.Path(afile)
+            dir_timestamp = datetime.datetime.fromtimestamp(
+                afile.parent.stat().st_ctime
+            )
+        except FileNotFoundError:
+            # No input files, so use the current time -- this is a fallback triggered for test cases
+            dir_timestamp = datetime.datetime.now()
+        time_format = "%Y-%m-%dT%H:%M:%SZ"
+        creation_date = dir_timestamp.strftime(time_format)
+        result = {attr: getattr(self, attr, None) for attr in attrs}
+        result["creation_date"] = creation_date
+        return result
+
+    def create_global_attributes(self, GlobalAttributesClass):
+        self.ga = GlobalAttributesClass(
+            self.data_request_variable,
+            self.controlled_vocabularies,
+            self.global_attributes_set_on_rule(),
+        )

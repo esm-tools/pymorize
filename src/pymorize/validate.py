@@ -9,43 +9,11 @@ import pathlib
 from cerberus import Validator
 
 
-class PipelineValidator(Validator):
+class DirectoryAwareValidator(Validator):
     """
-    Validator for pipeline configuration.
-
-    See Also
-    --------
-    * https://cerberus-sanhe.readthedocs.io/customize.html#class-based-custom-validators
+    A Validator that can check if a field is a directory.
     """
 
-    def _validate_is_qualname(self, is_qualname, field, value):
-        """Test if a string is a Python qualname.
-
-        The rule's arguments are validated against this schema:
-        {'type': 'boolean'}. This means that you can use a boolean value
-        for the schema argument "is_qualname" in your rule definition.
-        """
-        if is_qualname and not isinstance(value, str):
-            self._error(field, "Must be a string")
-        if is_qualname:
-            parts = value.split(".")
-            module_name, attr_name = ".".join(parts[:-1]), parts[-1]
-            try:
-                module = importlib.import_module(module_name)
-                if not hasattr(module, attr_name):
-                    self._error(field, "Must be a valid Python qualname")
-            except (ImportError, ModuleNotFoundError):
-                self._error(field, "Must be a valid Python qualname")
-
-    def _validate(self, document):
-        super()._validate(document)
-        if "steps" not in document and "uses" not in document:
-            self._error(
-                "document", 'At least one of "steps" or "uses" must be specified'
-            )
-
-
-class RuleValidator(Validator):
     def _validate_is_directory(self, is_directory, field, value):
         if is_directory:
             try:
@@ -59,6 +27,98 @@ class RuleValidator(Validator):
                 except TypeError as e:
                     self._error(field, f"{e.args[0]}. Must be a string")
 
+    # Add a schema for the rule arguments
+    _validate_is_directory.schema = {"type": "boolean"}
+
+
+class GeneralSectionValidator(DirectoryAwareValidator):
+    """A Validator for the general section of the configuration file"""
+
+
+class PipelineSectionValidator(Validator):
+    """
+    Validator for pipeline configuration.
+
+    See Also
+    --------
+    * https://cerberus-sanhe.readthedocs.io/customize.html#class-based-custom-validators
+    """
+
+    def _validate_is_qualname_or_script(self, is_qualname, field, value):
+        """Test if a string is a Python qualname.
+
+        The rule's arguments are validated against this schema:
+        {'type': 'boolean'}. This means that you can use a boolean value
+        for the schema argument "is_qualname" in your rule definition.
+        """
+        if is_qualname and not isinstance(value, str):
+            self._error(field, "Must be a string")
+        if is_qualname:
+            if value.startswith("script://"):
+                script_path = value.replace("script://", "")
+                script_path = script_path.rsplit(":", 1)[0]
+                try:
+                    pathlib.Path(script_path).expanduser().resolve()
+                except TypeError as e:
+                    self._error(field, f"{e.args[0]}. Must be a string")
+                if not pathlib.Path(script_path).expanduser().resolve().is_file():
+                    self._error(field, "Must be a valid file path")
+            else:
+                parts = value.split(".")
+                module_name, attr_name = ".".join(parts[:-1]), parts[-1]
+                try:
+                    module = importlib.import_module(module_name)
+                    if not hasattr(module, attr_name):
+                        self._error(field, "Must be a valid Python qualname")
+                except (ImportError, ModuleNotFoundError):
+                    self._error(field, "Must be a valid Python qualname")
+
+    # Add a schema for the rule arguments
+    _validate_is_qualname_or_script.schema = {"type": "boolean"}
+
+    def _validate(self, document):
+        super()._validate(document)
+        if "steps" not in document and "uses" not in document:
+            self._error(
+                "document", 'At least one of "steps" or "uses" must be specified'
+            )
+
+
+class RuleSectionValidator(DirectoryAwareValidator):
+    """Validator for rules configuration."""
+
+
+GENERAL_SCHEMA = {
+    "general": {
+        "type": "dict",
+        "allow_unknown": True,
+        "schema": {
+            "cmor_version": {
+                "type": "string",
+                "required": True,
+                "allowed": [
+                    "CMIP6",
+                    "CMIP7",
+                ],
+            },
+            "CV_Dir": {
+                "type": "string",
+                "required": True,
+                "is_directory": True,
+            },
+            "CMIP_Tables_Dir": {
+                "type": "string",
+                "required": True,
+                "is_directory": True,
+            },
+        },
+    },
+}
+"""dict : Schema for validating general configuration."""
+
+GENERAL_VALIDATOR = GeneralSectionValidator(GENERAL_SCHEMA)
+"""Validator : Validator for general configuration."""
+
 
 PIPELINES_SCHEMA = {
     "pipelines": {
@@ -71,7 +131,7 @@ PIPELINES_SCHEMA = {
                 "steps": {
                     "type": "list",
                     "excludes": "uses",
-                    "schema": {"type": "string", "is_qualname": True},
+                    "schema": {"type": "string", "is_qualname_or_script": True},
                 },
             },
         },
@@ -79,7 +139,7 @@ PIPELINES_SCHEMA = {
 }
 """dict : Schema for validating pipelines configuration."""
 
-PIPELINES_VALIDATOR = PipelineValidator(PIPELINES_SCHEMA)
+PIPELINES_VALIDATOR = PipelineSectionValidator(PIPELINES_SCHEMA)
 """Validator : Validator for pipelines configuration."""
 
 RULES_SCHEMA = {
@@ -129,10 +189,11 @@ RULES_SCHEMA = {
                 "cmor_units": {"type": "string", "required": False},
                 # FIXME(PS): How is it currently defined?
                 "model_units": {"type": "string", "required": False},
+                "file_timespan": {"type": "string", "required": False},
                 "variant_label": {
                     "type": "string",
                     "required": True,
-                    "regex": "^r\d+i\d+p\d+f\d+$",
+                    "regex": r"^r\d+i\d+p\d+f\d+$",
                 },
                 "source_id": {"type": "string", "required": True},
                 "output_directory": {
@@ -143,9 +204,14 @@ RULES_SCHEMA = {
                 "instition_id": {"type": "string", "required": False},
                 "experiment_id": {"type": "string", "required": True},
                 "adjust_timestamp": {"type": "boolean", "required": False},
+                "further_info_url": {"type": "string", "required": False},
+                # "model_component" examples:
+                # aerosol, atmos, land, landIce, ocnBgchem, ocean, seaIce
+                "model_component": {"type": "string", "required": True},
+                "grid_label": {"type": "string", "required": True},
             },
         },
     },
 }
 """dict : Schema for validating rules configuration."""
-RULES_VALIDATOR = RuleValidator(RULES_SCHEMA)
+RULES_VALIDATOR = RuleSectionValidator(RULES_SCHEMA)

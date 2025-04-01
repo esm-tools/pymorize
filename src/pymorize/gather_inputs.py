@@ -11,7 +11,7 @@ import deprecation
 import dpath
 import xarray as xr
 
-from .filecache import register_cache
+from .filecache import register_cache  # noqa: F401
 from .logging import logger
 
 _PATTERN_ENV_VAR_NAME_ADDR = "/pymorize/pattern_env_var_name"
@@ -25,15 +25,16 @@ _PATTERN_ENV_VAR_VALUE_DEFAULT = ".*"  # Default: match anything
 
 
 class InputFileCollection:
-    def __init__(self, path, pattern):
+    def __init__(self, path, pattern, frequency=None, time_dim_name=None):
         self.path = pathlib.Path(path)
         self.pattern = re.compile(pattern)  # Compile the regex pattern
+        self.frequency = frequency
+        self.time_dim_name = time_dim_name
 
-    # def __iter__(self):
     @property
     def files(self):
         files = []
-        for file in self.path.iterdir():
+        for file in list(self.path.iterdir()):
             if self.pattern.match(
                 file.name
             ):  # Check if the filename matches the pattern
@@ -42,7 +43,7 @@ class InputFileCollection:
 
     @classmethod
     def from_dict(cls, d):
-        return cls(d["path"], d["pattern"])
+        return cls(d["path"], d["pattern"], d.get("frequency"), d.get("time_dim_name"))
 
 
 def _input_pattern_from_env(config: dict) -> re.Pattern:
@@ -266,14 +267,16 @@ def load_mfdataset(data, rule_spec):
     rule_spec : Rule
         Rule being handled
     """
+    engine = rule_spec._pymorize_cfg("xarray_engine")
     all_files = []
     for file_collection in rule_spec.inputs:
         for f in file_collection.files:
             all_files.append(f)
     all_files = _resolve_symlinks(all_files)
-    mf_ds = xr.open_mfdataset(
-        all_files, parallel=True, use_cftime=True, preprocess=register_cache
-    )
+    logger.info(f"Loading {len(all_files)} files using {engine} backend on xarray...")
+    for f in all_files:
+        logger.info(f"  * {f}")
+    mf_ds = xr.open_mfdataset(all_files, parallel=True, use_cftime=True, engine=engine)
     return mf_ds
 
 

@@ -4,11 +4,15 @@ import re
 
 import pytest
 
-from pymorize.gather_inputs import (_files_to_string, _filter_by_year,
-                                    _input_files_in_path,
-                                    _input_pattern_from_env, _resolve_symlinks,
-                                    _sort_by_year,
-                                    _validate_rule_has_marked_regex)
+from pymorize.gather_inputs import (
+    _files_to_string,
+    _filter_by_year,
+    _input_files_in_path,
+    _input_pattern_from_env,
+    _resolve_symlinks,
+    _sort_by_year,
+    _validate_rule_has_marked_regex,
+)
 
 
 @pytest.mark.parametrize(

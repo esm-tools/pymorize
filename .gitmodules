@@ -4,3 +4,6 @@
 [submodule "tests/data/test_experiments/piControl_on_PI/mesh/pi"]
 	path = tests/data/test_experiments/piControl_on_PI/mesh/pi
 	url = https://gitlab.awi.de/fesom/pi.git
+[submodule "CMIP7_DReq_Software"]
+	path = CMIP7_DReq_Software
+	url = https://github.com/CMIP-Data-Request/CMIP7_DReq_Software.git

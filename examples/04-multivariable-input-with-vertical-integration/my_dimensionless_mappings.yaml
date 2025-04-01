@@ -1,0 +1,9 @@
+# In general:
+# model_variable_name:
+#   cmor_unit_string: pint_friendly_SI_units
+so:
+  "0.001": g/kg
+sos:
+  "0.001": g/kg
+intpp:
+  "mol m-2 s-1": "molC m-2 s-1"

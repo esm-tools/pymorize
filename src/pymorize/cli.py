@@ -1,5 +1,4 @@
 import os
-import pathlib
 import sys
 from importlib import resources
 from typing import List
@@ -12,12 +11,14 @@ from dask.distributed import Client
 from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
+from pymorize.fesom_1p4.nodes_to_levels import convert
+
 from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
 from .filecache import fc
 from .logging import add_report_logger, logger
 from .ssh_tunnel import ssh_tunnel_cli
-from .validate import PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -97,8 +98,21 @@ def process(config_file):
     with open(config_file, "r") as f:
         cfg = yaml.safe_load(f)
     cmorizer = CMORizer.from_dict(cfg)
-    client = Client(cmorizer._cluster)
+    client = Client(cmorizer._cluster)  # noqa: F841
     cmorizer.process()
+
+
+@cli.command()
+@click_loguru.init_logger()
+@click.argument("config_file", type=click.Path(exists=True))
+def prefect_check(config_file):
+    add_report_logger()
+    logger.info(f"Checking prefect with dummy flow using {config_file}")
+    with open(config_file, "r") as f:
+        cfg = yaml.safe_load(f)
+        cmorizer = CMORizer.from_dict(cfg)
+        client = Client(cmorizer._cluster)  # noqa: F841
+        cmorizer.check_prefect()
 
 
 @cli.command()
@@ -137,7 +151,11 @@ def cache(verbose, quiet, logfile, profile_mem):
     return 0
 
 
-################################################################################
+@click.group()
+def scripts():
+    return 0
+
+
 ################################################################################
 ################################################################################
 
@@ -183,11 +201,21 @@ def config(config_file, verbose, quiet, logfile, profile_mem):
         if "rules" in cfg:
             rules = cfg["rules"]
             RULES_VALIDATOR.validate({"rules": rules})
-        if not PIPELINES_VALIDATOR.errors and not RULES_VALIDATOR.errors:
+        if "general" in cfg:
+            general = cfg["general"]
+            GENERAL_VALIDATOR.validate({"general": general})
+        if not any(
+            [
+                PIPELINES_VALIDATOR.errors,
+                RULES_VALIDATOR.errors,
+                GENERAL_VALIDATOR.errors,
+            ]
+        ):
             logger.success(
-                f"Configuration {config_file} is valid for both rules and pipelines!"
+                f"Configuration {config_file} is valid for general settings, rules, and pipelines!"
             )
         for key, error in {
+            **GENERAL_VALIDATOR.errors,
             **PIPELINES_VALIDATOR.errors,
             **RULES_VALIDATOR.errors,
         }.items():
@@ -219,6 +247,22 @@ def directory(config_file, output_dir, verbose, quiet, logfile, profile_mem):
         cmorizer = CMORizer.from_dict(cfg)
         cmorizer.check_rules_for_output_dir(output_dir)
 
+
+################################################################################
+################################################################################
+################################################################################
+
+################################################################################
+# COMMANDS FOR scripts
+################################################################################
+
+
+@scripts.group()
+def fesom1():
+    pass
+
+
+fesom1.add_command(convert, name="nodes-to-levels")
 
 ################################################################################
 ################################################################################
@@ -269,14 +313,31 @@ def populate_cache(files: List, verbose, quiet, logfile, profile_mem):
 ################################################################################
 ################################################################################
 
+################################################################################
+# Imported subcommands
+################################################################################
+
+cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
+cli.add_command(scripts)
+
+################################################################################
+
+################################################################################
+# Defined subcommands
+################################################################################
+
+cli.add_command(develop)
+cli.add_command(validate)
+cli.add_command(cache)
+
+################################################################################
+################################################################################
+################################################################################
+
 
 def main():
     for entry_point_name, entry_point in find_subcommands().items():
         cli.add_command(entry_point["callable"], name=entry_point_name)
-    cli.add_command(validate)
-    cli.add_command(develop)
-    cli.add_command(cache)
-    cli.add_command(ssh_tunnel_cli, name="ssh-tunnel")
     cli(auto_envvar_prefix="PYMORIZE")
 
 

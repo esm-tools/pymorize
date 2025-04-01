@@ -27,8 +27,9 @@ def year_bounds_major_digits(first, last, step, binning_digit, return_type=int):
     """
     Generate year ranges with a specific first digit.
 
-    This function generates a list of year ranges (bounds) where each range starts with a specific digit (binning_digit).
-    The ranges are generated from a given start year (first) to an end year (last) with a specific step size.
+    This function generates a list of year ranges (bounds) where each range starts
+    with a specific digit (binning_digit). The ranges are generated from a given start
+    year (first) to an end year (last) with a specific step size.
 
     Parameters
     ----------
@@ -64,11 +65,13 @@ def year_bounds_major_digits(first, last, step, binning_digit, return_type=int):
     Notes
     -----
     This function uses a while loop to iterate through the years from first to last.
-    It checks the ones digit of the current year and compares it with the binning_digit to determine the start of a new range.
-    If the first range is undersized (i.e., the binning_digit is in the ones digit of the first few years),
-    the function will continue to increment the current year until it hits the binning_digit.
-    If the first range is not undersized, the function will continue to increment the current year until it hits the next binning_digit.
-    Once a range is completed, it is appended to the bounds list and the process continues until the last year is reached.
+    It checks the ones digit of the current year and compares it with the binning_digit
+    to determine the start of a new range. If the first range is undersized (i.e., the
+    binning_digit is in the ones digit of the first few years), the function will
+    continue to increment the current year until it hits the binning_digit. If the
+    first range is not undersized, the function will continue to increment the current
+    year until it hits the next binning_digit. Once a range is completed, it is appended
+    to the bounds list and the process continues until the last year is reached.
     """
     # NOTE(PG): This is a bit hacky and difficult to read, but all the tests pass...
     logger.debug(
