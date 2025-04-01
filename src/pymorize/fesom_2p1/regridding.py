@@ -101,7 +101,8 @@ def fesom2regular(
     inds_path : string
         Path to the file with inds. If not provided and dumpfile=True, it will be created.
     qhull_path : str
-         Path to the file with qhull (needed for linear and cubic interpolations). If not provided and dumpfile=True, it will be created.
+         Path to the file with qhull (needed for linear and cubic interpolations). If not provided
+         and dumpfile=True, it will be created.
     how : str
        Interpolation method. Options are 'nn' (nearest neighbor), 'idist' (inverce distance), "linear" and "cubic".
     k : int
@@ -140,7 +141,7 @@ def fesom2regular(
     qhull_paths = []
 
     MESH_BASE = os.path.basename(mesh.path)
-    MESH_DIR = mesh.path
+    # MESH_DIR = mesh.path
     CACHE_DIR = os.environ.get("PYFESOM_CACHE", os.path.join(os.getcwd(), "MESH_cache"))
     CACHE_DIR = os.path.join(CACHE_DIR, MESH_BASE)
 
@@ -339,12 +340,12 @@ def fesom2regular(
 
 
 def attach_mesh_to_rule(data, rule):
-    rule.mesh = load_mesh(rule.mesh_file)
+    rule.mesh = load_mesh(rule.mesh_path)
     return data
 
 
 def regrid_to_regular(data, rule):
-    mesh = load_mesh(rule.mesh_file)
+    mesh = load_mesh(rule.mesh_path)
     box = rule.get("box", "-180, 180, -90, 90")
     x_min, x_max, y_min, y_max = map(float, box.split(","))
     x = np.linspace(x_min, x_max, int(x_max - x_min))
