@@ -1,7 +1,7 @@
 general:
   CMIP_TABLES_DIR: ./cmip6-cmor-tables/Tables/
 inherit:
-  mesh_file: ./tests/data/test_experiments/piControl_on_PI/mesh/pi/
+  mesh_path: ./tests/data/test_experiments/piControl_on_PI/mesh/pi/
 rules:
   - model_variable: sst
     inputs:
