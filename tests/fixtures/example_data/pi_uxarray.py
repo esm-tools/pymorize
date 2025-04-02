@@ -48,7 +48,7 @@ def pi_uxarray_download_mesh(tmp_path_factory):
     data_path = cache_dir / "pi_mesh.tar"
 
     if not data_path.exists():
-        response = requests.get(URL)
+        response = requests.get(MESH_URL)
         response.raise_for_status()
         with open(data_path, "wb") as f:
             f.write(response.content)

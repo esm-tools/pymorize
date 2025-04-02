@@ -354,13 +354,13 @@ def regrid_to_regular(data, rule):
     # This works on a timestep-by-timestep basis, so we need to
     # run an apply here...
     # Apply `fesom2regular` function to each time step
-    interpolated = xr.map_blocks(
+    # breakpoint()
+    interpolated = data.chunk({"time": 1}).map_blocks(
         fesom2regular,
-        data,
         kwargs={"mesh": mesh, "lons": lon, "lats": lat},
         template=xr.DataArray(
             np.empty((len(data["time"]), 360, 180)), dims=["time", "lon", "lat"]
-        ),
+        ).chunk({"time": 1}),
     )
     return interpolated
 
