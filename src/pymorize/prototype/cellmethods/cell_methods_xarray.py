@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 import numpy as np
 import xarray as xr
 
-from .prototype.cellmethods.cellmethods_parser import parse_cell_methods
+from .cellmethods_parser import parse_cell_methods
 
 """
 Prototype code only. Not sure if cellmethods are handled this way. Lot of ambiguity at many steps.

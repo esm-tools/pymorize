@@ -1,4 +1,4 @@
-from .prototype.cellmethods.cellmethods_parser import translate_to_xarray
+from .cellmethods_parser import translate_to_xarray
 
 test_cases = [
     ("area: mean", "da.mean(dim='area')"),
