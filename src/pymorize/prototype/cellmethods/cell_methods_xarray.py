@@ -1,7 +1,7 @@
 import xarray as xr
 import numpy as np
 from typing import List, Tuple, Optional
-from cellmethods_parser import parse_cell_methods
+from .prototype.cellmethods.cellmethods_parser import parse_cell_methods
 
 """
 Prototype code only. Not sure if cellmethods are handled this way. Lot of ambiguity at many steps.

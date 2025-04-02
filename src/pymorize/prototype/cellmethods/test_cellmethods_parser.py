@@ -1,4 +1,4 @@
-from cellmethods_parser import parse_cell_methods
+from .prototype.cellmethods.cellmethods_parser import parse_cell_methods
 
 
 def test_single_statement_with_just_action():
