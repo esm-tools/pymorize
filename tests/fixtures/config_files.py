@@ -13,6 +13,7 @@ def fesom_pi_mesh_config_file():
     return TEST_ROOT / "configs/fesom_pi_mesh_run.yaml"
 
 
+@pytest.fixture
 def test_config_cmip6():
     return TEST_ROOT / "configs" / "test_config_cmip6.yaml"
 
