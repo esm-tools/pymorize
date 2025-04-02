@@ -65,4 +65,4 @@ def pi_uxarray_mesh(pi_uxarray_download_mesh):
     with tarfile.open(pi_uxarray_download_mesh, "r") as tar:
         tar.extractall(data_dir)
 
-    return data_dir
+    return data_dir / "pi"
