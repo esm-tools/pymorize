@@ -26,7 +26,7 @@ rules:
     source_id: AWI-CM-1-1-HR
     model_component: ocnBgchem
     grid_label: gn
-  - name: fgco2
+  - name: spco2
     inputs:
       - path: ./model_runs/piControl_LUtrans1850/outdata/recom/
         pattern: pCO2s_fesom_mon_.*nc
