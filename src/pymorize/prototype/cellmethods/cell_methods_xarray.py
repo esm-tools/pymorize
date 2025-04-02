@@ -1,6 +1,8 @@
-import xarray as xr
+from typing import List, Optional, Tuple
+
 import numpy as np
-from typing import List, Tuple, Optional
+import xarray as xr
+
 from .prototype.cellmethods.cellmethods_parser import parse_cell_methods
 
 """

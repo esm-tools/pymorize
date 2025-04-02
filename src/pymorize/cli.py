@@ -17,9 +17,12 @@ from . import _version, caching, dev_utils
 from .cmorizer import CMORizer
 from .filecache import fc
 from .logging import add_report_logger, logger
+from .prototype.cellmethods.cellmethods_parser import (
+    parse_cell_methods,
+    translate_to_xarray,
+)
 from .ssh_tunnel import ssh_tunnel_cli
 from .validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
-from .prototype.cellmethods.cellmethods_parser import parse_cell_methods, translate_to_xarray
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
