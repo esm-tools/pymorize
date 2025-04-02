@@ -5,6 +5,7 @@ general:
   email: "pgierz@awi.de"
   cmor_version: "CMIP6"
   mip: "CMIP"
+  CV_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/CMIP6_CVs"
   CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
 pymorize:
   # parallel: True
@@ -71,6 +72,11 @@ pipelines:
       - "pymorize.generic.get_variable"
       - "pymorize.timeaverage.compute_average"
       - "pymorize.units.handle_unit_conversion"
+      # NOTE(PG): Nodes to levels needs to happen early in the pipeline to ensure that
+      #           the setgrid works correctly.
+      - "pymorize.fesom_1p4.nodes_to_levels"
+      - "pymorize.setgrid.setgrid"
+      # - "pymorize.variable_attributes.set_variable_attrs"
       - "pymorize.global_attributes.set_global_attributes"
       - "pymorize.generic.trigger_compute"
       - "pymorize.generic.show_data"
