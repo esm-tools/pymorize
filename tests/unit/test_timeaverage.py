@@ -3,7 +3,7 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import pymorize.timeaverage
+import pymorize.std_lib.timeaverage
 
 FREQUENCY_TIME_METHOD = {
     "fx": "MEAN",

@@ -2,7 +2,7 @@ import shutil
 import tempfile
 from pathlib import Path
 
-from pymorize.generic import create_cmor_directories
+from pymorize.core.generic import create_cmor_directories
 
 
 def test_create_cmor_directories():

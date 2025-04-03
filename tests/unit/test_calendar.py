@@ -2,8 +2,8 @@ import numpy as np
 import pytest
 import xarray as xr
 
-import pymorize.calendar
-from pymorize.calendar import assign_time_axis, date_ranges_from_year_bounds
+import pymorize.core.calendar
+from pymorize.core.calendar import assign_time_axis, date_ranges_from_year_bounds
 
 
 @pytest.fixture

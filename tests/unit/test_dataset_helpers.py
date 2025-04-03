@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from pymorize.dataset_helpers import (
+from pymorize.core.dataset_helpers import (
     get_time_label,
     has_time_axis,
     is_datetime_type,
