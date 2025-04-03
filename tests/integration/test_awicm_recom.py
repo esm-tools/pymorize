@@ -1,7 +1,7 @@
 import yaml
 
-from pymorize.cmorizer import CMORizer
-from pymorize.logging import logger
+from pymorize.core.cmorizer import CMORizer
+from pymorize.core.logging import logger
 
 
 def test_process(awicm_1p0_recom_config, awicm_1p0_recom_data):
