@@ -1,4 +1,4 @@
-from pymorize.pipeline import Pipeline
+from pymorize.core.pipeline import Pipeline
 
 
 def test_basic_creation():

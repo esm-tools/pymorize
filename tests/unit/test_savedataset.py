@@ -65,9 +65,9 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from pymorize.config import PymorizeConfigManager
-from pymorize.files import _filename_time_range, save_dataset
-from pymorize.timeaverage import _get_time_method  # noqa: F401
+from pymorize.core.config import PymorizeConfigManager
+from pymorize.std_lib.files import _filename_time_range, save_dataset
+from pymorize.std_lib.timeaverage import _get_time_method  # noqa: F401
 
 # Tests for time-span in filename
 

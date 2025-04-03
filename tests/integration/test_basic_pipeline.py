@@ -8,8 +8,8 @@ import pytest
 import yaml
 from prefect.logging import disable_run_logger
 
-from pymorize.cmorizer import CMORizer
-from pymorize.logging import logger
+from pymorize.core.cmorizer import CMORizer
+from pymorize.core.logging import logger
 
 
 @pytest.mark.parametrize(

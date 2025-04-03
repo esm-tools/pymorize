@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from pymorize.utils import generate_partial_function, get_callable_by_name
+from pymorize.core.utils import generate_partial_function, get_callable_by_name
 
 
 def test_get_callable_by_name_with_function():

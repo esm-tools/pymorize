@@ -4,7 +4,7 @@ import tempfile
 import yaml
 from pyfakefs.fake_filesystem_unittest import Patcher
 
-from pymorize.dev_utils import ls_to_yaml
+from pymorize.dev.utils import ls_to_yaml
 
 
 def test_ls_to_yaml():

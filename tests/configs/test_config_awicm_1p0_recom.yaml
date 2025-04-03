@@ -33,12 +33,12 @@ rules:
 pipelines:
   - name: level_regridder
     steps:
-      - pymorize.gather_inputs.load_mfdataset
-      - pymorize.generic.get_variable
+      - pymorize.core.gather_inputs.load_mfdataset
+      - pymorize.std_lib.generic.get_variable
       - pymorize.fesom_1p4.nodes_to_levels
-      - pymorize.caching.manual_checkpoint
-      - pymorize.generic.trigger_compute
-      - pymorize.generic.show_data
+      - pymorize.core.caching.manual_checkpoint
+      - pymorize.std_lib.generic.trigger_compute
+      - pymorize.std_lib.generic.show_data
 distributed:
   worker:
     memory:

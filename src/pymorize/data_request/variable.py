@@ -26,7 +26,7 @@ from dataclasses import dataclass
 from importlib.resources import files
 from typing import Optional
 
-from ..factory import MetaFactory
+from ..core.factory import MetaFactory
 
 
 @dataclass

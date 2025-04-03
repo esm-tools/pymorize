@@ -7,9 +7,9 @@ import warnings
 
 import yaml
 
+from ..data_request.table import DataRequestTable
+from ..data_request.variable import DataRequestVariable
 from . import pipeline
-from .data_request.table import DataRequestTable
-from .data_request.variable import DataRequestVariable
 from .gather_inputs import InputFileCollection
 from .logging import logger
 

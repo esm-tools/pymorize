@@ -40,7 +40,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 
-from .logging import logger
+from ..core.logging import logger
 
 
 def _split_by_chunks(dataset: xr.DataArray):

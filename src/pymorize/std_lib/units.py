@@ -22,8 +22,8 @@ import pint_xarray
 import xarray as xr
 from chemicals import periodic_table
 
-from .logging import logger
-from .rule import Rule
+from ..core.logging import logger
+from ..core.rule import Rule
 
 ureg = pint_xarray.unit_registry
 

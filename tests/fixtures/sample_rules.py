@@ -1,13 +1,13 @@
 import pytest
 
-from pymorize.aux_files import AuxiliaryFile
-from pymorize.config import PymorizeConfigManager
-from pymorize.controlled_vocabularies import ControlledVocabularies
+from pymorize.core.aux_files import AuxiliaryFile
+from pymorize.core.config import PymorizeConfigManager
+from pymorize.core.controlled_vocabularies import ControlledVocabularies
+from pymorize.core.factory import create_factory
+from pymorize.core.rule import Rule
 from pymorize.data_request.collection import CMIP6DataRequest
 from pymorize.data_request.table import CMIP6DataRequestTable
 from pymorize.data_request.variable import CMIP6DataRequestVariable
-from pymorize.factory import create_factory
-from pymorize.rule import Rule
 
 
 @pytest.fixture
