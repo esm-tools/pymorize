@@ -228,6 +228,13 @@ class XArrayTranslator:
 
     def __init__(self, da_name="da"):
         self.da_name = da_name
+        self.function_map = {
+            "maximum": "max",
+            "minimum": "min",
+            "point": "isel",
+            "within": "groupby",
+            "over": "groupby",
+        }
 
     def translate_group(self, group):
         """Translate a single group of tokens into an xarray operation."""
@@ -235,6 +242,7 @@ class XArrayTranslator:
         token_type, dim = next(tokens)
         assert token_type == "DIMENSION"
         token_type, function = next(tokens)
+        function = self.function_map.get(function, function)
         assert token_type == "FUNCTION"
         texts = []
         try:
@@ -251,14 +259,18 @@ class XArrayTranslator:
                         f"{self.da_name}.{function}(dim={dim})  # comment: {tok_value}"
                     )
             elif token_type == "CONSTRAINT":
-                constraint = tok_value
+                _constraint = tok_value
+                constraint = self.function_map.get(tok_value, tok_value)
                 token_type, tok_value = next(tokens)
-                text = f"{self.da_name}.{function}(dim={dim}).{constraint}({tok_value})"
-                texts.append(text)
-                if constraint == "over":
-                    token_type, tok_value = next(tokens)
+                if constraint == "groupby":
+                    text = f"{self.da_name}.{constraint}({tok_value}).{function}(dim={dim})  # {_constraint}"
+                else:
                     text = f"{self.da_name}.{function}(dim={dim}).{constraint}({tok_value})"
-                    texts.append(text)
+                texts.append(text)
+                # if constraint == "over":
+                #    token_type, tok_value = next(tokens)
+                #    text = f"{self.da_name}.{function}(dim={dim}).{constraint}({tok_value})"
+                #    texts.append(text)
             while True:
                 try:
                     token_type, tok_value = next(tokens)
