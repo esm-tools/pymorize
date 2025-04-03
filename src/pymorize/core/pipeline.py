@@ -246,15 +246,15 @@ class DefaultPipeline(FrozenPipeline):
     """
 
     STEPS = (
-        "pymorize.gather_inputs.load_mfdataset",
-        "pymorize.generic.get_variable",
-        "pymorize.timeaverage.compute_average",
-        "pymorize.units.handle_unit_conversion",
-        "pymorize.global_attributes.set_global_attributes",
-        "pymorize.caching.manual_checkpoint",
-        "pymorize.generic.trigger_compute",
-        "pymorize.generic.show_data",
-        "pymorize.files.save_dataset",
+        "pymorize.core.gather_inputs.load_mfdataset",
+        "pymorize.std_lib.generic.get_variable",
+        "pymorize.std_lib.timeaverage.compute_average",
+        "pymorize.std_lib.units.handle_unit_conversion",
+        "pymorize.std_lib.global_attributes.set_global_attributes",
+        "pymorize.core.caching.manual_checkpoint",
+        "pymorize.std_lib.generic.trigger_compute",
+        "pymorize.std_lib.generic.show_data",
+        "pymorize.std_lib.files.save_dataset",
     )
 
     def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
