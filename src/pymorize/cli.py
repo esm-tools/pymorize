@@ -272,7 +272,7 @@ def cellmethods(config_file, verbose, quiet, logfile, profile_mem):
                     continue
                 else:
                     tokengroups = parse_cell_methods(cellmethod_text)
-                    logger.info(f"Rule {rule.name!r}: Parsing cellmethods text...")
+                    logger.info(f"{rule.cmor_variable!r}: Parsing cellmethods text...")
                     logger.info(f"{cellmethod_text}")
                     logger.info("Tokens:")
                     for tok in tokengroups:
