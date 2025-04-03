@@ -5,7 +5,7 @@ from abc import abstractmethod
 
 import xarray as xr
 
-from .factory import MetaFactory
+from ..core.factory import MetaFactory
 
 
 class GlobalAttributes(metaclass=MetaFactory):
