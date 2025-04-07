@@ -200,6 +200,66 @@ def rule_with_data_request():
 
 
 @pytest.fixture
+def rule_with_unsorted_data():
+    r = Rule(
+        array_order=["time", "lat", "lon"],
+        inputs=[
+            {
+                "path": "/some/files/containing/",
+                "pattern": "var1.*.nc",
+            },
+            {
+                "path": "/some/other/files/containing/",
+                "pattern": r"var1_(?P<year>\d{4}).nc",
+            },
+        ],
+        cmor_variable="var1",
+        pipelines=["pymorize.pipeline.TestingPipeline"],
+        data_request_variables=[
+            CMIP6DataRequestVariable.from_dict(
+                dict(
+                    variable_id="var1",
+                    units="kg m-2 s-1",
+                    comment="Some comment",
+                    description="Some description",
+                    dimensions="time lat lon",
+                    long_name="Some long name",
+                    time_method="instant",
+                    table="Some Table",
+                    frequency="mon",
+                    positive="up",
+                    out_name="var1",
+                    ok_max_mean_abs=999,
+                    ok_min_mean_abs=-999,
+                    type="real",
+                    modeling_realm="atmos",
+                    realms=["atmos"],
+                    standard_name="some_standard_name",
+                    cell_methods="time: mean",
+                    cell_measures="area: areacella",
+                    valid_max=1,
+                    valid_min=0,
+                )
+            )
+        ],
+    )
+    r.data_request_variable = r.data_request_variables[0]
+
+    return r
+
+
+@pytest.fixture
+def dummy_array():
+    import numpy
+    import xarray as xr
+
+    return xr.DataArray(
+        numpy.random.rand(10, 10, 10),
+        dims=["lat", "lon", "time"],
+    )
+
+
+@pytest.fixture
 def rule_sos():
     from tests.utils.constants import TEST_ROOT
 
