@@ -19,12 +19,12 @@ pipelines:
     uses: "pymorize.pipeline.TestingPipeline"
   - name: "my_pipeline"
     steps:
-      - "pymorize.generic.dummy_load_data"
-      - "pymorize.units.handle_unit_conversion"
-      - "pymorize.generic.dummy_save_data"
+      - "pymorize.std_lib.generic.dummy_load_data"
+      - "pymorize.std_lib.units.handle_unit_conversion"
+      - "pymorize.std_lib.generic.dummy_save_data"
   - name: "sleeper_pipeline"
     steps:
-      - "pymorize.generic.dummy_sleep"
+      - "pymorize.std_lib.generic.dummy_sleep"
 rules:
   - name: "tas_rule"
     pipelines: ["my_pipeline"]
