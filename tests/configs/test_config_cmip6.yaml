@@ -16,7 +16,7 @@ general:
   CV_Dir: "./cmip6-cmor-tables/CMIP6_CVs"
 pipelines:
   - name: "test_pipeline"
-    uses: "pymorize.pipeline.TestingPipeline"
+    uses: "pymorize.core.pipeline.TestingPipeline"
   - name: "my_pipeline"
     steps:
       - "pymorize.std_lib.generic.dummy_load_data"
