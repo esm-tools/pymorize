@@ -2,8 +2,8 @@ import subprocess
 
 import rich_click as click
 
-from .cli import find_subcommands  # noqa: F401
-from .cli import NAME, VERSION, click_loguru  # , pymorize_cli_group
+from ..cli import find_subcommands  # noqa: F401
+from ..cli import NAME, VERSION, click_loguru  # , pymorize_cli_group
 from .logging import logger
 
 
