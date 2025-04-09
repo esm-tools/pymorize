@@ -22,7 +22,7 @@ def test_get_callable_by_name_with_nested_callable():
 
 def test_get_callable_with_from_import():
     assert (
-        get_callable_by_name("pymorize.utils.get_callable_by_name")
+        get_callable_by_name("pymorize.core.utils.get_callable_by_name")
         == get_callable_by_name
     )
 

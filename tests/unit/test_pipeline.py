@@ -7,5 +7,8 @@ def test_basic_creation():
 
 def test_qualname_creation():
     Pipeline.from_qualname_list(
-        ["pymorize.generic.load_data", "pymorize.units.handle_unit_conversion"]
+        [
+            "pymorize.std_lib.generic.load_data",
+            "pymorize.std_lib.units.handle_unit_conversion",
+        ]
     )

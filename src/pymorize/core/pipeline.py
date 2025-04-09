@@ -245,6 +245,8 @@ class DefaultPipeline(FrozenPipeline):
         The name of the pipeline. If not provided, it defaults to "pymorize.pipeline.DefaultPipeline".
     """
 
+    # FIXME(PG): This is not so nice. All things should come out of the std_lib,
+    #            but it is a good start...
     STEPS = (
         "pymorize.core.gather_inputs.load_mfdataset",
         "pymorize.std_lib.generic.get_variable",
@@ -281,9 +283,9 @@ class TestingPipeline(FrozenPipeline):
     __test__ = False  # Prevent pytest from thinking this is a test, as the class name starts with test.
 
     STEPS = (
-        "pymorize.generic.dummy_load_data",
-        "pymorize.generic.dummy_logic_step",
-        "pymorize.generic.dummy_save_data",
+        "pymorize.std_lib.generic.dummy_load_data",
+        "pymorize.std_lib.generic.dummy_logic_step",
+        "pymorize.std_lib.generic.dummy_save_data",
     )
 
     def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
