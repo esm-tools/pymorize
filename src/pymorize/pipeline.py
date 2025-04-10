@@ -224,6 +224,9 @@ class FrozenPipeline(Pipeline):
         A tuple containing the steps of the pipeline. This is a class-level attribute and cannot be modified.
     """
 
+    NAME = "FrozenPipeline"
+    STEPS = ()
+
     @property
     def steps(self):
         return self._steps
@@ -231,6 +234,10 @@ class FrozenPipeline(Pipeline):
     @steps.setter
     def steps(self, value):
         raise AttributeError("Cannot set steps on a FrozenPipeline")
+
+    def __init__(self, name=NAME, **kwargs):
+        steps = [get_callable_by_name(name) for name in self.STEPS]
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class DefaultPipeline(FrozenPipeline):
@@ -256,10 +263,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.generic.show_data",
         "pymorize.files.save_dataset",
     )
-
-    def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
-        steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name, **kwargs)
+    NAME = "pymorize.pipeline.DefaultPipeline"
 
 
 class TestingPipeline(FrozenPipeline):
@@ -285,7 +289,4 @@ class TestingPipeline(FrozenPipeline):
         "pymorize.generic.dummy_logic_step",
         "pymorize.generic.dummy_save_data",
     )
-
-    def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
-        steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name, **kwargs)
+    NAME = "pymorize.pipeline.TestingPipeline"

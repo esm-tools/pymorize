@@ -1,0 +1,12 @@
+general:
+  CMIP_TABLES_DIR: ./cmip6-cmor-tables/Tables/
+inherit:
+  mesh_path: ./tests/data/test_experiments/piControl_on_PI/mesh/pi/
+rules:
+  - model_variable: sst
+    inputs:
+      - path: ./tests/data/test_experiments/piControl_on_PI/output_pi/
+        pattern: sst.fesom.*.nc
+    cmor_variable: tos
+    output_directory: ./sandbox/
+    pipelines: ["pymorize.fesom.FESOMRegridPipeline"]
