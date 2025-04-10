@@ -12,12 +12,13 @@ from rich.traceback import install as rich_traceback_install
 from streamlit.web import cli as stcli
 
 from . import _version
-from .core import caching, dev_utils
+from .core import caching
 from .core.cmorizer import CMORizer
 from .core.filecache import fc
 from .core.logging import add_report_logger, logger
 from .core.ssh_tunnel import ssh_tunnel_cli
 from .core.validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
+from .dev import utils as dev_utils
 from .fesom_1p4.nodes_to_levels import convert
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
