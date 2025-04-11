@@ -128,12 +128,12 @@ def _frequency_from_approx_interval(interval: str):
         If the interval cannot be converted to a float.
     """
     notation = [
-        ("decade", lambda x: f"{x*10}YE" if x else "10YE", 3650),
-        ("year", lambda x: f"{x}YE", 366),
-        ("year", lambda x: f"{x}YE", 365),
-        ("month", lambda x: f"{x}ME", 30),
-        ("day", lambda x: f"{x}D", 1),
-        ("hour", lambda x: f"{x}H", 24),
+        ("decade", lambda x: f"{x*10}YS" if x else "10YS", 3650),
+        ("year", lambda x: f"{x}YS", 366),
+        ("year", lambda x: f"{x}YS", 365),
+        ("month", lambda x: f"{x}MS", 30),
+        ("day", lambda x: f"{x}d", 1),
+        ("hour", lambda x: f"{x}h", 24),
         ("minute", lambda x: f"{x}min", 24 * 60),
         ("second", lambda x: f"{x}s", 24 * 60 * 60),
         ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
@@ -199,12 +199,20 @@ def compute_average(da: xr.DataArray, rule):
     based on the time method specified in the rule. The time methods can be ``"INSTANTANEOUS"``,
     ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
+    For ``"MEAN"`` time method, the timestamps can be adjusted using the ``adjust_timestamp`` parameter in the rule dict.
+    This can be either:
+    - A float between 0 and 1 representing the position within each period (e.g., 0.5 for mid-point)
+    - A string preset: "first"/"start" (0.0), "last"/"end" (1.0), "mid"/"middle" (0.5)
+    - A pandas offset string (e.g., "2d" for 2 days offset)
+      This feature is useful for setting consistent mid-month dates by setting ``adjust_timestamp`` to "14d".
+
     Parameters
     ----------
     da : xr.DataArray
         The data array to compute the timespan for.
     rule : dict
         The rule dict containing the time method and other parameters.
+        For "MEAN" time method, can include 'adjust_timestamp' to control timestamp positioning.
 
     Returns
     -------
@@ -225,12 +233,35 @@ def compute_average(da: xr.DataArray, rule):
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
     elif time_method == "MEAN":
+        # First compute the mean using resample
         ds = da.resample(time=frequency_str).mean()
-        adjust_timestamp = rule.get("adjust_timestamp", True)
-        if adjust_timestamp:
-            offset = pd.Timedelta(approx_interval_in_hours / 2)
-            logger.info(f"{offset=}")
-            ds["time"] = ds.time.to_pandas() + offset
+        # Get offset from adjust_timestamp, default to 0.5 (mid-point)
+        offset = rule.get("adjust_timestamp", 0.5)
+        offset_presets = {
+            "first": 0,
+            "start": 0,
+            "last": 1,
+            "end": 1,
+            "mid": 0.5,
+            "middle": 0.5,
+        }   
+        offset = offset_presets.get(offset, offset)
+        try:
+            offset = float(offset)
+        except (TypeError, ValueError):
+            # Use pandas offset string. example: offset="14d"
+            ds['time'] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
+        else:
+            # Use custom_resample style offset calculation
+            new_times = []
+            for _, group in da.time.to_series().groupby(pd.Grouper(freq=frequency_str)):
+                if not group.empty:
+                    period_start = group.iloc[0]
+                    period_end = group.iloc[-1]
+                    new_timestamp = period_start + (period_end - period_start) * offset
+                    new_times.append(new_timestamp)
+            # Update the timestamps
+            ds["time"] = pd.DatetimeIndex(new_times)
     elif time_method == "CLIMATOLOGY":
         if drv.table.frequency == "monC":
             ds = da.groupby("time.month").mean("time")

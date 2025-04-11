@@ -142,7 +142,7 @@ RULES_SCHEMA = {
                 },
                 "instition_id": {"type": "string", "required": False},
                 "experiment_id": {"type": "string", "required": True},
-                "adjust_timestamp": {"type": "boolean", "required": False},
+                "adjust_timestamp": {"type": "string", "required": False},
             },
         },
     },
