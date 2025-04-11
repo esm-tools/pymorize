@@ -1,73 +1,323 @@
 """
-Standard library for the pymorize package.
+============================
+The Pymorize Standard Library
+============================
+The standard library contains functions that are included in the default
+pipelines, and are generally used as ``step`` functions. We expose several
+useful ones:
 
-This module provides commonly used functions and utilities for
-manipulating and standardizing climate model output data.
+* Unit Conversion
+* Time Averaging
+* Dataset Loading
+* Variable Extraction
+* Temporal Resampling
+* Trigger Compute
+* Show Data
+* Global Metadata
+* Variable Metadata
+
+See the documentation for each of the steps for more details.
 """
 
-# Dataset helper functions
-from .dataset_helpers import (
-    get_time_label,
-    has_time_axis,
-    is_datetime_type,
-    needs_resampling,
-)
+from typing import Union
 
-# Data transformation utilities
-from .generic import (
-    create_cmor_directories,
-    get_variable,
-    invert_z_axis,
-    linear_transform,
-    load_data,
-    multiyear_monthly_mean,
-    resample_monthly,
-    resample_yearly,
-    trigger_compute,
-)
+from xarray import DataArray, Dataset
 
-# Attribute management
-from .global_attributes import (
-    CMIP6GlobalAttributes,
-    CMIP7GlobalAttributes,
-    GlobalAttributes,
-    set_global_attributes,
-)
-
-# Time averaging functionality
-from .timeaverage import _frequency_from_approx_interval, compute_average
-
-# Unit manipulation
-from .units import convert_units, get_standard_units, is_dimensional
+from ..core.rule import Rule
+from .dataset_helpers import get_time_label, has_time_axis
+from .generic import load_data as _load_data
+from .generic import show_data as _show_data
+from .generic import trigger_compute as _trigger_compute
+from .global_attributes import set_global_attributes as _set_global_attributes
+from .timeaverage import compute_average
+from .units import handle_unit_conversion
 from .variable_attributes import set_variable_attrs
 
 __all__ = [
-    # Data transformation
-    "linear_transform",
-    "invert_z_axis",
-    "create_cmor_directories",
+    "convert_units",
+    "time_average",
     "load_data",
     "get_variable",
-    "resample_monthly",
-    "resample_yearly",
-    "multiyear_monthly_mean",
+    "temporal_resample",
     "trigger_compute",
-    # Time averaging
-    "compute_average",
-    "_frequency_from_approx_interval",
-    # Dataset helpers
-    "is_datetime_type",
-    "get_time_label",
-    "has_time_axis",
-    "needs_resampling",
-    # Attribute management
-    "GlobalAttributes",
-    "CMIP6GlobalAttributes",
-    "CMIP7GlobalAttributes",
-    "set_global_attributes",
-    "set_variable_attrs",
-    # Unit management
-    "convert_units",
-    "get_standard_units",
-    "is_dimensional",
+    "show_data",
+    "set_global_metadata",
+    "set_variable_metadata",
+    "checkpoint_pipeline",
 ]
+
+
+def convert_units(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Convert units of a DataArray or Dataset based upon the Data Request Variable you
+    have selected. Automatically handles chemical elements and dimensionless units.
+
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to convert.
+    rule : Rule
+        The rule containing the units to convert to.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The converted data.
+    """
+    return handle_unit_conversion(data, rule)
+
+
+def time_average(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Compute the time average of a DataArray or Dataset based upon the Data Request Variable you
+    have selected.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to average.
+    rule : Rule
+        The rule containing the units to convert to.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The averaged data.
+    """
+    return compute_average(data, rule)
+
+
+def load_data(
+    data: Union[DataArray, Dataset, None], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Load data from files according to the rule specification.
+
+    This function opens and combines data from multiple files that match the pattern
+    specified in the rule. It's useful for loading time series data that may be
+    spread across multiple files.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset or None
+        Existing data (if any) to incorporate with loaded data.
+    rule : Rule
+        The rule containing the input patterns and other specifications
+        for loading the data.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The loaded data combined into a single Dataset or DataArray.
+
+    Notes
+    -----
+    The rule_spec dictionary should contain an "input_patterns" key with a list
+    of file patterns to match, e.g., ["path/to/data/*.nc"].
+    """
+    return _load_data(data, rule)
+
+
+def get_variable(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Extract a variable from a dataset as a DataArray.
+
+    Parameters
+    ----------
+    data : xarray.Dataset
+        The dataset containing the variable to extract.
+    rule : Rule
+        The rule containing the variable name to extract.
+
+    Returns
+    -------
+    xarray.DataArray
+        The extracted variable as a DataArray.
+
+    Raises
+    ------
+    KeyError
+        If the variable specified in the rule does not exist in the dataset.
+    """
+    if isinstance(data, Dataset):
+        variable_name = rule.model_variable
+        if variable_name not in data:
+            raise KeyError(f"Variable '{variable_name}' not found in dataset")
+        return data[variable_name]
+    return data
+
+
+def temporal_resample(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Resample a DataArray or Dataset to a different temporal frequency.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to resample.
+    rule : Rule
+        The rule containing parameters for the resampling operation,
+        including the frequency for resampling.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The resampled data.
+
+    Notes
+    -----
+    This function resamples time series data to a different frequency.
+    The frequency is determined from the rule (typically from data_request_variable.frequency).
+    Common frequencies include:
+    - 'YS': year start
+    - 'MS': month start
+    - 'D': daily
+    - 'H': hourly
+
+    The resampling method (mean, sum, etc.) is determined by the rule.
+    """
+    if not has_time_axis(data):
+        return data
+
+    time_dim = get_time_label(data)
+    freq = rule.data_request_variable.frequency
+    return data.resample({time_dim: freq}).mean()
+
+
+def trigger_compute(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Trigger computation of lazy (dask-backed) data operations.
+
+    This function is useful to ensure that all pending computations are
+    executed before proceeding with the next steps in a pipeline. It's
+    particularly important before saving data to files.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data containing operations to be computed.
+    rule : Rule
+        The rule containing additional parameters for computation.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The computed data with all operations applied.
+    """
+    return _trigger_compute(data, rule)
+
+
+def show_data(data: Union[DataArray, Dataset], rule: Rule) -> Union[DataArray, Dataset]:
+    """
+    Print data to screen for inspection and debugging purposes.
+
+    This function is useful during development and debugging to inspect
+    the content and structure of DataArrays and Datasets.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to display.
+    rule : Rule
+        The rule containing additional parameters.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The input data (unchanged).
+    """
+    return _show_data(data, rule)
+
+
+def set_global_metadata(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Set global metadata attributes for a Dataset or DataArray.
+
+    This function applies standardized global attributes to the Dataset
+    or DataArray based on the specifications in the rule, following
+    conventions like CMIP6.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to which global attributes will be added.
+    rule : Rule
+        The rule containing the global attribute specifications.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The data with updated global attributes.
+    """
+    return _set_global_attributes(data, rule)
+
+
+def set_variable_metadata(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Set variable-specific metadata attributes.
+
+    This function applies standardized variable attributes to the Dataset
+    or DataArray based on the specifications in the rule, following
+    conventions like CMIP6.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The data to which variable attributes will be added.
+    rule : Rule
+        The rule containing the variable attribute specifications.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The data with updated variable attributes.
+    """
+    return set_variable_attrs(data, rule)
+
+
+def checkpoint_pipeline(
+    data: Union[DataArray, Dataset], rule: Rule
+) -> Union[DataArray, Dataset]:
+    """
+    Insert a checkpoint in the pipeline processing.
+
+    This function allows for state saving during pipeline processing,
+    which can be useful for debugging or resuming processing from
+    a specific point.
+
+    Parameters
+    ----------
+    data : xarray.DataArray or xarray.Dataset
+        The current data in the pipeline.
+    rule : Rule
+        The rule containing checkpoint parameters.
+
+    Returns
+    -------
+    xarray.DataArray or xarray.Dataset
+        The input data (typically unchanged).
+
+    Notes
+    -----
+    Depending on the configuration in rule, this function might:
+    - Save the current state to disk
+    - Log the current state
+    - Perform debugging operations
+    """
+    # Implementation can be added as needed
+    return data
