@@ -13,8 +13,8 @@ useful ones:
 * Temporal Resampling
 * Trigger Compute
 * Show Data
-* Global Metadata
-* Variable Metadata
+* Global Attributes
+* Variable Attributes
 
 See the documentation for each of the steps for more details.
 """
@@ -41,8 +41,8 @@ __all__ = [
     "temporal_resample",
     "trigger_compute",
     "show_data",
-    "set_global_metadata",
-    "set_variable_metadata",
+    "set_global_attributes",
+    "set_variable_attributes",
     "checkpoint_pipeline",
 ]
 
@@ -240,7 +240,7 @@ def show_data(data: Union[DataArray, Dataset], rule: Rule) -> Union[DataArray, D
     return _show_data(data, rule)
 
 
-def set_global_metadata(
+def set_global_attributes(
     data: Union[DataArray, Dataset], rule: Rule
 ) -> Union[DataArray, Dataset]:
     """
@@ -265,7 +265,7 @@ def set_global_metadata(
     return _set_global_attributes(data, rule)
 
 
-def set_variable_metadata(
+def set_variable_attributes(
     data: Union[DataArray, Dataset], rule: Rule
 ) -> Union[DataArray, Dataset]:
     """
