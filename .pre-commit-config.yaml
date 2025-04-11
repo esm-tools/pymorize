@@ -1,0 +1,37 @@
+default_language_version:
+  python: python3.9
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: check-yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+      - id: check-added-large-files
+  - repo: https://github.com/pycqa/isort
+    rev: 5.11.5
+    hooks:
+      - id: isort
+        args: ["--profile", "black"]
+        name: isort (python)
+  - repo: https://github.com/psf/black
+    rev: 22.10.0
+    hooks:
+      - id: black
+  - repo: https://github.com/pycqa/flake8
+    rev: '7.1.1'
+    hooks:
+      - id: flake8
+  # YAML stuff from https://earth.bsc.es/gitlab/digital-twins/de_340-2/workflow
+  - repo: https://github.com/adrienverge/yamllint.git
+    rev: v1.35.1  # or higher tag
+    hooks:
+      - id: yamllint
+exclude: |
+  (?x)  # Enable verbose regex
+  (
+      ^versioneer\.py$|           # Exclude 'versioneer.py'
+      ^src/pymorize/webapp\.py$|  # Exclude 'src/pymorize/webapp.py'
+      _version\.py|               # Exclude '_version.py'
+      ^src/pymorize/data/cmip7/   # Exclude 'src/pymorize/data/cmip7/'
+  )

@@ -18,7 +18,7 @@ import subprocess
 import sys
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
-from .logging import logger
+from .core.logging import logger
 
 
 def get_keywords() -> Dict[str, str]:

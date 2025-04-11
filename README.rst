@@ -2,8 +2,6 @@
 ``pymorize``: A Python package to simplify CMOR
 ===============================================
 
------
-
   ``pymorize`` is a Python package to simplify the standardization of output into the Climate Model Output Rewriter (CMOR) standard.
 
 .. image:: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml/badge.svg
@@ -20,33 +18,48 @@
 ------
 
 
-  "Makes CMOR Simple" :-) 
+  "Makes CMOR Simple" :-)
 
-``pymorize`` is designed as a wrapper around various CMORization tools and NetCDF 
+``pymorize`` is designed as a wrapper around various CMORization tools and NetCDF
 command line tools to make reformatting data into CMIP6 compliant format as simple
 and flexible as possible.
 
 The package is designed to be modular and extensible, with a plugin system that allows
-users to add their own subcommands to the main ``pymorize`` command line interface, as 
+users to add their own subcommands to the main ``pymorize`` command line interface, as
 well as including their own functionality to the standardization pipelines. The package is
-also designed to be used as a library, with a simple API that allows users to use the 
-package in their own scripts. 
+also designed to be used as a library, with a simple API that allows users to use the
+package in their own scripts.
 
 To get started, you can install it via ``pip``::
-  
+
     pip install git+https://github.com/esm-tools/pymorize
-  
+
 Then you can run the main command line interface. Start out by getting some help::
-  
+
     pymorize --help
 
-More detailed install instructions can be found in the :ref:`installation` section.
+
+The most basic command you will run is::
+
+    pymorize process <CONFIG_FILE>
+
+More detailed install instructions can be found in the :ref:`installation` section, and usage
+is summarized in the usage sections.
 
 
 Licence
 -------
 
 ``pymorize`` is licensed under the MIT license. See the LICENSE file for more details.
+
+Contributors
+-----------
+
+Thank you to all of our contributors!
+
+.. image:: https://contrib.rocks/image?repo=esm-tools/pymorize
+   :target: https://github.com/esm-tools/pymorize/graphs/contributors
+   :alt: Contributors
 
 Authors
 -------

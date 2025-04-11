@@ -1,9 +1,7 @@
 import re
 
-import pytest
-
-from pymorize.pipeline import TestingPipeline
-from pymorize.rule import Rule
+from pymorize.core.pipeline import TestingPipeline
+from pymorize.core.rule import Rule
 
 
 def test_direct_init(simple_rule):
@@ -44,7 +42,7 @@ def test_from_yaml():
     cmor_variable: var1
     pipelines:
       - pymorize.pipeline.TestingPipeline
-    """
+    """  # noqa: W605
     rule = Rule.from_yaml(yaml_str)
     assert all(isinstance(ip, re.Pattern) for ip in rule.input_patterns)
     assert isinstance(rule.cmor_variable, str)
