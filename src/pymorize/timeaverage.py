@@ -20,7 +20,7 @@ _frequency_from_approx_interval(interval: str) -> str:
 _compute_file_timespan(da: xr.DataArray) -> int:
     Compute the timespan of a given data array.
 
-timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
+compute_average(da: xr.DataArray, rule: Dict) -> xr.DataArray:
     Time averages data with respect to time-method (mean/climatology/instant.)
 
 Module Variables
@@ -223,7 +223,6 @@ def compute_average(da: xr.DataArray, rule):
     rule.file_timespan = file_timespan
     drv = rule.data_request_variable
     approx_interval = drv.table.approx_interval
-    approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
     # attach the frequency_str to rule, it is referenced when creating file name
