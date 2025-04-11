@@ -23,7 +23,7 @@ _frequency_from_approx_interval(interval: str) -> str:
 _compute_file_timespan(da: xr.DataArray) -> int:
     Compute the timespan of a given data array.
 
-timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
+compute_average(da: xr.DataArray, rule: Dict) -> xr.DataArray:
     Time averages data with respect to time-method (mean/climatology/instant.)
 
 Module Variables
@@ -133,15 +133,15 @@ def _frequency_from_approx_interval(interval: str):
         If the interval cannot be converted to a float.
     """
     notation = [
-        ("decade", lambda x: f"{x*10}YE" if x else "10YE", 3650),
-        ("year", lambda x: f"{x}YE", 366),
-        ("year", lambda x: f"{x}YE", 365),
-        ("month", lambda x: f"{x}ME", 30),
-        ("day", lambda x: f"{x}D", 1),
-        ("hour", lambda x: f"{x}H", 1 / 24),
-        ("minute", lambda x: f"{x}min", 1.0 / (24 * 60)),
-        ("second", lambda x: f"{x}s", 1.0 / (24 * 60 * 60)),
-        ("millisecond", lambda x: f"{x}ms", 1.0 / (24 * 60 * 60 * 1000)),
+        ("decade", lambda x: f"{x*10}YS" if x else "10YS", 3650),
+        ("year", lambda x: f"{x}YS", 366),
+        ("year", lambda x: f"{x}YS", 365),
+        ("month", lambda x: f"{x}MS", 30),
+        ("day", lambda x: f"{x}d", 1),
+        ("hour", lambda x: f"{x}h", 24),
+        ("minute", lambda x: f"{x}min", 24 * 60),
+        ("second", lambda x: f"{x}s", 24 * 60 * 60),
+        ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
     ]
     try:
         interval = float(interval)
@@ -207,12 +207,20 @@ def compute_average(da: xr.DataArray, rule):
     array, and then performs time averaging based on the time method specified in the
     rule. The time methods can be ``"INSTANTANEOUS"``, ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
+    For ``"MEAN"`` time method, the timestamps can be adjusted using the ``adjust_timestamp`` parameter in the rule dict.
+    This can be either:
+    - A float between 0 and 1 representing the position within each period (e.g., 0.5 for mid-point)
+    - A string preset: "first"/"start" (0.0), "last"/"end" (1.0), "mid"/"middle" (0.5)
+    - A pandas offset string (e.g., "2d" for 2 days offset)
+      This feature is useful for setting consistent mid-month dates by setting ``adjust_timestamp`` to "14d".
+
     Parameters
     ----------
     da : xr.DataArray
         The data array to compute the timespan for.
     rule : dict
         The rule dict containing the time method and other parameters.
+        For "MEAN" time method, can include 'adjust_timestamp' to control timestamp positioning.
 
     Returns
     -------
@@ -224,8 +232,7 @@ def compute_average(da: xr.DataArray, rule):
         file_timespan, unit="D"
     )
     drv = rule.data_request_variable
-    approx_interval = drv.table_header.approx_interval
-    approx_interval_in_hours = pd.offsets.Hour(float(approx_interval) * 24)
+    approx_interval = drv.table.approx_interval
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
     # attach the frequency_str to rule, it is referenced when creating file name
@@ -235,12 +242,35 @@ def compute_average(da: xr.DataArray, rule):
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
     elif time_method == "MEAN":
+        # First compute the mean using resample
         ds = da.resample(time=frequency_str).mean()
-        adjust_timestamp = rule.get("adjust_timestamp", True)
-        if adjust_timestamp:
-            offset = pd.Timedelta(approx_interval_in_hours / 2)
-            logger.info(f"{offset=}")
-            ds["time"] = ds.time.to_pandas() + offset
+        # Get offset from adjust_timestamp, default to 0.5 (mid-point)
+        offset = rule.get("adjust_timestamp", 0.5)
+        offset_presets = {
+            "first": 0,
+            "start": 0,
+            "last": 1,
+            "end": 1,
+            "mid": 0.5,
+            "middle": 0.5,
+        }
+        offset = offset_presets.get(offset, offset)
+        try:
+            offset = float(offset)
+        except (TypeError, ValueError):
+            # Use pandas offset string. example: offset="14d"
+            ds['time'] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
+        else:
+            # Use custom_resample style offset calculation
+            new_times = []
+            for _, group in da.time.to_series().groupby(pd.Grouper(freq=frequency_str)):
+                if not group.empty:
+                    period_start = group.iloc[0]
+                    period_end = group.iloc[-1]
+                    new_timestamp = period_start + (period_end - period_start) * offset
+                    new_times.append(new_timestamp)
+            # Update the timestamps
+            ds["time"] = pd.DatetimeIndex(new_times)
     elif time_method == "CLIMATOLOGY":
         if drv.frequency == "monC":
             ds = da.groupby("time.month").mean("time")
@@ -253,6 +283,132 @@ def compute_average(da: xr.DataArray, rule):
     else:
         raise ValueError(f"Unknown time method: {time_method}")
     return ds
+
+
+def custom_resample(df, freq="M", offset=0.5, func="mean"):
+    """
+    Resample a DataFrame and place timestamps at a custom offset within each period.
+
+    Parameters
+    ----------
+    df : DataFrame
+        DataFrame with a DatetimeIndex
+    freq : str
+        Frequency string (e.g., 'M' for month, 'Y' for year)
+    offset : float
+        Float between 0 and 1, representing the position within each period
+    func : str
+        Resampling function (e.g., 'mean', 'sum', 'max')
+
+    Returns
+    -------
+    DataFrame
+        Resampled DataFrame with adjusted timestamps
+
+    Examples
+    --------
+    Each example is set up as follows:
+
+        >>> date_rng = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
+        >>> df = pd.DataFrame({"value": np.random.rand(len(date_rng))}, index=date_rng)
+
+    Resample to mid-month:
+
+        >>> df_month_mid = custom_resample(df, freq="ME", offset=0.5)
+        >>> print("Mid-month resampling:")
+        >>> print(df_month_mid.head())
+        Mid-month resampling:
+                                value
+        2023-01-16 00:00:00  0.402107
+        2023-02-14 12:00:00  0.550212
+        2023-03-16 00:00:00  0.496109
+        2023-04-15 12:00:00  0.525329
+        2023-05-16 00:00:00  0.554832
+
+    Resample to mid-year:
+
+        >>> df_year_mid = custom_resample(df, freq="YE", offset=0.5)
+        >>> print("Mid-year resampling:")
+        >>> print(df_year_mid)
+            Mid-year resampling:
+                           value
+            2023-07-02  0.503732
+
+    Resample to mid-week:
+
+        >>> df_week_mid = custom_resample(df, freq="W", offset=0.5)
+        >>> print("Mid-week resampling:")
+        >>> print(df_week_mid.head())
+        Mid-week resampling:
+                       value
+        2023-01-01  0.037969
+        2023-01-05  0.400238
+        2023-01-12  0.304294
+        2023-01-19  0.435459
+        2023-01-26  0.484908
+
+    Resample to one-third through each month
+
+        >>> df_month_third = custom_resample(df, freq="ME", offset=1 / 3)
+        >>> print("One-third through each month:")
+        >>> print(df_month_third.head())
+        One-third through each month:
+                                value
+        2023-01-11 00:00:00  0.402107
+        2023-02-10 00:00:00  0.550212
+        2023-03-11 00:00:00  0.496109
+        2023-04-10 16:00:00  0.525329
+        2023-05-11 00:00:00  0.554832
+
+    Resample to end of each quarter (equivalent to standard quarterly resampling)
+
+        >>> df_quarter_end = custom_resample(df, freq="QE", offset=1)
+        >>> print("Quarter-end resampling:")
+        >>> print(df_quarter_end)
+        Quarter-end resampling:
+                       value
+        2023-03-31  0.480563
+        2023-06-30  0.525529
+        2023-09-30  0.493180
+        2023-12-31  0.515388
+
+
+    Example with irregular time series:
+
+        >>> irregular_dates = (
+        >>>     pd.date_range("2023-01-01", periods=100, freq="D").tolist()
+        >>>     + pd.date_range("2023-05-01", periods=50, freq="2D").tolist()
+        >>>     + pd.date_range("2023-07-01", periods=30, freq="3D").tolist()
+        >>> )
+        >>> df_irregular = pd.DataFrame(
+        >>>     {"value": np.random.rand(len(irregular_dates))}, index=irregular_dates
+        >>> )
+        >>> df_irregular_month = custom_resample(df_irregular, freq="ME", offset=0.5)
+        >>> print("Irregular time series resampled to mid-month:")
+        >>> print(df_irregular_month.head())
+        Irregular time series resampled to mid-month:
+                                value
+        2023-01-16 00:00:00  0.500401
+        2023-02-14 12:00:00  0.475774
+        2023-03-16 00:00:00  0.495607
+        2023-04-05 12:00:00  0.565798
+        2023-05-16 00:00:00  0.597488
+
+    """
+    # Perform the resampling
+    resampled = getattr(df.resample(freq), func)()
+
+    # Adjust the timestamps
+    new_index = []
+    for name, group in df.groupby(pd.Grouper(freq=freq)):
+        if not group.empty:
+            period_start = group.index[0]
+            period_end = group.index[-1]
+            new_timestamp = period_start + (period_end - period_start) * offset
+            new_index.append(new_timestamp)
+
+    resampled.index = pd.DatetimeIndex(new_index)
+    return resampled
 
 
 _IGNORED_CELL_METHODS = """
