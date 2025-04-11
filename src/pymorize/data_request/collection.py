@@ -7,8 +7,8 @@ from typing import Dict
 
 import deprecation
 
-from ..factory import MetaFactory
-from ..utils import download_json_tables_from_url, list_files_in_directory
+from ..core.factory import MetaFactory
+from ..core.utils import download_json_tables_from_url, list_files_in_directory
 from .table import CMIP6DataRequestTable, CMIP7DataRequestTable, DataRequestTable
 from .variable import CMIP7DataRequestVariable
 

@@ -1,7 +1,7 @@
 import xarray as xr
 
-from pymorize.config import PymorizeConfigManager
-from pymorize.variable_attributes import set_variable_attrs
+from pymorize.core.config import PymorizeConfigManager
+from pymorize.std_lib.variable_attributes import set_variable_attrs
 
 
 def test_variable_attrs_dataarray(rule_after_cmip6_cmorizer_init):

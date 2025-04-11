@@ -25,8 +25,8 @@ from typing import Union
 
 import xarray as xr
 
-from .logging import logger
-from .rule import Rule
+from ..core.logging import logger
+from ..core.rule import Rule
 
 
 def setgrid(

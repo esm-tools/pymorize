@@ -29,7 +29,7 @@ The file cache can be loaded and saved using the following functions:
 
 .. code-block:: python
 
-    >>> from pymorize.filecache import Filecache
+    >>> from pymorize.core.filecache import Filecache
     >>> cache = Filecache.load()
     >>> cache.save()
 

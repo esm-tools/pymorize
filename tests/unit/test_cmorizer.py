@@ -2,8 +2,8 @@ from unittest.mock import Mock, patch
 
 import pytest
 
-from pymorize.cmorizer import CMORizer
-from pymorize.pipeline import TestingPipeline
+from pymorize.core.cmorizer import CMORizer
+from pymorize.core.pipeline import TestingPipeline
 
 
 @pytest.mark.skip

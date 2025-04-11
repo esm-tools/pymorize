@@ -4,8 +4,8 @@ import pytest
 import xarray as xr
 from chemicals import periodic_table
 
-from pymorize.cmorizer import CMORizer
-from pymorize.units import handle_chemicals, handle_unit_conversion, ureg
+from pymorize.core.cmorizer import CMORizer
+from pymorize.std_lib.units import handle_chemicals, handle_unit_conversion, ureg
 
 #  input samples that are found in CMIP6 tables and in fesom1 (recom)
 allunits = [
