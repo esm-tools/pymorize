@@ -82,8 +82,8 @@ def time_average(
     data : xarray.DataArray or xarray.Dataset
         The data to average.
     rule : Rule
-        The rule containing the units to convert to.
-
+        The rule specifying parameters for time averaging, such as the time period
+        or method to use for averaging.
     Returns
     -------
     xarray.DataArray or xarray.Dataset
