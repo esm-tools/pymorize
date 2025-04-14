@@ -281,7 +281,9 @@ def compute_average(da: xr.DataArray, rule):
         except (TypeError, ValueError):
             # Use pandas offset string. example: offset="14d"
             # ds["time"] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
-            ds["time"] = ds.time + pd.Timedelta(pd.tseries.frequencies.to_offset(offset))
+            ds["time"] = ds.time + pd.Timedelta(
+                pd.tseries.frequencies.to_offset(offset)
+            )
         else:
             # Use custom_resample style offset calculation
             new_times = []
@@ -331,93 +333,78 @@ def custom_resample(df, freq="M", offset=0.5, func="mean"):
 
     Examples
     --------
-    Each example is set up as follows:
+    First, set up our imports and random seed:
 
-        >>> date_rng = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
-        >>> df = pd.DataFrame({"value": np.random.rand(len(date_rng))}, index=date_rng)
+    >>> import numpy as np
+    >>> import pandas as pd
+    >>> rng = np.random.default_rng(42)
+    >>> date_rng = pd.date_range(start="2023-01-01", end="2023-12-31", freq="D")
+    >>> df = pd.DataFrame({"value": rng.random(len(date_rng))}, index=date_rng)
 
-    Resample to mid-month:
+    Test mid-month resampling:
 
-        >>> df_month_mid = custom_resample(df, freq="ME", offset=0.5)
-        >>> print("Mid-month resampling:")
-        >>> print(df_month_mid.head())
-        Mid-month resampling:
-                                value
-        2023-01-16 00:00:00  0.402107
-        2023-02-14 12:00:00  0.550212
-        2023-03-16 00:00:00  0.496109
-        2023-04-15 12:00:00  0.525329
-        2023-05-16 00:00:00  0.554832
+    >>> df_month_mid = custom_resample(df, freq="ME", offset=0.5)
+    >>> print(df_month_mid.head())
+                            value
+    2023-01-16 00:00:00  0.565127
+    2023-02-14 12:00:00  0.484111
+    2023-03-16 00:00:00  0.434221
+    2023-04-15 12:00:00  0.510354
+    2023-05-16 00:00:00  0.443399
 
-    Resample to mid-year:
+    Test mid-year resampling:
 
-        >>> df_year_mid = custom_resample(df, freq="YE", offset=0.5)
-        >>> print("Mid-year resampling:")
-        >>> print(df_year_mid)
-            Mid-year resampling:
-                           value
-            2023-07-02  0.503732
+    >>> df_year_mid = custom_resample(df, freq="YE", offset=0.5)
+    >>> print(df_year_mid)
+                   value
+    2023-07-02  0.492457
 
-    Resample to mid-week:
+    Test mid-week resampling:
 
-        >>> df_week_mid = custom_resample(df, freq="W", offset=0.5)
-        >>> print("Mid-week resampling:")
-        >>> print(df_week_mid.head())
-        Mid-week resampling:
-                       value
-        2023-01-01  0.037969
-        2023-01-05  0.400238
-        2023-01-12  0.304294
-        2023-01-19  0.435459
-        2023-01-26  0.484908
+    >>> df_week_mid = custom_resample(df, freq="W", offset=0.5)
+    >>> print(df_week_mid.head())
+                   value
+    2023-01-01  0.773956
+    2023-01-05  0.658835
+    2023-01-12  0.540872
+    2023-01-19  0.488221
+    2023-01-26  0.500237
 
-    Resample to one-third through each month
+    Test one-third through each month:
 
-        >>> df_month_third = custom_resample(df, freq="ME", offset=1 / 3)
-        >>> print("One-third through each month:")
-        >>> print(df_month_third.head())
-        One-third through each month:
-                                value
-        2023-01-11 00:00:00  0.402107
-        2023-02-10 00:00:00  0.550212
-        2023-03-11 00:00:00  0.496109
-        2023-04-10 16:00:00  0.525329
-        2023-05-11 00:00:00  0.554832
+    >>> df_month_third = custom_resample(df, freq="ME", offset=1/3)
+    >>> print(df_month_third.head())
+                            value
+    2023-01-11 00:00:00  0.565127
+    2023-02-10 00:00:00  0.484111
+    2023-03-11 00:00:00  0.434221
+    2023-04-10 16:00:00  0.510354
+    2023-05-11 00:00:00  0.443399
 
-    Resample to end of each quarter (equivalent to standard quarterly resampling)
+    Test quarter-end resampling:
 
-        >>> df_quarter_end = custom_resample(df, freq="QE", offset=1)
-        >>> print("Quarter-end resampling:")
-        >>> print(df_quarter_end)
-        Quarter-end resampling:
-                       value
-        2023-03-31  0.480563
-        2023-06-30  0.525529
-        2023-09-30  0.493180
-        2023-12-31  0.515388
+    >>> df_quarter_end = custom_resample(df, freq="QE", offset=1)
+    >>> print(df_quarter_end)
+                   value
+    2023-03-31  0.494832
+    2023-06-30  0.496207
+    2023-09-30  0.461806
+    2023-12-31  0.517077
 
+    Test with irregular time series:
 
-    Example with irregular time series:
-
-        >>> irregular_dates = (
-        >>>     pd.date_range("2023-01-01", periods=100, freq="D").tolist()
-        >>>     + pd.date_range("2023-05-01", periods=50, freq="2D").tolist()
-        >>>     + pd.date_range("2023-07-01", periods=30, freq="3D").tolist()
-        >>> )
-        >>> df_irregular = pd.DataFrame(
-        >>>     {"value": np.random.rand(len(irregular_dates))}, index=irregular_dates
-        >>> )
-        >>> df_irregular_month = custom_resample(df_irregular, freq="ME", offset=0.5)
-        >>> print("Irregular time series resampled to mid-month:")
-        >>> print(df_irregular_month.head())
-        Irregular time series resampled to mid-month:
-                                value
-        2023-01-16 00:00:00  0.500401
-        2023-02-14 12:00:00  0.475774
-        2023-03-16 00:00:00  0.495607
-        2023-04-05 12:00:00  0.565798
-        2023-05-16 00:00:00  0.597488
-
+    >>> irregular_dates = pd.date_range("2023-01-01", periods=100, freq="D").tolist()
+    >>> irregular_dates += pd.date_range("2023-05-01", periods=50, freq="2D").tolist()
+    >>> irregular_dates += pd.date_range("2023-07-01", periods=30, freq="3D").tolist()
+    >>> df_irregular = pd.DataFrame({"value": rng.random(len(irregular_dates))}, index=irregular_dates)
+    >>> df_irregular_month = custom_resample(df_irregular, freq="ME", offset=0.5)
+    >>> print(df_irregular_month.head())
+                            value
+    2023-01-16 00:00:00  0.543549
+    2023-02-14 12:00:00  0.485275
+    2023-03-16 00:00:00  0.513365
+    2023-04-05 12:00:00  0.558554
+    2023-05-16 00:00:00  0.447175
     """
     # Perform the resampling
     resampled = getattr(df.resample(freq), func)()
