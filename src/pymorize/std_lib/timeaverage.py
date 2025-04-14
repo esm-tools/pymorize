@@ -33,10 +33,8 @@ _IGNORED_CELL_METHODS : list
 
 """
 
-import functools
 import itertools
 
-import numpy as np
 import pandas as pd
 import xarray as xr
 
