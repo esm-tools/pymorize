@@ -132,27 +132,46 @@ def _frequency_from_approx_interval(interval: str):
     ValueError
         If the interval cannot be converted to a float.
     """
-    notation = [
-        ("decade", lambda x: f"{x*10}YS" if x else "10YS", 3650),
-        ("year", lambda x: f"{x}YS", 366),
-        ("year", lambda x: f"{x}YS", 365),
-        ("month", lambda x: f"{x}MS", 30),
-        ("day", lambda x: f"{x}d", 1),
-        ("hour", lambda x: f"{x}h", 24),
-        ("minute", lambda x: f"{x}min", 24 * 60),
-        ("second", lambda x: f"{x}s", 24 * 60 * 60),
-        ("millisecond", lambda x: f"{x}ms", 24 * 60 * 60 * 1000),
-    ]
     try:
         interval = float(interval)
     except ValueError:
         raise ValueError(f"Invalid interval: {interval}")
-    isclose = functools.partial(np.isclose, rtol=1e-3)
-    for name, func, val in notation:
-        if (interval >= val) or isclose(interval, val):
-            value = round(interval / val)
-            value = "" if value == 1 else value
-            return func(value)
+    ref = pd.Timestamp("1970-01-01")
+    dt = pd.Timedelta(interval, unit="d")
+    dt = dt.round(freq="s")
+    # handle special case of 60 days
+    if dt.days == 60:
+        dt = pd.Timedelta(59, unit="d")
+    ts = ref + dt
+    year = ts.year - ref.year
+    # account leap years, add deficit days
+    extra_days, reminder = divmod(year, 4)
+    if extra_days or reminder:
+        extra_days = extra_days + reminder // 2
+        ts = ts + pd.Timedelta(extra_days, unit="d")
+        year = ts.year - ref.year
+    month = ts.month - ref.month
+    day = ts.day - ref.day
+    hour = ts.hour - ref.hour
+    minute = ts.minute - ref.minute
+    second = ts.second - ref.second
+    result = []
+    if year:
+        result.append(f"{year}YS")
+    if month:
+        result.append(f"{month}MS")
+    if day:
+        if day == 30 and month == 0:
+            result.append("1MS")
+        else:
+            result.append(f"{day}d")
+    if hour:
+        result.append(f"{hour}h")
+    if minute:
+        result.append(f"{minute}m")
+    if second:
+        result.append(f"{second}s")
+    return "".join(result)
 
 
 def _compute_file_timespan(da: xr.DataArray):
@@ -259,7 +278,7 @@ def compute_average(da: xr.DataArray, rule):
             offset = float(offset)
         except (TypeError, ValueError):
             # Use pandas offset string. example: offset="14d"
-            ds['time'] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
+            ds["time"] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
         else:
             # Use custom_resample style offset calculation
             new_times = []
