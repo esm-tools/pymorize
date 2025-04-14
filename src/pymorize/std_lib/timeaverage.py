@@ -35,6 +35,7 @@ _IGNORED_CELL_METHODS : list
 
 import itertools
 
+import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -162,7 +163,7 @@ def _frequency_from_approx_interval(interval: str):
         if day == 30 and month == 0:
             result.append("1MS")
         else:
-            result.append(f"{day}d")
+            result.append(f"{day}D")
     if hour:
         result.append(f"{hour}h")
     if minute:
@@ -279,18 +280,21 @@ def compute_average(da: xr.DataArray, rule):
             offset = float(offset)
         except (TypeError, ValueError):
             # Use pandas offset string. example: offset="14d"
-            ds["time"] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
+            # ds["time"] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
+            ds["time"] = ds.time + pd.Timedelta(pd.tseries.frequencies.to_offset(offset))
         else:
             # Use custom_resample style offset calculation
             new_times = []
-            for _, group in da.time.to_series().groupby(pd.Grouper(freq=frequency_str)):
-                if not group.empty:
-                    period_start = group.iloc[0]
-                    period_end = group.iloc[-1]
-                    new_timestamp = period_start + (period_end - period_start) * offset
-                    new_times.append(new_timestamp)
+            for _, group in da.groupby(time=xr.groupers.TimeResampler(frequency_str)):
+                period_start = group.time.values[0]
+                period_end = group.time.values[-1]
+                new_timestamp = period_start + (period_end - period_start) * offset
+                new_times.append(new_timestamp)
             # Update the timestamps
-            ds["time"] = pd.DatetimeIndex(new_times)
+            if isinstance(new_times[0], np.datetime64):
+                ds["time"] = pd.DatetimeIndex(new_times)
+            else:
+                ds["time"] = xr.CFTimeIndex(new_times)
     elif time_method == "CLIMATOLOGY":
         if drv.frequency == "monC":
             ds = da.groupby("time.month").mean("time")

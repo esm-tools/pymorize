@@ -256,8 +256,8 @@ def test__frequency_from_approx_interval_month():
 
 def test__frequency_from_approx_interval_day():
     assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("1") in {
-        "d",
-        "1d",
+        "D",
+        "1D",
     }  # One day
 
 
