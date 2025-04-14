@@ -35,6 +35,7 @@ def sample_rule():
     class MockDataRequestVariable:
         def __init__(self, table):
             self.table = table
+            self.table_header = table  # Add this line to provide table_header
             self.frequency = table.frequency
 
     class MockRule(dict):

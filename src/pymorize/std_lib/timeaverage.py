@@ -252,7 +252,7 @@ def compute_average(da: xr.DataArray, rule):
         file_timespan, unit="D"
     )
     drv = rule.data_request_variable
-    approx_interval = drv.table.approx_interval
+    approx_interval = drv.table_header.approx_interval
     frequency_str = _frequency_from_approx_interval(approx_interval)
     logger.debug(f"{approx_interval=} {frequency_str=}")
     # attach the frequency_str to rule, it is referenced when creating file name
