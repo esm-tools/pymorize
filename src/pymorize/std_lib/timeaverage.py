@@ -224,12 +224,15 @@ def compute_average(da: xr.DataArray, rule):
     array, and then performs time averaging based on the time method specified in the
     rule. The time methods can be ``"INSTANTANEOUS"``, ``"MEAN"``, or ``"CLIMATOLOGY"``.
 
-    For ``"MEAN"`` time method, the timestamps can be adjusted using the ``adjust_timestamp`` parameter in the rule dict.
+    For ``"MEAN"`` time method, the timestamps can be adjusted using the ``adjust_timestamp``
+    parameter in the rule dict.
+
     This can be either:
     - A float between 0 and 1 representing the position within each period (e.g., 0.5 for mid-point)
     - A string preset: "first"/"start" (0.0), "last"/"end" (1.0), "mid"/"middle" (0.5)
     - A pandas offset string (e.g., "2d" for 2 days offset)
-      This feature is useful for setting consistent mid-month dates by setting ``adjust_timestamp`` to "14d".
+      This feature is useful for setting consistent mid-month dates by setting
+      ``adjust_timestamp`` to "14d".
 
     Parameters
     ----------
