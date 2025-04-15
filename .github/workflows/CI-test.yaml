@@ -129,9 +129,10 @@ jobs:
             cp coverage-reports/coverage-reports-$version/coverage-$version.xml coverage-output/$version/coverage.xml
           done
       - name: Upload coverage reports to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
           directory: ./coverage-output/
           fail_ci_if_error: false
           flags: python-3.9,python-3.10,python-3.11,python-3.12
           token: ${{ secrets.CODECOV_TOKEN }}
+          slug: esm-tools/pymorize
