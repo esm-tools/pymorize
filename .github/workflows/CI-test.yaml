@@ -78,27 +78,27 @@ jobs:
           export NETCDF_DEBUG=1
           export XARRAY_ENGINE=h5netcdf
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
-          pytest -vvv -s --cov tests/meta/*.py --cov-report=xml:coverage-meta.xml
+          pytest -vvv -s --cov tests/meta/*.py --cov-report=xml:coverage-meta.xml --cov-report=json:coverage-meta.json
       - name: Test with pytest (Unit)
         run: |
           export XARRAY_ENGINE=h5netcdf
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
-          pytest -vvv -s --cov tests/unit/*.py --cov-report=xml:coverage-unit1.xml
-          pytest -vvv -s --cov tests/unit/data_request/*.py --cov-report=xml:coverage-unit2.xml
+          pytest -vvv -s --cov tests/unit/*.py --cov-report=xml:coverage-unit1.xml --cov-report=json:coverage-unit1.json
+          pytest -vvv -s --cov tests/unit/data_request/*.py --cov-report=xml:coverage-unit2.xml --cov-report=json:coverage-unit2.json
       - name: Test with pytest (Integration)
         run: |
           export XARRAY_ENGINE=h5netcdf
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
-          pytest -vvv -s --cov tests/integration/*.py --cov-report=xml:coverage-integration.xml
+          pytest -vvv -s --cov tests/integration/*.py --cov-report=xml:coverage-integration.xml --cov-report=json:coverage-integration.json
       - name: Test with doctest
         run: |
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
-          PYTHONPATH=src pytest -v --doctest-modules src/ --cov=src/pymorize --cov-report=xml:coverage-doctest.xml
+          PYTHONPATH=src pytest -v --doctest-modules src/ --cov=src/pymorize --cov-report=xml:coverage-doctest.xml --cov-report=json:coverage-doctest.json
       - name: Upload coverage reports
         uses: actions/upload-artifact@v4
         with:
           name: coverage-reports-${{ matrix.python-version }}
-          path: coverage-*.xml
+          path: coverage-*.json
 
   # Combined test coverage report
   coverage:
@@ -126,12 +126,28 @@ jobs:
 
           # Process each Python version separately
           for version in 3.9 3.10 3.11 3.12; do
-            # Combine coverage files for this version
-            find coverage-reports/coverage-reports-$version/ -name "*.xml" -exec python -m coverage combine {} \;
-            # Generate XML report for this version
-            python -m coverage xml -o coverage-output/$version/coverage.xml
-            # Reset coverage data for next version
-            python -m coverage erase
+            # Create a temporary directory for this version's JSON files
+            mkdir -p temp-$version
+
+            # Extract JSON files for this version
+            find coverage-reports/coverage-reports-$version/ -name "*.json" -exec cp {} temp-$version/ \;
+
+            # Process the coverage data
+            cd temp-$version
+            # Convert each JSON file to a .coverage data file and then combine them
+            for json_file in *.json; do
+              # Create a unique name for each .coverage file
+              coverage_file=".coverage.$(basename $json_file .json)"
+              python -c "import json, coverage; data = json.load(open('$json_file')); cov = coverage.Coverage(); cov.data.add_file_tracers(data['files']); cov.save('$coverage_file')"
+            done
+            # Combine all the .coverage files
+            python -m coverage combine
+            # Generate XML report
+            python -m coverage xml -o ../coverage-output/$version/coverage.xml
+            cd ..
+
+            # Clean up temporary directory
+            rm -rf temp-$version
           done
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
