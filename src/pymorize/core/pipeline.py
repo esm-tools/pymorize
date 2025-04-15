@@ -257,7 +257,7 @@ class DefaultPipeline(FrozenPipeline):
     STEPS = (
         "pymorize.core.gather_inputs.load_mfdataset",
         "pymorize.std_lib.generic.get_variable",
-        "pymorize.std_lib.timeaverage.compute_average",
+        "pymorize.std_lib.timeaverage.timeavg",
         "pymorize.std_lib.units.handle_unit_conversion",
         "pymorize.std_lib.global_attributes.set_global_attributes",
         "pymorize.core.caching.manual_checkpoint",

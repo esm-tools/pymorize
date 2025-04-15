@@ -70,7 +70,7 @@ pipelines:
     steps:
       - "pymorize.gather_inputs.load_mfdataset"
       - "pymorize.generic.get_variable"
-      - "pymorize.timeaverage.compute_average"
+      - "pymorize.timeaverage.timeavg"
       - "pymorize.units.handle_unit_conversion"
       # NOTE(PG): Nodes to levels needs to happen early in the pipeline to ensure that
       #           the setgrid works correctly.

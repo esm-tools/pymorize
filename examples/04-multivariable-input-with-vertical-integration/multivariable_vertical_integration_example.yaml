@@ -48,7 +48,7 @@ pipelines:
       - "script://./intpp_recom.py:vertical_integration"
       - "script://./intpp_recom.py:set_pp_units"
       - "pymorize.units.handle_unit_conversion"
-      - "pymorize.timeaverage.compute_average"
+      - "pymorize.timeaverage.timeavg"
       - "pymorize.global_attributes.set_global_attributes"
       - "pymorize.generic.trigger_compute"
       - "pymorize.generic.show_data"
