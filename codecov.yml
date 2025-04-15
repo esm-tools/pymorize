@@ -1,0 +1,11 @@
+codecov:
+  require_ci_to_pass: yes
+
+ignore:
+  - "src/pymorize/_version.py"
+  - "cmip6-cmor-tables/**/*"
+  - "CMIP7_DReq_Software/**/*"
+  - "versioneer.py"
+  - "setup.py"
+  - "reload_sphinx.py"
+  - "conftest.py"
