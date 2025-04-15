@@ -6,7 +6,7 @@ import pytest
 import xarray as xr
 
 import pymorize.std_lib.timeaverage
-from pymorize.std_lib.timeaverage import compute_average
+from pymorize.std_lib.timeaverage import timeavg
 
 
 @pytest.fixture
@@ -51,7 +51,7 @@ def sample_rule():
 def test_instantaneous_sampling(sample_data, sample_rule):
     """Test instantaneous sampling (first value of each period)."""
     rule = sample_rule("AmonPt", "30")  # Monthly instantaneous
-    result = compute_average(sample_data, rule)
+    result = timeavg(sample_data, rule)
 
     # Should have 12 monthly values
     assert len(result) == 12
@@ -63,7 +63,7 @@ def test_instantaneous_sampling(sample_data, sample_rule):
 def test_mean_default_offset(sample_data, sample_rule):
     """Test mean with default offset (mid-point)."""
     rule = sample_rule("Amon", "30")  # Monthly mean
-    result = compute_average(sample_data, rule)
+    result = timeavg(sample_data, rule)
 
     # Should have 12 monthly values
     assert len(result) == 12
@@ -89,7 +89,7 @@ def test_mean_with_different_offsets(sample_data, sample_rule, offset, expected_
     """Test mean with various offset specifications."""
     rule = sample_rule("Amon", "30")  # Monthly mean
     rule["adjust_timestamp"] = offset
-    result = compute_average(sample_data, rule)
+    result = timeavg(sample_data, rule)
 
     # Check January timestamp
     jan_time = pd.Timestamp(result.time.values[0])
@@ -99,7 +99,7 @@ def test_mean_with_different_offsets(sample_data, sample_rule, offset, expected_
 def test_climatology_monthly(sample_data, sample_rule):
     """Test monthly climatology."""
     rule = sample_rule("AmonC", "30", frequency="monC")
-    result = compute_average(sample_data, rule)
+    result = timeavg(sample_data, rule)
 
     # Should have 12 values (one per month)
     assert len(result) == 12
@@ -119,7 +119,7 @@ def test_climatology_hourly(sample_data, sample_rule):
     )  # Chunk by day
 
     rule = sample_rule("AmonCM", "30", frequency="1hrCM")
-    result = compute_average(hourly_data, rule)
+    result = timeavg(hourly_data, rule)
 
     # Should have 24 values (one per hour)
     assert len(result) == 24

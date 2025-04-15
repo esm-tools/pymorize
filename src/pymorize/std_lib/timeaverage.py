@@ -23,7 +23,7 @@ _frequency_from_approx_interval(interval: str) -> str:
 _compute_file_timespan(da: xr.DataArray) -> int:
     Compute the timespan of a given data array.
 
-compute_average(da: xr.DataArray, rule: Dict) -> xr.DataArray:
+timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
     Time averages data with respect to time-method (mean/climatology/instant.)
 
 Module Variables
@@ -217,7 +217,7 @@ def _compute_file_timespan(da: xr.DataArray):
     return file_timespan
 
 
-def compute_average(da: xr.DataArray, rule):
+def timeavg(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
 
