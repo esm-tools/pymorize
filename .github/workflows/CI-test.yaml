@@ -95,7 +95,7 @@ jobs:
           export PREFECT_SERVER_EPHEMERAL_STARTUP_TIMEOUT_SECONDS=300
           PYTHONPATH=src pytest -v --doctest-modules src/ --cov=src/pymorize --cov-report=xml:coverage-doctest.xml
       - name: Upload coverage reports
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: coverage-reports-${{ matrix.python-version }}
           path: coverage-*.xml
@@ -116,7 +116,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install pytest pytest-cov coverage
       - name: Download coverage reports
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: coverage-reports
       - name: Process coverage reports
