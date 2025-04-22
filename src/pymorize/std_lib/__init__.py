@@ -84,6 +84,7 @@ def time_average(
     rule : Rule
         The rule specifying parameters for time averaging, such as the time period
         or method to use for averaging.
+ 
     Returns
     -------
     xarray.DataArray or xarray.Dataset
@@ -117,8 +118,8 @@ def load_data(
 
     Notes
     -----
-    The rule_spec dictionary should contain an "input_patterns" key with a list
-    of file patterns to match, e.g., ["path/to/data/*.nc"].
+    The rule_spec dictionary should contain an ``input_patterns`` key with a list
+    of file patterns to match, e.g., [``path/to/data/*.nc``].
     """
     return _load_data(data, rule)
 
