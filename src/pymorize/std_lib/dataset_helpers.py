@@ -3,6 +3,7 @@ from collections import deque
 import cftime
 import numpy as np
 import pandas as pd
+import xarray as xr
 from xarray.core.utils import is_scalar
 
 
@@ -110,3 +111,42 @@ def needs_resampling(ds, timespan):
     end = pd.Timestamp(str(ds[time_label].data[-1]))
     offset = pd.tseries.frequencies.to_offset(timespan)
     return (start + offset) < end
+
+
+def freq_is_coarser_than_data(
+    freq: str,
+    ds: xr.Dataset,
+    ref_time: pd.Timestamp = pd.Timestamp("1970-01-01"),
+) -> bool:
+    """
+    Checks if the frequency is coarser than the time frequency of the xarray Dataset.
+
+    Parameters
+    ----------
+    freq : str
+        The frequency to compare (e.g. 'M', 'D', '6H').
+    ds : xr.Dataset
+        The dataset containing a time coordinate.
+    ref_time : pd.Timestamp, optional
+        Reference timestamp used to convert frequency to a time delta. Defaults to the beginning of
+        the Unix Epoch.
+
+
+    Returns
+    -------
+    bool
+        True if `freq` is coarser (covers a longer duration) than the dataset's frequency.
+    """
+    time_label = get_time_label(ds)
+    time_index = ds.indexes[time_label]
+
+    data_freq = pd.infer_freq(time_index)
+    if data_freq is None:
+        raise ValueError(
+            "Could not infer frequency from the dataset's time coordinate."
+        )
+
+    delta1 = (ref_time + pd.tseries.frequencies.to_offset(freq)) - ref_time
+    delta2 = (ref_time + pd.tseries.frequencies.to_offset(data_freq)) - ref_time
+
+    return delta1 > delta2
