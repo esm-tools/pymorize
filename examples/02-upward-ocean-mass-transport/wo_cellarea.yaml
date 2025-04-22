@@ -31,17 +31,17 @@ rules:
 pipelines:
   - name: default
     steps:
-      - "pymorize.gather_inputs.load_mfdataset"
-      - "pymorize.generic.get_variable"
+      - "pymorize.core.gather_inputs.load_mfdataset"
+      - "pymorize.std_lib.get_variable"
       - "script://./wo_cellarea.py:nodes_to_levels"
-      - "pymorize.timeaverage.compute_average"
+      - "pymorize.std_lib.time_average"
       - "script://./wo_cellarea.py:weight_by_cellarea_and_density"
-      - "pymorize.unity.handle_unit_conversion"
-      - "pymorize.setgrid.setgrid"
-      - "pymorize.global_attributes.set_global_attributes"
-      - "pymorize.generic.trigger_compute"
-      - "pymorize.generic.show_data"
-      - "pymorize.files.save_dataset"
+      - "pymorize.std_lib.convert_units"
+      - "pymorize.std_lib.setgrid.setgrid"
+      - "pymorize.std_lib.set_global_attributes"
+      - "pymorize.std_lib.trigger_compute"
+      - "pymorize.std_lib.show_data"
+      - "pymorize.std_lib.files.save_dataset"
 # Settings for using dask-distributed
 distributed:
   worker:
