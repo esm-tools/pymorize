@@ -23,8 +23,13 @@ from typing import Union
 
 from xarray import DataArray, Dataset
 
+from ..core.logging import logger
 from ..core.rule import Rule
-from .dataset_helpers import get_time_label, has_time_axis
+from .dataset_helpers import freq_is_coarser_than_data, get_time_label, has_time_axis
+from .exceptions import (
+    PymorizeResamplingError,
+    PymorizeResamplingTimeAxisIncompatibilityError,
+)
 from .generic import load_data as _load_data
 from .generic import show_data as _show_data
 from .generic import trigger_compute as _trigger_compute
@@ -184,14 +189,24 @@ def temporal_resample(
     - 'D': daily
     - 'H': hourly
 
-    The resampling method (mean, sum, etc.) is determined by the rule.
+    See Also
+    --------
+    https://docs.xarray.dev/en/stable/user-guide/time-series.html#resampling-and-grouped-operations
     """
     if not has_time_axis(data):
         return data
 
     time_dim = get_time_label(data)
     freq = rule.data_request_variable.frequency
-    return data.resample({time_dim: freq}).mean()
+    if not freq_is_coarser_than_data(freq, data):
+        raise PymorizeResamplingTimeAxisIncompatibilityError(
+            f"The data is too coarse to resample to the requested frequency of {freq}"
+        )
+    try:
+        return data.resample({time_dim: freq}).mean()
+    except Exception as e:
+        logger.debug(e)
+        raise PymorizeResamplingError(f"Error during resampling: {e}")
 
 
 def trigger_compute(
