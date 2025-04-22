@@ -200,7 +200,7 @@ def temporal_resample(
     freq = rule.data_request_variable.frequency
     if not freq_is_coarser_than_data(freq, data):
         raise PymorizeResamplingTimeAxisIncompatibilityError(
-            f"Requested frequency {freq} is finer than the dataset's inherent frequency, and resampling cannot be performed."
+            f"Requested frequency {freq} is finer than the dataset's inherent frequency. Cannot resample!"
         )
     try:
         return data.resample({time_dim: freq}).mean()
