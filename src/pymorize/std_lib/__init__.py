@@ -84,7 +84,7 @@ def time_average(
     rule : Rule
         The rule specifying parameters for time averaging, such as the time period
         or method to use for averaging.
- 
+
     Returns
     -------
     xarray.DataArray or xarray.Dataset
