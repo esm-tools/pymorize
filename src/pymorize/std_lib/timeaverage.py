@@ -135,6 +135,9 @@ def _frequency_from_approx_interval(interval: str):
         interval = float(interval)
     except ValueError:
         raise ValueError(f"Invalid interval: {interval}")
+    # NOTE: A reference date is needed to calculate
+    #       datetime diffs. We use the Unix epoch as
+    #       an arbitrary reference date stamp:
     ref = pd.Timestamp("1970-01-01")
     dt = pd.Timedelta(interval, unit="d")
     dt = dt.round(freq="s")
