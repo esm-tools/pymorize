@@ -25,6 +25,7 @@ Contents
    pymorize_configuration
    pymorize_aux_files
    pymorize_fesom
+   timeaveraging_frequencies
    cookbook
    developer_guide
    developer_setup

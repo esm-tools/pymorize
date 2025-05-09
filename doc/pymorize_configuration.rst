@@ -1,4 +1,4 @@
 ==========================
 ``pymorize`` Configuration
 ==========================
-.. automodule:: pymorize.config
+.. automodule:: pymorize.core.config
