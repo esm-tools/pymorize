@@ -9,6 +9,6 @@ if [ -d model_runs ]; then
 fi
 
 module load py-python-swiftclient
-swift download pymorize_demo_data 03 
-tar -xzvf 04-multivariable-input-with-vertical-integration-model-runs.tgz
-rm 04-multivariable-input-with-vertical-integration-model-runs.tgz
+swift download pymorize_demo_data 03-incorrect-units-in-source-files-model-runs.tgz 
+tar -xzvf 03-incorrect-units-in-source-files-model-runs.tgz 
+rm 03-incorrect-units-in-source-files-model-runs.tgz 

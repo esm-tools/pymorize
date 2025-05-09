@@ -40,7 +40,6 @@ rules:
     source_id: AWI-CM-1-1-HR
     model_component: ocnBgchem
     grid_label: gn
-
 # Settings for using dask-distributed
 distributed:
   worker:

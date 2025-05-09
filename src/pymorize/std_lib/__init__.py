@@ -29,7 +29,7 @@ from .generic import load_data as _load_data
 from .generic import show_data as _show_data
 from .generic import trigger_compute as _trigger_compute
 from .global_attributes import set_global_attributes as _set_global_attributes
-from .timeaverage import compute_average
+from .timeaverage import timeavg
 from .units import handle_unit_conversion
 from .variable_attributes import set_variable_attrs
 
@@ -90,7 +90,7 @@ def time_average(
     xarray.DataArray or xarray.Dataset
         The averaged data.
     """
-    return compute_average(data, rule)
+    return timeavg(data, rule)
 
 
 def load_data(
