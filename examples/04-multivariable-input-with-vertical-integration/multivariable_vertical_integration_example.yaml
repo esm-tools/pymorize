@@ -42,17 +42,17 @@ rules:
 pipelines:
   - name: default
     steps:
-      - "pymorize.gather_inputs.load_mfdataset"
+      - "pymorize.core.gather_inputs.load_mfdataset"
       - "script://./intpp_recom.py:add_pp_components"
       - "pymorize.fesom_1p4.nodes_to_levels"
       - "script://./intpp_recom.py:vertical_integration"
       - "script://./intpp_recom.py:set_pp_units"
-      - "pymorize.units.handle_unit_conversion"
-      - "pymorize.timeaverage.timeavg"
-      - "pymorize.global_attributes.set_global_attributes"
-      - "pymorize.generic.trigger_compute"
-      - "pymorize.generic.show_data"
-      - "pymorize.files.save_dataset"
+      - "pymorize.std_lib.convert_units"
+      - "pymorize.std_lib.time_average"
+      - "pymorize.std_lib.set_global_attributes"
+      - "pymorize.std_lib.trigger_compute"
+      - "pymorize.std_lib.show_data"
+      - "pymorize.std_lib.files.save_dataset"
 # Settings for using dask-distributed
 distributed:
   worker:
