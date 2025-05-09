@@ -100,8 +100,8 @@ setup(
             "pymorize=pymorize.cli:main",
         ],
         "pymorize.cli_subcommands": [
-            "plugins=pymorize.plugins:plugins",
-            "externals=pymorize.externals:externals",
+            "plugins=pymorize.core.plugins:plugins",
+            "externals=pymorize.core.externals:externals",
         ],
     },
     include_package_data=True,
