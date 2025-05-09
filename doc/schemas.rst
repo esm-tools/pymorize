@@ -8,9 +8,9 @@ yaml configuration file.
 
 
 .. cerberus-schema:: Pipeline Schema
-   :module: pymorize.validate
+   :module: pymorize.core.validate
    :schema: PIPELINES_SCHEMA
 
 .. cerberus-schema:: Rule Schema
-   :module: pymorize.validate
+   :module: pymorize.core.validate
    :schema: RULES_SCHEMA
