@@ -1,0 +1,15 @@
+codecov:
+  require_ci_to_pass: yes
+coverage:
+  status:
+    project:
+      default:
+        threshold: 10% # Allow ten percent coverage decreases (a bit high, but that's fine for now...)
+ignore:
+  - "src/pymorize/_version.py"
+  - "cmip6-cmor-tables/**/*"
+  - "CMIP7_DReq_Software/**/*"
+  - "versioneer.py"
+  - "setup.py"
+  - "reload_sphinx.py"
+  - "conftest.py"
