@@ -361,20 +361,25 @@ class CMORizer:
         for rule in self.rules:
             if len(rule.data_request_variables) == 1:
                 new_rules.append(rule)
-            # Rule has a table_id or a table_name, so it should only
-            # match that table
-            elif hasattr(rule, "table_id"):
-                for drv in rule.data_request_variables:
-                    if drv.table_name == rule.table_id:
-                        new_rules.append(rule)
-            elif hasattr(rule, "table_name"):
-                for drv in rule.data_request_variables:
-                    if drv.table_name == rule.table_name:
-                        new_rules.append(rule)
             else:
                 cloned_rules = rule.expand_drvs()
                 for rule in cloned_rules:
-                    new_rules.append(rule)
+                    # Rule has a table_id or a table_name, so it should only
+                    # match that table
+                    if hasattr(rule, "table_id"):
+                        logger.info(f"Specified table_id as {rule.table_id=}")
+                        for drv in rule.data_request_variables:
+                            if drv.table_header.table_id == rule.table_id:
+                                logger.info(f"Adding rule/table combo for {drv}")
+                                new_rules.append(rule)
+                    elif hasattr(rule, "table_name"):
+                        logger.info(f"Specified table_name as {rule.table_name=}")
+                        for drv in rule.data_request_variables:
+                            if drv.table_header.table_id == rule.table_name:
+                                logger.info(f"Adding rule/table combo for {drv}")
+                                new_rules.append(rule)
+                    else:
+                        new_rules.append(rule)
         self.rules = new_rules
 
     def _rules_depluralize_drvs(self):
