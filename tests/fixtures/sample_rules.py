@@ -1,7 +1,7 @@
 import pytest
 
 from pymor.core.aux_files import AuxiliaryFile
-from pymor.core.config import PymorizeConfigManager
+from pymor.core.config import PymorConfigManager
 from pymor.core.controlled_vocabularies import ControlledVocabularies
 from pymor.core.factory import create_factory
 from pymor.core.rule import Rule
@@ -12,7 +12,7 @@ from pymor.data_request.variable import CMIP6DataRequestVariable
 
 @pytest.fixture
 def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
-    pymor_config = PymorizeConfigManager.from_pymor_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -37,7 +37,7 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
 
 @pytest.fixture
 def fesom_2p6_esmtools_temp_rule_without_data():
-    pymor_config = PymorizeConfigManager.from_pymor_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -60,7 +60,7 @@ def fesom_2p6_esmtools_temp_rule_without_data():
 
 @pytest.fixture
 def pi_uxarray_temp_rule(pi_uxarray_data):
-    pymor_config = PymorizeConfigManager.from_pymor_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -99,7 +99,7 @@ def simple_rule():
         cmor_variable="var1",
         pipelines=["pymor.pipeline.TestingPipeline"],
     )
-    r._pymor_cfg = PymorizeConfigManager.from_pymor_cfg({})
+    r._pymor_cfg = PymorConfigManager.from_pymor_cfg({})
     return r
 
 
