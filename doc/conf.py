@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "pymorize"
+project = "pymor"
 copyright = "2024, Paul Gierz"
 author = "Paul Gierz"
 
@@ -63,7 +63,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.viewcode",
     "sphinx_copybutton",
-    "sphinx_rtd_theme",
     "sphinx_tabs.tabs",
     "sphinx_toolbox.collapse",
     "sphinx_jinja",
@@ -73,7 +72,7 @@ extensions = [
     "sphinx_click",
 ]
 
-# Strip the input promps for code cells when copying
+# Strip the input prompts for code cells when copying
 copybutton_prompt_text = r">>> |\.\.\. |\$ |In \[\d*\]: | {2,5}\.\.\.: | {5,8}: "
 copybutton_prompt_is_regexp = True
 
@@ -99,5 +98,5 @@ napoleon_custom_sections = [("Mutates", "params_style")]
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_theme = "sphinx_rtd_theme"
+html_theme = "sphinx_book_theme"
 html_static_path = ["_static"]

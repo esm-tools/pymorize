@@ -65,9 +65,9 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from pymorize.core.config import PymorizeConfigManager
-from pymorize.std_lib.files import _filename_time_range, save_dataset
-from pymorize.std_lib.timeaverage import _get_time_method  # noqa: F401
+from pymor.core.config import PymorizeConfigManager
+from pymor.std_lib.files import _filename_time_range, save_dataset
+from pymor.std_lib.timeaverage import _get_time_method  # noqa: F401
 
 # Tests for time-span in filename
 
@@ -189,7 +189,7 @@ def test_save_dataset_saves_to_single_file(tmp_path):
     dates = xr.cftime_range(start="2001", periods=24, freq="MS", calendar="noleap")
     da = xr.DataArray(np.arange(24), coords=[dates], dims=["time"], name="foo")
     rule = Mock()
-    rule._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg({})
+    rule._pymor_cfg = PymorizeConfigManager.from_pymor_cfg({})
     rule.data_request_variable.frequency = "mon"
     rule.data_request_variable.table.table_id = "Omon"
     rule.cmor_variable = "CO2"
@@ -208,7 +208,7 @@ def test_save_dataset_saves_to_multiple_files(tmp_path):
     dates = xr.cftime_range(start="2001", periods=24, freq="MS", calendar="noleap")
     da = xr.DataArray(np.arange(24), coords=[dates], dims=["time"], name="foo")
     rule = Mock()
-    rule._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg({})
+    rule._pymor_cfg = PymorizeConfigManager.from_pymor_cfg({})
     rule.data_request_variable.frequency = "mon"
     rule.data_request_variable.table.table_id = "Omon"
     rule.cmor_variable = "CO2"

@@ -34,13 +34,13 @@ def cleanup():
             rm_file(item)
         if (
             item.is_file()
-            and item.name.startswith("pymorize")
+            and item.name.startswith("pymor")
             and item.name.endswith("json")
         ):
             rm_file(item)
         if item.is_file() and item.name.endswith("nc"):
             rm_file(item)
-        if item.name == "pymorize_report.log":
+        if item.name == "pymor_report.log":
             rm_file(item)
         elif item.is_dir() and item.name == "logs":
             rm_dir(item)

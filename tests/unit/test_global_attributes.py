@@ -1,8 +1,8 @@
 import re
 
-from pymorize.core.controlled_vocabularies import ControlledVocabularies
-from pymorize.core.factory import create_factory
-from pymorize.std_lib.global_attributes import GlobalAttributes
+from pymor.core.controlled_vocabularies import ControlledVocabularies
+from pymor.core.factory import create_factory
+from pymor.std_lib.global_attributes import GlobalAttributes
 
 # Name, expected pass
 creation_date_format = r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$"

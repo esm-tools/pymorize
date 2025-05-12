@@ -1,14 +1,14 @@
 import xarray as xr
 
-from pymorize.core.config import PymorizeConfigManager
-from pymorize.std_lib.variable_attributes import set_variable_attrs
+from pymor.core.config import PymorizeConfigManager
+from pymor.std_lib.variable_attributes import set_variable_attrs
 
 
 def test_variable_attrs_dataarray(rule_after_cmip6_cmorizer_init):
     """Pseudo-integration test for the variable attributes of a DataArray"""
     # Set the fixture as the rule
     rule = rule_after_cmip6_cmorizer_init
-    rule._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg({})
+    rule._pymor_cfg = PymorizeConfigManager.from_pymor_cfg({})
     # Set the DataArray
     da = xr.DataArray()
     # Set the variable attributes

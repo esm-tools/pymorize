@@ -1,4 +1,4 @@
-from pymorize.core.frequency import Frequency
+from pymor.core.frequency import Frequency
 
 
 def test_frequency_for_mon_has_name_mon():

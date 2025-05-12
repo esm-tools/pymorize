@@ -5,8 +5,8 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-import pymorize.std_lib.timeaverage
-from pymorize.std_lib.timeaverage import timeavg
+import pymor.std_lib.timeaverage
+from pymor.std_lib.timeaverage import timeavg
 
 
 @pytest.fixture
@@ -155,14 +155,14 @@ FREQUENCY_TIME_METHOD = {
 
 @pytest.mark.parametrize("frequency_name, expected", FREQUENCY_TIME_METHOD.items())
 def test__get_time_method(frequency_name, expected):
-    answer = pymorize.std_lib.timeaverage._get_time_method(frequency_name)
+    answer = pymor.std_lib.timeaverage._get_time_method(frequency_name)
     assert answer == expected
 
 
 def test__split_by_chunks_1d():
     # 1D array with chunks
     data = xr.DataArray(np.arange(10), dims="x").chunk({"x": 5})
-    chunks = list(pymorize.std_lib.timeaverage._split_by_chunks(data))
+    chunks = list(pymor.std_lib.timeaverage._split_by_chunks(data))
     assert len(chunks) == 2  # Expecting 2 chunks for x dimension
     assert chunks[0][0] == {"x": slice(0, 5)}
     assert chunks[1][0] == {"x": slice(5, 10)}
@@ -173,7 +173,7 @@ def test__split_by_chunks_2d():
     data = xr.DataArray(np.arange(100).reshape(10, 10), dims=("x", "y")).chunk(
         {"x": 5, "y": 2}
     )
-    chunks = list(pymorize.std_lib.timeaverage._split_by_chunks(data))
+    chunks = list(pymor.std_lib.timeaverage._split_by_chunks(data))
     assert len(chunks) == 10  # Expecting 10 chunks (5 for x, 2 for y)
     assert chunks[0][0] == {"x": slice(0, 5), "y": slice(0, 2)}
     assert chunks[-1][0] == {"x": slice(5, 10), "y": slice(8, 10)}
@@ -184,12 +184,12 @@ def test__split_by_chunks_no_chunks():
     data = xr.DataArray(np.arange(10), dims="x")
     # Split-by-chunks is meaningless if you have no chunks, so you should...
     # ...get back the same data?
-    # assert data == pymorize.std_lib.timeaverage._split_by_chunks(data)
+    # assert data == pymor.std_lib.timeaverage._split_by_chunks(data)
     # or
     # ...get an error? ValueError? The Chatbot agrees:
     # https://chatgpt.com/share/67458273-1368-8013-a1cc-7db511c18549
     with pytest.raises(ValueError):
-        list(pymorize.std_lib.timeaverage._split_by_chunks(data))
+        list(pymor.std_lib.timeaverage._split_by_chunks(data))
 
 
 @pytest.mark.skip(reason="too slow to run")
@@ -197,7 +197,7 @@ def test__split_by_chunks_fesom_single_timestep(pi_uxarray_data):
     ds = xr.open_mfdataset(
         f for f in pi_uxarray_data.iterdir() if f.name.startswith("temp")
     )
-    chunks = list(pymorize.std_lib.timeaverage._split_by_chunks(ds))
+    chunks = list(pymor.std_lib.timeaverage._split_by_chunks(ds))
     # Only 1 file...
     assert len(chunks) == 1
     assert chunks[0][0] == {
@@ -214,7 +214,7 @@ def test__split_by_chunks_fesom_example_data(fesom_2p6_pimesh_esm_tools_data):
         for f in (fesom_2p6_pimesh_esm_tools_data / "outdata/fesom/").iterdir()
         if f.name.startswith("temp.fesom")
     )
-    chunks = list(pymorize.std_lib.timeaverage._split_by_chunks(ds))
+    chunks = list(pymor.std_lib.timeaverage._split_by_chunks(ds))
     # Expect 3 chunks, since we have 3 files in the example dataset
     assert len(chunks) == 3
     assert chunks[0][0] == {
@@ -236,96 +236,89 @@ def test__split_by_chunks_fesom_example_data(fesom_2p6_pimesh_esm_tools_data):
 
 def test__frequency_from_approx_interval_decade():
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("3650") == "10YS"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("3650") == "10YS"
     )  # Decade conversion
 
 
 def test__frequency_from_approx_interval_year():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("365") in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("365") in {
         "YS",
         "1YS",
     }  # One year
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("1095") == "3YS"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("1095") == "3YS"
     )  # Three years
 
 
 def test__frequency_from_approx_interval_month():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("30") in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("30") in {
         "MS",
         "1MS",
     }  # One month
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("60") == "2MS"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("60") == "2MS"
     )  # Two months
 
 
 def test__frequency_from_approx_interval_day():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("1") in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("1") in {
         "D",
         "1D",
     }  # One day
 
 
 def test__frequency_from_approx_interval_hour():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.04167") in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("0.04167") in {
         "h",
         "1h",
     }  # Approximately one hour in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.08333") == "2h"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.08333") == "2h"
     )  # Approximately two hours in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.5") == "12h"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.5") == "12h"
     )  # Half a day in hours
 
 
 def test__frequency_from_approx_interval_minute():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.000694") in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("0.000694") in {
         "m",
         "1m",
     }  # Approximately one minute in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.001388") == "2m"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.001388") == "2m"
     )  # Approximately two minutes in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.020833")
-        == "30m"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.020833") == "30m"
     )  # Approximately half an hour in minutes
 
 
 def test__frequency_from_approx_interval_second():
-    assert pymorize.std_lib.timeaverage._frequency_from_approx_interval(
-        "0.000011574"
-    ) in {
+    assert pymor.std_lib.timeaverage._frequency_from_approx_interval("0.000011574") in {
         "s",
         "1s",
     }  # Approximately one second in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.00002314")
-        == "2s"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.00002314") == "2s"
     )  # Approximately two seconds in days
     assert not (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("0.000694")
-        == "60s"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("0.000694") == "60s"
     )  # Approximately one minute in seconds, should give back min, since it can round up.
 
 
 @pytest.mark.skip(reason="not supported.")
 def test__frequency_from_approx_interval_millisecond():
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("1.1574e-8")
-        == "ms"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("1.1574e-8") == "ms"
     )  # Approximately one millisecond in days
     assert (
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("2.3148e-8")
-        == "2ms"
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("2.3148e-8") == "2ms"
     )  # Approximately two milliseconds in days
 
 
 def test__invalid_interval():
     with pytest.raises(ValueError):
-        pymorize.std_lib.timeaverage._frequency_from_approx_interval("not_a_number")
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("not_a_number")
 
 
 def test__compute_file_timespan_single_chunk():
@@ -334,7 +327,7 @@ def test__compute_file_timespan_single_chunk():
     data = xr.DataArray(np.random.rand(10), dims="time", coords={"time": time})
     data = data.chunk({"time": 5})  # Single chunk
 
-    assert pymorize.std_lib.timeaverage._compute_file_timespan(data) == 4
+    assert pymor.std_lib.timeaverage._compute_file_timespan(data) == 4
 
 
 def test__compute_file_timespan_multiple_chunks():
@@ -343,21 +336,21 @@ def test__compute_file_timespan_multiple_chunks():
     data = xr.DataArray(np.random.rand(30), dims="time", coords={"time": time})
     data = data.chunk({"time": 10})
 
-    assert pymorize.std_lib.timeaverage._compute_file_timespan(data) == 9
+    assert pymor.std_lib.timeaverage._compute_file_timespan(data) == 9
 
 
 def test__compute_file_timespan_empty_time_dimension():
     # DataArray with an empty time dimension
     data = xr.DataArray(np.array([]), dims="time", coords={"time": []})
     with pytest.raises(ValueError, match="no time values in this chunk"):
-        pymorize.std_lib.timeaverage._compute_file_timespan(data)
+        pymor.std_lib.timeaverage._compute_file_timespan(data)
 
 
 def test__compute_file_timespan_missing_time_dimension():
     # DataArray without a time dimension
     data = xr.DataArray(np.random.rand(10), dims="x")
     with pytest.raises(ValueError, match="missing the 'time' dimension"):
-        pymorize.std_lib.timeaverage._compute_file_timespan(data)
+        pymor.std_lib.timeaverage._compute_file_timespan(data)
 
 
 def test__compute_file_timespan_non_sequential_time():
@@ -375,4 +368,4 @@ def test__compute_file_timespan_large_dataarray():
     data = xr.DataArray(np.random.rand(100), dims="time", coords={"time": time})
     data = data.chunk({"time": 20})
 
-    assert pymorize.std_lib.timeaverage._compute_file_timespan(data) == 19
+    assert pymor.std_lib.timeaverage._compute_file_timespan(data) == 19

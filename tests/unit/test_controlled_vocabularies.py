@@ -1,6 +1,6 @@
 import pytest
 
-from pymorize.core.controlled_vocabularies import (
+from pymor.core.controlled_vocabularies import (
     CMIP6ControlledVocabularies,
     ControlledVocabularies,
 )

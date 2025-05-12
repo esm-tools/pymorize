@@ -18,11 +18,11 @@ docs_require = read("doc/requirements.txt").splitlines()
 
 
 setup(
-    name="pymorize",
+    name="pymor",
     python_requires=">=3.9, <4",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
-    url="https://github.com/pgierz/pymorize",
+    url="https://github.com/esm-tools/pymor",
     license="MIT",
     author="Paul Gierz",
     author_email="pgierz@awi.de",
@@ -97,16 +97,17 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "pymorize=pymorize.cli:main",
+            "pymor=pymor.cli:main",
+            "pymorize=pymor.cli:main",
         ],
-        "pymorize.cli_subcommands": [
-            "plugins=pymorize.core.plugins:plugins",
-            "externals=pymorize.core.externals:externals",
+        "pymor.cli_subcommands": [
+            "plugins=pymor.core.plugins:plugins",
+            "externals=pymor.core.externals:externals",
         ],
     },
     include_package_data=True,
     package_data={
-        "pymorize": ["data/*.yaml", "data/cmip7/all_var_info.json"],
+        "pymor": ["data/*.yaml", "data/cmip7/all_var_info.json"],
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",

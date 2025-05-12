@@ -1,9 +1,9 @@
 import pytest
 import yaml
 
-from pymorize.core.cmorizer import CMORizer
-from pymorize.core.logging import logger
-from pymorize.core.pipeline import DefaultPipeline
+from pymor.core.cmorizer import CMORizer
+from pymor.core.logging import logger
+from pymor.core.pipeline import DefaultPipeline
 
 STEPS = DefaultPipeline.STEPS
 PROGRESSIVE_STEPS = [STEPS[: i + 1] for i in range(len(STEPS))]
