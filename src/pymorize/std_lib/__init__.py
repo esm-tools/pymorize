@@ -208,6 +208,7 @@ def temporal_resample(
         logger.exception(e)
         raise PymorizeResamplingError(f"Error during resampling: {e}")
 
+
 def trigger_compute(
     data: Union[DataArray, Dataset], rule: Rule
 ) -> Union[DataArray, Dataset]:
