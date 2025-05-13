@@ -205,9 +205,8 @@ def temporal_resample(
     try:
         return data.resample({time_dim: freq}).mean()
     except Exception as e:
-        logger.debug(e)
+        logger.exception(e)
         raise PymorizeResamplingError(f"Error during resampling: {e}")
-
 
 def trigger_compute(
     data: Union[DataArray, Dataset], rule: Rule
