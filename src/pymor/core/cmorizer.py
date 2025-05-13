@@ -330,7 +330,7 @@ class CMORizer:
             msg = f"No rule found for {data_request_variable}"
             if self._pymor_cfg.get("raise_on_no_rule", False):
                 raise ValueError(msg)
-            elif self._pymor_cfg.get("warn_on_no_rule", True):
+            elif self._pymor_cfg.get("warn_on_no_rule", False):
                 logger.warning(msg)
             return None
         if len(matches) > 1:
