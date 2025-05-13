@@ -478,20 +478,20 @@ class CMORizer:
                     filename = input_collection.files[0]
                 except IndexError:
                     break
-                model_units = rule.get("model_unit") or fc.get(filename).units
-                cmor_units = rule.data_request_variable.units
+                model_unit = rule.get("model_unit") or fc.get(filename).units
+                cmor_unit = rule.data_request_variable.units
                 cmor_variable = rule.data_request_variables.get("cmor_variable")
-                if model_units is None:
-                    if not (is_unit_scalar(cmor_units) or cmor_units == "%"):
+                if model_unit is None:
+                    if not (is_unit_scalar(cmor_unit) or cmor_unit == "%"):
                         errors.append(
                             ValueError(
-                                f"dimensionless variables must have dimensionless units ({model_units}  {cmor_units})"
+                                f"dimensionless variables must have dimensionless units ({model_unit}  {cmor_unit})"
                             )
                         )
-                if is_unit_scalar(cmor_units):
-                    if not is_unit_scalar(model_units):
+                if is_unit_scalar(cmor_unit):
+                    if not is_unit_scalar(model_unit):
                         dimless = rule.get("dimensionless_unit_mappings", {})
-                        if cmor_units not in dimless.get(cmor_variable, {}):
+                        if cmor_unit not in dimless.get(cmor_variable, {}):
                             errors.append(
                                 f"Missing mapping for dimensionless variable {cmor_variable}"
                             )

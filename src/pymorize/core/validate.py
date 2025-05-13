@@ -186,7 +186,7 @@ RULES_SCHEMA = {
                     # FIXME(PG): Should cross-check with pipelines.
                     "schema": {"type": "string"},
                 },
-                "cmor_units": {"type": "string", "required": False},
+                "cmor_unit": {"type": "string", "required": False},
                 "model_unit": {"type": "string", "required": False},
                 "file_timespan": {"type": "string", "required": False},
                 "variant_label": {
