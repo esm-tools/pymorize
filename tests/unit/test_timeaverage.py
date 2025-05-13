@@ -246,6 +246,9 @@ def test__frequency_from_approx_interval_year():
         "1YS",
     }  # One year
     assert (
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("365") == "1YS"
+    )  # One year
+    assert (
         pymor.std_lib.timeaverage._frequency_from_approx_interval("1095") == "3YS"
     )  # Three years
 
@@ -255,6 +258,9 @@ def test__frequency_from_approx_interval_month():
         "MS",
         "1MS",
     }  # One month
+    assert (
+        pymor.std_lib.timeaverage._frequency_from_approx_interval("30") == "1MS"
+    )  # One month
     assert (
         pymor.std_lib.timeaverage._frequency_from_approx_interval("60") == "2MS"
     )  # Two months
