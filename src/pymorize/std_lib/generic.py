@@ -23,7 +23,7 @@ from pathlib import Path
 
 import xarray as xr
 
-from .logging import logger
+from ..core.logging import logger
 
 
 def load_data(data, rule_spec, *args, **kwargs):

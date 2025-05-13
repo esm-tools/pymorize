@@ -5,6 +5,7 @@ general:
   email: "pgierz@awi.de"
   cmor_version: "CMIP6"
   mip: "CMIP"
+  CV_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/CMIP6_CVs"
   CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
 pymorize:
   # parallel: True
@@ -67,14 +68,19 @@ rules:
 pipelines:
   - name: default
     steps:
-      - "pymorize.gather_inputs.load_mfdataset"
-      - "pymorize.generic.get_variable"
-      - "pymorize.timeaverage.compute_average"
-      - "pymorize.units.handle_unit_conversion"
-      - "pymorize.global_attributes.set_global_attributes"
-      - "pymorize.generic.trigger_compute"
-      - "pymorize.generic.show_data"
-      - "pymorize.files.save_dataset"
+      - "pymorize.core.gather_inputs.load_mfdataset"
+      - "pymorize.std_lib.get_variable"
+      - "pymorize.std_lib.time_average"
+      - "pymorize.std_lib.convert_units"
+      # NOTE(PG): Nodes to levels needs to happen early in the pipeline to ensure that
+      #           the setgrid works correctly.
+      - "pymorize.fesom_1p4.nodes_to_levels"
+      - "pymorize.std_lib.setgrid.setgrid"
+      # - "pymorize.variable_attributes.set_variable_attrs"
+      - "pymorize.std_lib.set_global_attributes"
+      - "pymorize.std_lib.trigger_compute"
+      - "pymorize.std_lib.show_data"
+      - "pymorize.std_lib.files.save_dataset"
 # Settings for using dask-distributed
 distributed:
   worker:

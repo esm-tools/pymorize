@@ -1,6 +1,6 @@
 import rich_click as click
 
-from .cli import NAME, VERSION, click_loguru, find_subcommands  # , pymorize_cli_group
+from ..cli import NAME, VERSION, click_loguru, find_subcommands  # , pymorize_cli_group
 from .logging import logger
 
 

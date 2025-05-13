@@ -30,7 +30,7 @@ Configuration Options
 
 You can configure the following:
 
-.. autocomponentconfig:: pymorize.config.PymorizeConfig
+.. autocomponentconfig:: pymorize.core.config.PymorizeConfig
    :case: upper
    :show-table:
    :namespace: pymorize

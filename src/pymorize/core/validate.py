@@ -203,7 +203,7 @@ RULES_SCHEMA = {
                 },
                 "instition_id": {"type": "string", "required": False},
                 "experiment_id": {"type": "string", "required": True},
-                "adjust_timestamp": {"type": "boolean", "required": False},
+                "adjust_timestamp": {"type": "string", "required": False},
                 "further_info_url": {"type": "string", "required": False},
                 # "model_component" examples:
                 # aerosol, atmos, land, landIce, ocnBgchem, ocean, seaIce

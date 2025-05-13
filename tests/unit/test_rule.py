@@ -1,7 +1,7 @@
 import re
 
-from pymorize.pipeline import TestingPipeline
-from pymorize.rule import Rule
+from pymorize.core.pipeline import TestingPipeline
+from pymorize.core.rule import Rule
 
 
 def test_direct_init(simple_rule):

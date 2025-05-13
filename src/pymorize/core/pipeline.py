@@ -224,6 +224,9 @@ class FrozenPipeline(Pipeline):
         A tuple containing the steps of the pipeline. This is a class-level attribute and cannot be modified.
     """
 
+    NAME = "FrozenPipeline"
+    STEPS = ()
+
     @property
     def steps(self):
         return self._steps
@@ -231,6 +234,10 @@ class FrozenPipeline(Pipeline):
     @steps.setter
     def steps(self, value):
         raise AttributeError("Cannot set steps on a FrozenPipeline")
+
+    def __init__(self, name=NAME, **kwargs):
+        steps = [get_callable_by_name(name) for name in self.STEPS]
+        super().__init__(*steps, name=name, **kwargs)
 
 
 class DefaultPipeline(FrozenPipeline):
@@ -245,22 +252,21 @@ class DefaultPipeline(FrozenPipeline):
         The name of the pipeline. If not provided, it defaults to "pymorize.pipeline.DefaultPipeline".
     """
 
+    # FIXME(PG): This is not so nice. All things should come out of the std_lib,
+    #            but it is a good start...
     STEPS = (
-        "pymorize.gather_inputs.load_mfdataset",
-        "pymorize.generic.get_variable",
-        "pymorize.timeaverage.compute_average",
-        "pymorize.units.handle_unit_conversion",
-        "pymorize.generic.sort_dimensions",
-        "pymorize.global_attributes.set_global_attributes",
-        "pymorize.caching.manual_checkpoint",
-        "pymorize.generic.trigger_compute",
-        "pymorize.generic.show_data",
-        "pymorize.files.save_dataset",
+        "pymorize.core.gather_inputs.load_mfdataset",
+        "pymorize.std_lib.generic.get_variable",
+        "pymorize.std_lib.timeaverage.timeavg",
+        "pymorize.std_lib.units.handle_unit_conversion",
+        "pymorize.std_lib.sort_dimensions",
+        "pymorize.std_lib.global_attributes.set_global_attributes",
+        "pymorize.core.caching.manual_checkpoint",
+        "pymorize.std_lib.generic.trigger_compute",
+        "pymorize.std_lib.generic.show_data",
+        "pymorize.std_lib.files.save_dataset",
     )
-
-    def __init__(self, name="pymorize.pipeline.DefaultPipeline", **kwargs):
-        steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name, **kwargs)
+    NAME = "pymorize.pipeline.DefaultPipeline"
 
 
 class TestingPipeline(FrozenPipeline):
@@ -282,11 +288,8 @@ class TestingPipeline(FrozenPipeline):
     __test__ = False  # Prevent pytest from thinking this is a test, as the class name starts with test.
 
     STEPS = (
-        "pymorize.generic.dummy_load_data",
-        "pymorize.generic.dummy_logic_step",
-        "pymorize.generic.dummy_save_data",
+        "pymorize.std_lib.generic.dummy_load_data",
+        "pymorize.std_lib.generic.dummy_logic_step",
+        "pymorize.std_lib.generic.dummy_save_data",
     )
-
-    def __init__(self, name="pymorize.pipeline.TestingPipeline", **kwargs):
-        steps = [get_callable_by_name(name) for name in self.STEPS]
-        super().__init__(*steps, name=name, **kwargs)
+    NAME = "pymorize.pipeline.TestingPipeline"
