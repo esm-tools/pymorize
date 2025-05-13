@@ -367,15 +367,23 @@ class CMORizer:
                     # Rule has a table_id or a table_name, so it should only
                     # match that table
                     if hasattr(rule, "table_id"):
+                        if isinstance(rule.table_id, str):
+                            rule.table_id = [
+                                rule.table_id,
+                            ]
                         logger.info(f"Specified table_id as {rule.table_id=}")
                         for drv in rule.data_request_variables:
-                            if drv.table_header.table_id == rule.table_id:
+                            if drv.table_header.table_id in rule.table_id:
                                 logger.info(f"Adding rule/table combo for {drv}")
                                 new_rules.append(rule)
                     elif hasattr(rule, "table_name"):
+                        if isinstance(rule.table_name, str):
+                            rule.table_name = [
+                                rule.table_name,
+                            ]
                         logger.info(f"Specified table_name as {rule.table_name=}")
                         for drv in rule.data_request_variables:
-                            if drv.table_header.table_id == rule.table_name:
+                            if drv.table_header.table_id in rule.table_name:
                                 logger.info(f"Adding rule/table combo for {drv}")
                                 new_rules.append(rule)
                     else:
