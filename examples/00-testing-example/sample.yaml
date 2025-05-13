@@ -5,9 +5,9 @@ general:
   email: "pgierz@awi.de"
   cmor_version: "CMIP6"
   mip: "CMIP"
-  CV_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/CMIP6_CVs"
-  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymorize/cmip6-cmor-tables/Tables"
-pymorize:
+  CV_Dir: "/work/ab0246/a270077/SciComp/Projects/pymor/cmip6-cmor-tables/CMIP6_CVs"
+  CMIP_Tables_Dir: "/work/ab0246/a270077/SciComp/Projects/pymor/cmip6-cmor-tables/Tables"
+pymor:
   # parallel: True
   warn_on_no_rule: False
   use_flox: True
@@ -68,19 +68,19 @@ rules:
 pipelines:
   - name: default
     steps:
-      - "pymorize.core.gather_inputs.load_mfdataset"
-      - "pymorize.std_lib.get_variable"
-      - "pymorize.std_lib.time_average"
-      - "pymorize.std_lib.convert_units"
+      - "pymor.core.gather_inputs.load_mfdataset"
+      - "pymor.std_lib.get_variable"
+      - "pymor.std_lib.time_average"
+      - "pymor.std_lib.convert_units"
       # NOTE(PG): Nodes to levels needs to happen early in the pipeline to ensure that
       #           the setgrid works correctly.
-      - "pymorize.fesom_1p4.nodes_to_levels"
-      - "pymorize.std_lib.setgrid.setgrid"
-      # - "pymorize.variable_attributes.set_variable_attrs"
-      - "pymorize.std_lib.set_global_attributes"
-      - "pymorize.std_lib.trigger_compute"
-      - "pymorize.std_lib.show_data"
-      - "pymorize.std_lib.files.save_dataset"
+      - "pymor.fesom_1p4.nodes_to_levels"
+      - "pymor.std_lib.setgrid.setgrid"
+      # - "pymor.variable_attributes.set_variable_attrs"
+      - "pymor.std_lib.set_global_attributes"
+      - "pymor.std_lib.trigger_compute"
+      - "pymor.std_lib.show_data"
+      - "pymor.std_lib.files.save_dataset"
 # Settings for using dask-distributed
 distributed:
   worker:
@@ -95,7 +95,7 @@ distributed:
 # SLURM-specific settings for launching workers
 jobqueue:
   slurm:
-    name: pymorize-worker
+    name: pymor-worker
     queue: compute # SLURM queue/partition to submit jobs
     account: ab0246 # SLURM project/account name
     cores: 4 # Number of cores per worker

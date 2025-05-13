@@ -23,7 +23,7 @@ include it in the pipeline.
 Notice in the above function, ``density`` is defined as a unit aware
 quantity so that the correct dimensionality reduction happens
 automatically in the calculations. Also notice the ``ureg``
-function. This function is provided by pymorize tool.  The advantage
+function. This function is provided by pymor tool.  The advantage
 of using this function as opposed to ``UnitRegistry`` from ``pint``
 library is that it can handle various kinds of unit notations. For
 instance, ``pint`` does not recognize the unit notation ``kg m-3``. It
@@ -55,11 +55,11 @@ this transformation.
                   "Set `mesh_path` path in yaml config."
                   "Required for converting nodes to levels"
               )
-          return pymorize.fesom_1p4.nodes_to_levels(data, rule)
+          return pymor.fesom_1p4.nodes_to_levels(data, rule)
 
-Note: It is possible to use ``pymorize.fesom_1p4.nodes_to_levels`` directly in
+Note: It is possible to use ``pymor.fesom_1p4.nodes_to_levels`` directly in
 the pipeline instead of this wrapped function.
 
 Check out ``wo_cellarea.yaml`` for details on how these functions are inserted
-in the pipeline, ``pymorize_wo_cellarea.slurm`` for the job submission
+in the pipeline, ``pymor_wo_cellarea.slurm`` for the job submission
 script. The ``wo_cellarea.py`` has these custom functions defined.
