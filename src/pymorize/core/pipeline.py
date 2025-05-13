@@ -259,7 +259,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymorize.std_lib.generic.get_variable",
         "pymorize.std_lib.timeaverage.timeavg",
         "pymorize.std_lib.units.handle_unit_conversion",
-        "pymorize.std_lib.sort_dimensions",
+        "pymorize.std_lib.generic.sort_dimensions",
         "pymorize.std_lib.global_attributes.set_global_attributes",
         "pymorize.core.caching.manual_checkpoint",
         "pymorize.std_lib.generic.trigger_compute",
