@@ -138,6 +138,8 @@ def freq_is_coarser_than_data(
         True if `freq` is coarser (covers a longer duration) than the dataset's frequency.
     """
     time_label = get_time_label(ds)
+    if time_label is None:
+        raise ValueError("The dataset does not contain a valid time coordinate.")
     time_index = ds.indexes[time_label]
 
     data_freq = pd.infer_freq(time_index)
