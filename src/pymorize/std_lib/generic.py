@@ -262,6 +262,14 @@ def rename_dims(data, rule_spec):
     # Check if the rule_spec has a model_dim attribute
     if rule_spec.get("model_dim"):
         model_dim = rule_spec.model_dim
+        # Rename the dimensions in the encoding if they exist:
+        del_encodings = []
+        for dim in data.dims:
+            if dim in data.encoding:
+                del_encodings.append(dim)
+                data.encoding[model_dim[dim]] = data.encoding[dim]
+        for dim in del_encodings:
+            del data.encoding[dim]
         # If it does, rename the dimensions of the array based on the key/values of rule_spec["model_dim"]
         data = data.rename({k: v for k, v in model_dim.items()})
     return data
