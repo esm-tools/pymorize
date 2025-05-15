@@ -29,6 +29,7 @@ Contents
    cookbook
    developer_guide
    developer_setup
+   roadmap
    API
 
 
