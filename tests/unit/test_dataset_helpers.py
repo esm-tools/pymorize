@@ -1,8 +1,10 @@
 import numpy as np
 import pandas as pd
+import pytest
 import xarray as xr
 
 from pymorize.std_lib.dataset_helpers import (
+    freq_is_coarser_than_data,
     get_time_label,
     has_time_axis,
     is_datetime_type,
@@ -176,3 +178,33 @@ def test_get_time_label_can_recognize_time_label_even_if_dimension_is_named_diff
         ],
     )
     assert get_time_label(b) == "time"
+
+
+@pytest.fixture
+def daily_dataset():
+    time = pd.date_range("2000-01-01", periods=10, freq="D")
+    return xr.Dataset({"temp": ("time", np.random.rand(10))}, coords={"time": time})
+
+
+def test_month_is_coarser_than_day(daily_dataset):
+    assert freq_is_coarser_than_data("M", daily_dataset) is True
+
+
+def test_hour_is_not_coarser_than_day(daily_dataset):
+    assert freq_is_coarser_than_data("6H", daily_dataset) is False
+
+
+def test_same_freq_is_not_coarser(daily_dataset):
+    assert freq_is_coarser_than_data("D", daily_dataset) is False
+
+
+def test_year_is_coarser_than_day(daily_dataset):
+    assert freq_is_coarser_than_data("A", daily_dataset) is True
+
+
+def test_unknown_frequency_raises():
+    # Irregular time steps → infer_freq returns None
+    time = pd.to_datetime(["2000-01-01", "2000-01-02", "2000-01-04"])
+    ds = xr.Dataset({"temp": ("time", np.random.rand(3))}, coords={"time": time})
+    with pytest.raises(ValueError, match="Could not infer frequency"):
+        freq_is_coarser_than_data("D", ds)
