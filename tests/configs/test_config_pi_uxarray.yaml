@@ -24,3 +24,8 @@ rules:
     model_variable: "temp"
     model_component: ocean
     grid_label: gn
+    sort_dimensions_missing_dims: "warn"
+    model_dim:
+      nz1: "olevel"
+      time: "longitude" # This is fake and knowingly wrong! Just for the test...
+      nod2: "latitude" # Also fake!

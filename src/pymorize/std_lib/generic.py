@@ -17,6 +17,7 @@ The Full CMOR (yes, bad pun):
     * Performs time averaging
 """
 
+import re
 import tempfile
 from pathlib import Path
 
@@ -251,4 +252,56 @@ def trigger_compute(data, rule_spec, *args, **kwargs):
     if hasattr(data, "compute"):
         return data.compute()
     # Data doesn't have a compute method, do nothing
+    return data
+
+
+def rename_dims(data, rule_spec):
+    """
+    Renames the dimensions of the array based on the key/values of rule_spec["model_dim"]
+    """
+    # Check if the rule_spec has a model_dim attribute
+    if rule_spec.get("model_dim"):
+        model_dim = rule_spec.model_dim
+        # Rename the dimensions in the encoding if they exist:
+        del_encodings = []
+        for dim in data.dims:
+            if dim in data.encoding:
+                del_encodings.append(dim)
+                data.encoding[model_dim[dim]] = data.encoding[dim]
+        for dim in del_encodings:
+            del data.encoding[dim]
+        # If it does, rename the dimensions of the array based on the key/values of rule_spec["model_dim"]
+        data = data.rename({k: v for k, v in model_dim.items()})
+    return data
+
+
+def sort_dimensions(data, rule_spec):
+    """
+    Sorts the dimensions of a DataArray based on the array_order attribute of the
+    rule_spec. If the array_order attribute is not present, it is inferred from the
+    dimensions attribute of the data request variable.
+    """
+    missing_dims = rule_spec.get("sort_dimensions_missing_dims", "raise")
+
+    if hasattr(rule_spec, "array_order"):
+        array_order = rule_spec.array_order
+    else:
+        dimensions = rule_spec.data_request_variable.dimensions
+        # Pattern to match a valid array_order (e.g. "time lat lon", but not
+        # "[time lat lon]" or "time,lat,lon")
+        pattern = r"^(?!\[.*\]$)(?!.*,.*)(?:\S+\s*)+$"
+        if isinstance(dimensions, str) and re.fullmatch(pattern, dimensions):
+            array_order = dimensions.split(" ")
+        elif isinstance(dimensions, list) or isinstance(dimensions, tuple):
+            array_order = dimensions
+        else:
+            logger.error(
+                "Invalid dimensions in data request variable: "
+                f"{rule_spec.data_request_variable}"
+            )
+            raise ValueError("Invalid dimensions in data request variable")
+
+    logger.info(f"Transposing dimensions of data from {data.dims} to {array_order}")
+    data = data.transpose(*array_order, missing_dims=missing_dims)
+
     return data

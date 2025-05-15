@@ -197,7 +197,7 @@ def save_dataset(da: xr.DataArray, rule):
             filepath,
             mode="w",
             format="NETCDF4",
-            encoding={"time": time_encoding},
+            encoding={time_label: time_encoding},
             **extra_kwargs,
         )
     if isinstance(da, xr.DataArray):
@@ -221,7 +221,7 @@ def save_dataset(da: xr.DataArray, rule):
             filepath,
             mode="w",
             format="NETCDF4",
-            encoding={"time": time_encoding},
+            encoding={time_label: time_encoding},
             **extra_kwargs,
         )
     groups = da.resample(time=file_timespan)
@@ -233,6 +233,6 @@ def save_dataset(da: xr.DataArray, rule):
     return xr.save_mfdataset(
         datasets,
         paths,
-        encoding={"time": time_encoding},
+        encoding={time_label: time_encoding},
         **extra_kwargs,
     )

@@ -24,3 +24,8 @@ rules:
         pattern: "temp.fesom..*.nc"
     cmor_variable: "thetao"
     model_variable: "temp"
+    sort_dimensions_missing_dims: "warn"
+    model_dim:
+      nz1: "olevel"
+      time: "longitude" # This is fake and knowingly wrong! Just for the test...
+      nod2: "latitude" # Also fake!
