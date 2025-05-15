@@ -200,13 +200,15 @@ def temporal_resample(
     freq = rule.data_request_variable.frequency
     if not freq_is_coarser_than_data(freq, data):
         raise PymorizeResamplingTimeAxisIncompatibilityError(
-            f"Requested frequency {freq} for cmor variable {rule.cmor_variable} is finer than the dataset's ({rule.model_variable}) inherent frequency. Cannot resample!"
+            f"Requested frequency {freq} for cmor variable {rule.cmor_variable} is finer than the dataset's ({rule.model_variable}) inherent frequency. Cannot resample!"  # noqa: E501
         )
     try:
         return data.resample({time_dim: freq}).mean()
     except Exception as e:
         logger.exception(e)
-        raise PymorizeResamplingError(f"Error during resampling model {rule.model_variable} for CMOR {rule.cmor_variable}: {e}")
+        raise PymorizeResamplingError(
+            f"Error during resampling model {rule.model_variable} for CMOR {rule.cmor_variable}: {e}"
+        )
 
 
 def trigger_compute(
