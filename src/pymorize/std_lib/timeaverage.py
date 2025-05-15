@@ -266,10 +266,8 @@ def timeavg(da: xr.DataArray, rule):
     if time_method == "INSTANTANEOUS":
         ds = da.resample(time=frequency_str).first()
     elif time_method == "MEAN":
-        # First compute the mean using resample
         ds = da.resample(time=frequency_str).mean()
-        # Get offset from adjust_timestamp, default to 0.5 (mid-point)
-        offset = rule.get("adjust_timestamp", 0.5)
+        offset = rule.get("adjust_timestamp", None)
         offset_presets = {
             "first": 0,
             "start": 0,
@@ -279,27 +277,37 @@ def timeavg(da: xr.DataArray, rule):
             "middle": 0.5,
         }
         offset = offset_presets.get(offset, offset)
-        try:
-            offset = float(offset)
-        except (TypeError, ValueError):
-            # Use pandas offset string. example: offset="14d"
-            # ds["time"] = ds.time.to_series() + pd.tseries.frequencies.to_offset(offset)
-            ds["time"] = ds.time + pd.Timedelta(
-                pd.tseries.frequencies.to_offset(offset)
-            )
+        if offset in (None, 0.0):
+            return ds
+        if isinstance(offset, str):  # example: "14d"
+            offset = pd.to_timedelta(offset)
+            ds['time'] = ds.time.values + offset
+            return ds
         else:
-            # Use custom_resample style offset calculation
-            new_times = []
-            for _, group in da.groupby(time=xr.groupers.TimeResampler(frequency_str)):
-                period_start = group.time.values[0]
-                period_end = group.time.values[-1]
-                new_timestamp = period_start + (period_end - period_start) * offset
-                new_times.append(new_timestamp)
-            # Update the timestamps
-            if isinstance(new_times[0], np.datetime64):
-                ds["time"] = pd.DatetimeIndex(new_times)
+            offset = float(offset)
+            if "MS" in frequency_str or "YS" in frequency_str:
+                timestamps = []
+                magnitude = re.search("(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
+                magnitude = float(magnitude)
+                if "MS" in frequency_str:
+                    for _, grp in da.resample(time=frequency_str):
+                        ndays = grp.time.dt.days_in_month.values[0] * magnitude
+                        # NOTE: removing a day is requied to avoid overflow of the interval into next month
+                        new_offset = pd.to_timedelta(f"{ndays}d") * offset - pd.to_timedelta("1d")
+                        timestamp = grp.time.values[0] + new_offset
+                        timestamps.append(timestamp)
+                else:  # "YS"
+                    for _, grp in da.resample(time=frequency_str):
+                        ndays = grp.time.dt.days_in_year.values[0] * magnitude
+                        new_offset = pd.to_timedelta(f"{ndays}d") * offset  - pd.to_timedelta("1d")
+                        timestamp = grp.time.values[0] + new_offset
+                        timestamps.append(timestamp)
+                ds['time'] = timestamps
+                return ds
             else:
-                ds["time"] = xr.CFTimeIndex(new_times)
+                new_offset = pd.to_timedelta(frequency_str) * offset
+                ds["time"] = ds.time.values + new_offset
+                return ds
     elif time_method == "CLIMATOLOGY":
         if drv.frequency == "monC":
             ds = da.groupby("time.month").mean("time")
