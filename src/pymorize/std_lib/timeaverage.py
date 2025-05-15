@@ -290,21 +290,21 @@ def timeavg(da: xr.DataArray, rule):
                 magnitude = re.search(r"(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
                 magnitude = float(magnitude)
                 if "MS" in frequency_str:
-                    for _, grp in da.resample(time=frequency_str):
+                    for timestamp, grp in da.resample(time=frequency_str):
                         ndays = grp.time.dt.days_in_month.values[0] * magnitude
                         # NOTE: removing a day is requied to avoid overflow of the interval into next month
                         new_offset = pd.to_timedelta(
                             f"{ndays}d"
                         ) * offset - pd.to_timedelta("1d")
-                        timestamp = grp.time.values[0] + new_offset
+                        timestamp = timestamp + new_offset
                         timestamps.append(timestamp)
                 else:  # "YS"
-                    for _, grp in da.resample(time=frequency_str):
+                    for timestamp, grp in da.resample(time=frequency_str):
                         ndays = grp.time.dt.days_in_year.values[0] * magnitude
                         new_offset = pd.to_timedelta(
                             f"{ndays}d"
                         ) * offset - pd.to_timedelta("1d")
-                        timestamp = grp.time.values[0] + new_offset
+                        timestamp = timestamp + new_offset
                         timestamps.append(timestamp)
                 ds["time"] = timestamps
                 return ds
