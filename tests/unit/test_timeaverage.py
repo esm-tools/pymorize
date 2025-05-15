@@ -44,6 +44,7 @@ def sample_rule():
             self.data_request_variable = MockDataRequestVariable(
                 MockTable(table_id, approx_interval, frequency)
             )
+            self.adjust_timestamp = None
 
     return MockRule
 
@@ -61,26 +62,28 @@ def test_instantaneous_sampling(sample_data, sample_rule):
 
 
 def test_mean_default_offset(sample_data, sample_rule):
-    """Test mean with default offset (mid-point)."""
+    """Test mean with default offset (None).
+    This used to be mid-values as default. Now it is changed to None
+    """
     rule = sample_rule("Amon", "30")  # Monthly mean
     result = timeavg(sample_data, rule)
 
     # Should have 12 monthly values
     assert len(result) == 12
-    # Mid-month dates (approximately)
+    # month starting dates
     times = pd.DatetimeIndex(result.time.values)
-    assert times[0].strftime("%Y-%m-%d") == "2023-01-16"
-    assert times[1].strftime("%Y-%m-%d") == "2023-02-14"
+    assert times[0].strftime("%Y-%m-%d") == "2023-01-01"
+    assert times[1].strftime("%Y-%m-%d") == "2023-02-01"
 
 
 @pytest.mark.parametrize(
     "offset,expected_date",
     [
         (0.0, "2023-01-01"),  # Start of month
-        (0.5, "2023-01-16"),  # Middle of month
+        (0.5, "2023-01-15 12:00:00"),  # Middle of month
         (1.0, "2023-01-31"),  # End of month
         ("first", "2023-01-01"),  # Start of month
-        ("mid", "2023-01-16"),  # Middle of month
+        ("mid", "2023-01-15 12:00:00"),  # Middle of month
         ("last", "2023-01-31"),  # End of month
         ("14d", "2023-01-15"),  # Fixed 14 days offset
     ],
@@ -93,7 +96,10 @@ def test_mean_with_different_offsets(sample_data, sample_rule, offset, expected_
 
     # Check January timestamp
     jan_time = pd.Timestamp(result.time.values[0])
-    assert jan_time.strftime("%Y-%m-%d") == expected_date
+    if offset in (0.5, "mid"):
+        assert jan_time.strftime("%Y-%m-%d %H:%M:%S") == expected_date
+    else:
+        assert jan_time.strftime("%Y-%m-%d") == expected_date
 
 
 def test_climatology_monthly(sample_data, sample_rule):
