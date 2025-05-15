@@ -34,8 +34,8 @@ _IGNORED_CELL_METHODS : list
 """
 
 import itertools
+import re
 
-import numpy as np
 import pandas as pd
 import xarray as xr
 
@@ -281,28 +281,32 @@ def timeavg(da: xr.DataArray, rule):
             return ds
         if isinstance(offset, str):  # example: "14d"
             offset = pd.to_timedelta(offset)
-            ds['time'] = ds.time.values + offset
+            ds["time"] = ds.time.values + offset
             return ds
         else:
             offset = float(offset)
             if "MS" in frequency_str or "YS" in frequency_str:
                 timestamps = []
-                magnitude = re.search("(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
+                magnitude = re.search(r"(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
                 magnitude = float(magnitude)
                 if "MS" in frequency_str:
                     for _, grp in da.resample(time=frequency_str):
                         ndays = grp.time.dt.days_in_month.values[0] * magnitude
                         # NOTE: removing a day is requied to avoid overflow of the interval into next month
-                        new_offset = pd.to_timedelta(f"{ndays}d") * offset - pd.to_timedelta("1d")
+                        new_offset = pd.to_timedelta(
+                            f"{ndays}d"
+                        ) * offset - pd.to_timedelta("1d")
                         timestamp = grp.time.values[0] + new_offset
                         timestamps.append(timestamp)
                 else:  # "YS"
                     for _, grp in da.resample(time=frequency_str):
                         ndays = grp.time.dt.days_in_year.values[0] * magnitude
-                        new_offset = pd.to_timedelta(f"{ndays}d") * offset  - pd.to_timedelta("1d")
+                        new_offset = pd.to_timedelta(
+                            f"{ndays}d"
+                        ) * offset - pd.to_timedelta("1d")
                         timestamp = grp.time.values[0] + new_offset
                         timestamps.append(timestamp)
-                ds['time'] = timestamps
+                ds["time"] = timestamps
                 return ds
             else:
                 new_offset = pd.to_timedelta(frequency_str) * offset
