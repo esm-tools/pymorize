@@ -71,12 +71,29 @@ def _get_units(
     if cmor_variable in dimless_mapping:
         try:
             to_unit_dimensionless_mapping = dimless_mapping.get(cmor_variable)[to_unit]
-        except KeyError:
-            raise KeyError("Dimensionless unit not found in mappings")
-        if to_unit_dimensionless_mapping is not None:
+            # Check if the mapping is empty
+            if (
+                to_unit_dimensionless_mapping is None
+                or to_unit_dimensionless_mapping == ""
+            ):
+                raise ValueError(
+                    f"Empty dimensionless mapping found for variable '{cmor_variable}' with unit '{to_unit}'. "
+                    f"Please update the {dimless_mapping} file with an appropriate value. "
+                    f"See the PyMorize documentation at "
+                    f"https://pymorize.readthedocs.io/en/latest/cookbook.html#working-with-dimensionless-units "
+                    f"for more information on how to contribute dimensionless mappings."
+                )
             logger.info(
                 f"unit alias {to_unit_dimensionless_mapping!r} used for representing {to_unit!r}."
                 f" see dimensionless variable map for variable {cmor_variable!r}"
+            )
+        except KeyError:
+            raise KeyError(
+                f"Dimensionless unit '{to_unit}' not found in mappings for variable '{cmor_variable}'. "
+                f"Please add an appropriate mapping to {dimless_mapping}. "
+                f"See the PyMorize documentation at "
+                f"https://pymorize.readthedocs.io/en/latest/cookbook.html#working-with-dimensionless-units "
+                f"for more information on how to contribute dimensionless mappings."
             )
     if from_unit is None:
         raise ValueError(f"Unit not defined: {from_unit=}")
