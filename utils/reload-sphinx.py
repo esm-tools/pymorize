@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 """
 This script watches for changes in your Sphinx documentation and rebuilds the site when changes are detected.
 
