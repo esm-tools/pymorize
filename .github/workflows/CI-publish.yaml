@@ -16,8 +16,8 @@ jobs:
       - name: Check if the event is a tag push
         id: check
         run: |
-          echo "Triggered by ref: ${{ github.event.workflow_run.head_branch }}"
-          if [[ "${{ github.event.workflow_run.head_branch }}" == "" ]]; then
+          echo "Triggered by ref: ${{ github.ref }}"
+          if [[ "${GITHUB_REF}" =~ tags ]]; then
             echo "This is a tag push."
             echo "is_tag=true" >> $GITHUB_ENV
             echo "::set-output name=is_tag::true"
