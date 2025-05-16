@@ -301,28 +301,22 @@ def timeavg(da: xr.DataArray, rule):
                 magnitude = re.search(r"(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
                 magnitude = float(magnitude)
                 if "MS" in frequency_str:
-                    for timestamp, grp in da.resample(time=frequency_str):
-                        ndays = grp.time.dt.days_in_month.values[0] * magnitude
-                        # NOTE: removing a day is requied to avoid overflow of the interval into next month
-                        new_offset = pd.to_timedelta(
-                            f"{ndays}d"
-                        ) * offset - pd.to_timedelta("1d")
-                        timestamp = timestamp + new_offset
-                        timestamps.append(timestamp)
+                    day_counts = zip(ds.time.values, ds.time.dt.days_in_month.values)
                 elif "YS" in frequency_str:
-                    for timestamp, grp in da.resample(time=frequency_str):
-                        ndays = grp.time.dt.days_in_year.values[0] * magnitude
-                        new_offset = pd.to_timedelta(
-                            f"{ndays}d"
-                        ) * offset - pd.to_timedelta("1d")
-                        timestamp = timestamp + new_offset
-                        timestamps.append(timestamp)
+                    day_counts = zip(ds.time.values, ds.time.dt.days_in_year.values)
                 else:
                     print(
                         "It is not possible to reach this branch."
                         "If you are here, know that Pymor has gone nuts."
                         f"{frequency_str=} {offset=}"
                     )
+                for timestamp, days in day_counts:
+                    ndays = days * magnitude
+                    # NOTE: removing a day is required here to avoid overflow of date into next interval
+                    new_offset = pd.to_timedelta(
+                        f"{ndays}d"
+                    ) * offset - pd.to_timedelta("1d")
+                    timestamps.append(timestamp + new_offset)
                 ds["time"] = timestamps
                 return ds
             else:
