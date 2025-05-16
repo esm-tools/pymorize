@@ -1,0 +1,7 @@
+{
+  "status": "error",
+  "error": {
+    "code": 404,
+    "message": "No upcoming milestone found."
+  }
+}
