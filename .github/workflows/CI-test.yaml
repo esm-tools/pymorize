@@ -2,10 +2,10 @@
 name: Run Basic Tests
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "prep-release"]
     tags: ["v*.*.*"]
   pull_request:
-    branches: ["main"]
+    branches: ["main", "prep-release"]
 jobs:
   # Setup job for linting and formatting checks
   lint_and_format:
