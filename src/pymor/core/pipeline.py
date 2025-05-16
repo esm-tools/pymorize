@@ -257,7 +257,7 @@ class DefaultPipeline(FrozenPipeline):
     STEPS = (
         "pymor.core.gather_inputs.load_mfdataset",
         "pymor.std_lib.generic.get_variable",
-        "pymor.std_lib.timeaverage.compute_average",
+        "pymor.std_lib.timeaverage.timeavg",
         "pymor.std_lib.units.handle_unit_conversion",
         "pymor.std_lib.generic.rename_dims",
         "pymor.std_lib.generic.sort_dimensions",
