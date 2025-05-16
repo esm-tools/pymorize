@@ -20,6 +20,7 @@ from .core.ssh_tunnel import ssh_tunnel_cli
 from .core.validate import GENERAL_VALIDATOR, PIPELINES_VALIDATOR, RULES_VALIDATOR
 from .dev import utils as dev_utils
 from .fesom_1p4.nodes_to_levels import convert
+from .scripts.update_dimensionless_mappings import update_dimensionless_mappings
 
 MAX_FRAMES = int(os.environ.get("PYMORIZE_ERROR_MAX_FRAMES", 3))
 """
@@ -154,6 +155,7 @@ def cache(verbose, quiet, logfile, profile_mem):
 
 @click.group()
 def scripts():
+    """Various utility scripts for Pymor."""
     return 0
 
 
@@ -264,6 +266,9 @@ def fesom1():
 
 
 fesom1.add_command(convert, name="nodes-to-levels")
+
+# Add scripts commands
+scripts.add_command(update_dimensionless_mappings)
 
 ################################################################################
 ################################################################################

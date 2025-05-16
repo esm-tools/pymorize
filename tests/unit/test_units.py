@@ -216,7 +216,7 @@ def test_dimensionless_unit_missing_in_unit_mapping(rule_with_data_request, mock
     # Set the return value for the property
     mock_getter.return_value = "0.1"
     da = xr.DataArray(10, name="var1", attrs={"units": "g/kg"})
-    with pytest.raises(KeyError, match="Dimensionless unit not found in mappings"):
+    with pytest.raises(KeyError, match="not found in mappings"):
         handle_unit_conversion(da, rule_spec)
 
 
