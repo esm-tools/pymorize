@@ -1,8 +1,16 @@
+import pytest
+import requests
+
 from pymorize.data_request.collection import CMIP6DataRequest, CMIP7DataRequest
 
 
 def test_cmip6_from_git():
-    request = CMIP6DataRequest.from_git()
+    try:
+        request = CMIP6DataRequest.from_git()
+    except requests.exceptions.HTTPError as e:
+        # If we get 429, it's because we're being rate limited.
+        # In that case, mark this test as skipped:
+        pytest.skip(f"Rate limited: {e}")
     # If the function worked, we should get tables:
     assert request.tables
 
