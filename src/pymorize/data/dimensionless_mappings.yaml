@@ -705,13 +705,13 @@ so:  # sea_water_salinity
 so2:  # mole_fraction_of_sulfur_dioxide_in_air
   "mol mol-1":
 sob:  # sea_water_salinity_at_sea_floor
-  "0.001":
+  "0.001": g/kg
 soga:  # sea_water_salinity
-  "0.001":
+  "0.001": g/kg
 sos:  # sea_surface_salinity
-  "0.001":
+  "0.001": g/kg
 sosga:  # sea_surface_salinity
-  "0.001":
+  "0.001": g/kg
 sw17O:  # isotope_ratio_of_17O_to_16O_in_sea_water_excluding_solutes_and_solids
   "1":
 sw18O:  # isotope_ratio_of_18O_to_16O_in_sea_water_excluding_solutes_and_solids
