@@ -1,5 +1,5 @@
 #!/bin/bash -l
-#SBATCH --job-name=pymorize-controller  # <<< This is the main job, it will launch subjobs if you have Dask enabled.
+#SBATCH --job-name=pymor-controller  # <<< This is the main job, it will launch subjobs if you have Dask enabled.
 #SBATCH --account=ab0246                # <<< Adapt this to your computing account!
 #SBATCH --partition=compute
 #SBATCH --nodes=1
@@ -12,7 +12,7 @@ export PREFECT_RESULTS_LOCAL_STORAGE_PATH=/scratch/a/${USER}/prefect
 # loadconda
 module load python3
 source $(conda info --base)/etc/profile.d/conda.sh
-conda activate pymorize
+conda activate pymor
 prefect server start -b
-time pymorize process wo_cellarea.yaml
-#time pymorize process sample_so.yaml
+time pymor process wo_cellarea.yaml
+#time pymor process sample_so.yaml

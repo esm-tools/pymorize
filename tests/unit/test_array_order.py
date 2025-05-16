@@ -1,6 +1,8 @@
+from pymor.std_lib.generic import sort_dimensions
+
+
 def test_sort_dimensions(dummy_array, rule_with_unsorted_data):
     """Test to check that dimensions are sorted correctly"""
-    from pymorize.std_lib.generic import sort_dimensions
 
     dummy_array = sort_dimensions(dummy_array, rule_with_unsorted_data)
 
@@ -9,7 +11,6 @@ def test_sort_dimensions(dummy_array, rule_with_unsorted_data):
 
 def test_sort_dimensions_without_array_order_attr(dummy_array, rule_with_unsorted_data):
     """Test to check that dimensions are sorted correctly"""
-    from pymorize.std_lib.generic import sort_dimensions
 
     array_order = rule_with_unsorted_data.array_order
     del rule_with_unsorted_data.array_order

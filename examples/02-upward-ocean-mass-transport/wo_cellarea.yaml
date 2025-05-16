@@ -2,9 +2,9 @@ general:
   name: "wo_cellarea"
   cmor_version: "CMIP6"
   mip: "CMIP"
-  CMIP_Tables_Dir: "/work/ab0995/a270243/pymorize/cmip6-cmor-tables/Tables"
-  CV_Dir: "/work/ab0995/a270243/pymorize/cmip6-cmor-tables/CMIP6_CVs"
-pymorize:
+  CMIP_Tables_Dir: "/work/ab0995/a270243/pymor/cmip6-cmor-tables/Tables"
+  CV_Dir: "/work/ab0995/a270243/pymor/cmip6-cmor-tables/CMIP6_CVs"
+pymor:
   # parallel: True
   warn_on_no_rule: False
   use_flox: True
@@ -14,7 +14,7 @@ pymorize:
 rules:
   - name: cellarea_wo
     inputs:
-      - path: /work/ab0995/a270243/pymorize_sample_data
+      - path: /work/ab0995/a270243/pymor_sample_data
         pattern: wo_fesom_.*nc
     cmor_variable: wmo
     model_variable: wo
@@ -31,17 +31,17 @@ rules:
 pipelines:
   - name: default
     steps:
-      - "pymorize.core.gather_inputs.load_mfdataset"
-      - "pymorize.std_lib.get_variable"
+      - "pymor.core.gather_inputs.load_mfdataset"
+      - "pymor.std_lib.get_variable"
       - "script://./wo_cellarea.py:nodes_to_levels"
-      - "pymorize.std_lib.time_average"
+      - "pymor.std_lib.time_average"
       - "script://./wo_cellarea.py:weight_by_cellarea_and_density"
-      - "pymorize.std_lib.convert_units"
-      - "pymorize.std_lib.setgrid.setgrid"
-      - "pymorize.std_lib.set_global_attributes"
-      - "pymorize.std_lib.trigger_compute"
-      - "pymorize.std_lib.show_data"
-      - "pymorize.std_lib.files.save_dataset"
+      - "pymor.std_lib.convert_units"
+      - "pymor.std_lib.setgrid.setgrid"
+      - "pymor.std_lib.set_global_attributes"
+      - "pymor.std_lib.trigger_compute"
+      - "pymor.std_lib.show_data"
+      - "pymor.std_lib.files.save_dataset"
 # Settings for using dask-distributed
 distributed:
   worker:
@@ -56,7 +56,7 @@ distributed:
 # SLURM-specific settings for launching workers
 jobqueue:
   slurm:
-    name: pymorize-worker
+    name: pymor-worker
     queue: compute # SLURM queue/partition to submit jobs
     account: ab0246 # SLURM project/account name
     cores: 4 # Number of cores per worker

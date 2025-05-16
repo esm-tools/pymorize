@@ -1,4 +1,4 @@
-pymorize:
+pymor:
   version: "unreleased"
   use_xarray_backend: True
   warn_on_no_rule: False
@@ -33,12 +33,12 @@ rules:
 pipelines:
   - name: level_regridder
     steps:
-      - pymorize.core.gather_inputs.load_mfdataset
-      - pymorize.std_lib.generic.get_variable
-      - pymorize.fesom_1p4.nodes_to_levels
-      - pymorize.core.caching.manual_checkpoint
-      - pymorize.std_lib.generic.trigger_compute
-      - pymorize.std_lib.generic.show_data
+      - pymor.core.gather_inputs.load_mfdataset
+      - pymor.std_lib.generic.get_variable
+      - pymor.fesom_1p4.nodes_to_levels
+      - pymor.core.caching.manual_checkpoint
+      - pymor.std_lib.generic.trigger_compute
+      - pymor.std_lib.generic.show_data
 distributed:
   worker:
     memory:

@@ -1,18 +1,18 @@
 import pytest
 
-from pymorize.core.aux_files import AuxiliaryFile
-from pymorize.core.config import PymorizeConfigManager
-from pymorize.core.controlled_vocabularies import ControlledVocabularies
-from pymorize.core.factory import create_factory
-from pymorize.core.rule import Rule
-from pymorize.data_request.collection import CMIP6DataRequest
-from pymorize.data_request.table import CMIP6DataRequestTable
-from pymorize.data_request.variable import CMIP6DataRequestVariable
+from pymor.core.aux_files import AuxiliaryFile
+from pymor.core.config import PymorConfigManager
+from pymor.core.controlled_vocabularies import ControlledVocabularies
+from pymor.core.factory import create_factory
+from pymor.core.rule import Rule
+from pymor.data_request.collection import CMIP6DataRequest
+from pymor.data_request.table import CMIP6DataRequestTable
+from pymor.data_request.variable import CMIP6DataRequestVariable
 
 
 @pytest.fixture
 def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
-    pymorize_config = PymorizeConfigManager.from_pymorize_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -30,14 +30,14 @@ def fesom_2p6_esmtools_temp_rule(fesom_2p6_pimesh_esm_tools_data):
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
-            "_pymorize_cfg": pymorize_config,
+            "_pymor_cfg": pymor_config,
         }
     )
 
 
 @pytest.fixture
 def fesom_2p6_esmtools_temp_rule_without_data():
-    pymorize_config = PymorizeConfigManager.from_pymorize_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -53,14 +53,14 @@ def fesom_2p6_esmtools_temp_rule_without_data():
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
-            "_pymorize_cfg": pymorize_config,
+            "_pymor_cfg": pymor_config,
         }
     )
 
 
 @pytest.fixture
 def pi_uxarray_temp_rule(pi_uxarray_data):
-    pymorize_config = PymorizeConfigManager.from_pymorize_cfg({})
+    pymor_config = PymorConfigManager.from_pymor_cfg({})
     return Rule.from_dict(
         {
             "name": "temp",
@@ -78,7 +78,7 @@ def pi_uxarray_temp_rule(pi_uxarray_data):
             ],
             "cmor_variable": "thetao",
             "model_variable": "temp",
-            "_pymorize_cfg": pymorize_config,
+            "_pymor_cfg": pymor_config,
         }
     )
 
@@ -97,9 +97,9 @@ def simple_rule():
             },
         ],
         cmor_variable="var1",
-        pipelines=["pymorize.pipeline.TestingPipeline"],
+        pipelines=["pymor.pipeline.TestingPipeline"],
     )
-    r._pymorize_cfg = PymorizeConfigManager.from_pymorize_cfg({})
+    r._pymor_cfg = PymorConfigManager.from_pymor_cfg({})
     return r
 
 
@@ -117,7 +117,7 @@ def rule_with_mass_units():
             },
         ],
         cmor_variable="var1",
-        pipelines=["pymorize.pipeline.TestingPipeline"],
+        pipelines=["pymor.pipeline.TestingPipeline"],
         data_request_variables=[
             CMIP6DataRequestVariable.from_dict(
                 dict(
@@ -166,7 +166,7 @@ def rule_with_data_request():
             },
         ],
         cmor_variable="var1",
-        pipelines=["pymorize.pipeline.TestingPipeline"],
+        pipelines=["pymor.pipeline.TestingPipeline"],
         data_request_variables=[
             CMIP6DataRequestVariable.from_dict(
                 dict(
