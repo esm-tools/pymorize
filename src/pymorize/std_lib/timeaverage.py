@@ -277,15 +277,26 @@ def timeavg(da: xr.DataArray, rule):
             "middle": 0.5,
         }
         offset = offset_presets.get(offset, offset)
-        if offset in (None, 0.0):
+        if offset is None:
             return ds
-        if isinstance(offset, str):  # example: "14d"
-            offset = pd.to_timedelta(offset)
-            ds["time"] = ds.time.values + offset
-            return ds
-        else:
+        try:
             offset = float(offset)
-            if "MS" in frequency_str or "YS" in frequency_str:
+        except (ValueError, TypeError):
+            # dealing with a alphanumerical string. example: "14days"
+            try:
+                offset = pd.to_timedelta(offset)
+            except ValueError:
+                # don't know how to deal with it so raise the error
+                # supporing datetime kind of string is a bit complex.
+                # at the moment, skip supporting it.
+                raise ValueError(f"offset ({offset}) can not converted to timedelta")
+            else:
+                ds["time"] = ds.time.values + offset
+                return ds
+        else:
+            if offset == 0.0:
+                return ds
+            elif "MS" in frequency_str or "YS" in frequency_str:
                 timestamps = []
                 magnitude = re.search(r"(\d+(?:\.\d+)?)?", frequency_str).group(0) or 1
                 magnitude = float(magnitude)
@@ -298,7 +309,7 @@ def timeavg(da: xr.DataArray, rule):
                         ) * offset - pd.to_timedelta("1d")
                         timestamp = timestamp + new_offset
                         timestamps.append(timestamp)
-                else:  # "YS"
+                elif "YS" in frequency_str:
                     for timestamp, grp in da.resample(time=frequency_str):
                         ndays = grp.time.dt.days_in_year.values[0] * magnitude
                         new_offset = pd.to_timedelta(
@@ -306,6 +317,11 @@ def timeavg(da: xr.DataArray, rule):
                         ) * offset - pd.to_timedelta("1d")
                         timestamp = timestamp + new_offset
                         timestamps.append(timestamp)
+                else:
+                    print("It is not possible to reach this branch."
+                          "If you are here, know that Pymor has gone nuts."
+                          f"{frequency_str=} {offset=}"
+                          )
                 ds["time"] = timestamps
                 return ds
             else:
