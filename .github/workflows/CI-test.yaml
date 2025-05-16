@@ -114,6 +114,23 @@ jobs:
           echo "test_status=success" >> $GITHUB_ENV
           echo "lint_status=success" >> $GITHUB_OUTPUT
           echo "test_status=success" >> $GITHUB_OUTPUT
+  set-output:
+    name: Set Output for Ref
+    runs-on: ubuntu-latest
+    needs: [lint_and_format, test]
+    outputs:
+      ref: ${{ steps.set-ref.outputs.ref }}
+      is_tag: ${{ steps.set-ref.outputs.is_tag }}
+    steps:
+      - name: Determine if Ref is a Tag
+        id: set-ref
+        run: |
+          echo "ref=${GITHUB_REF}" >> $GITHUB_OUTPUT
+          if [[ "${GITHUB_REF}" =~ ^refs/tags/ ]]; then
+            echo "is_tag=true" >> $GITHUB_OUTPUT
+          else
+            echo "is_tag=false" >> $GITHUB_OUTPUT
+          fi
   # Combined test coverage report
   coverage:
     name: Generate Coverage Report
