@@ -100,6 +100,20 @@ jobs:
         with:
           name: coverage-reports-${{ matrix.python-version }}
           path: coverage-${{ matrix.python-version }}.xml
+  post-status:
+    name: Post Status for other jobs
+    needs: [lint_and_format, test]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set output for lint and test status
+        id: set-output
+        run: |
+          echo "::set-output name=test_status::success"
+          echo "::set-output name=lint_status::success"
+          echo "lint_status=success" >> $GITHUB_ENV
+          echo "test_status=success" >> $GITHUB_ENV
+          echo "lint_status=success" >> $GITHUB_OUTPUT
+          echo "test_status=success" >> $GITHUB_OUTPUT
   # Combined test coverage report
   coverage:
     name: Generate Coverage Report
