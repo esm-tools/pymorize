@@ -53,12 +53,21 @@ jobs:
     needs: check-tag
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
       - name: Set up Python
         uses: actions/setup-python@v5
       - name: Install Python Dependencies
         run: |
           python -m pip install -U pip
           pip install build
+      - name: Display proposed version
+        run: |
+          echo "From setup.py:"
+          python setup.py --version
+          echo "From git:"
+          git describe --tags --dirty
       - name: Build package
         run: |
           python -m build
@@ -77,7 +86,8 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: dist
+          path: dist
       - name: List files
-        run: ls -ratl
+        run: ls -ratlR
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@v1.9.0
