@@ -10,18 +10,44 @@ on:
     types:
       - completed
 jobs:
-  check-status:
-    name: Check Test and Lint Status
+  get-upstream-info:
+    name: Get Upstream Info
     runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.read.outputs.ref }}
+      is_tag: ${{ steps.read.outputs.is_tag }}
     steps:
-      - name: Get Ref and Tag Info
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Download artifacts from upstream run
         run: |
-          echo "Ref: ${{ github.event.workflow_run.outputs.ref }}"
-          echo "Is Tag: ${{ github.event.workflow_run.outputs.is_tag }}"
-          if [[ "${{ github.event.workflow_run.outputs.is_tag }}" != "true" ]]; then
+          mkdir artifacts
+          gh run download ${{ github.event.workflow_run.id }} -D artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read artifact file
+        id: read
+        run: |
+          cat artifacts/status-${{ github.event.workflow_run.id }}/status.dat
+          source artifacts/status-${{ github.event.workflow_run.id }}/status.dat
+          echo "ref=$ref" >> $GITHUB_OUTPUT
+          echo "is_tag=$is_tag" >> $GITHUB_OUTPUT
+  check-tag:
+    name: Check Tag
+    runs-on: ubuntu-latest
+    needs: get-upstream-info
+    steps:
+      - run: |
+          echo "State of workflow_run outputs:"
+          echo "Ref: ${REF}"
+          echo "Is Tag: ${IS_TAG}"
+          if [[ "${IS_TAG}" != "true" ]]; then
             echo "This is not a tag push. Aborting."
             exit 1
           fi
+        env:
+          REF: ${{ needs.get-upstream-info.outputs.ref }}
+          IS_TAG: ${{ needs.get-upstream-info.outputs.is_tag }}
   build:
     runs-on: ubuntu-latest
     needs: check-status

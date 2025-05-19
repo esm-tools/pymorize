@@ -131,6 +131,29 @@ jobs:
           else
             echo "is_tag=false" >> $GITHUB_OUTPUT
           fi
+          echo "cat ${GITHUB_OUTPUT}"
+          cat $GITHUB_OUTPUT
+  set-workflow-artifact:
+    name: Set workflow artifact
+    runs-on: ubuntu-latest
+    needs: set-output
+    steps:
+      - name: Create artifact
+        run: |
+          echo "Creating artifact..."
+          echo "ref=$REF"
+          echo "is_tag=$IS_TAG"
+
+          echo "ref=$REF" >> status.dat
+          echo "is_tag=$IS_TAG" >> status.dat
+        env:
+          REF: ${{ needs.set-output.outputs.ref }}
+          IS_TAG: ${{ needs.set-output.outputs.is_tag }}
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: status-${{ github.run_id }}
+          path: status.dat
   # Combined test coverage report
   coverage:
     name: Generate Coverage Report
