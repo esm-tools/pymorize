@@ -50,7 +50,7 @@ jobs:
           IS_TAG: ${{ needs.get-upstream-info.outputs.is_tag }}
   build:
     runs-on: ubuntu-latest
-    needs: check-status
+    needs: check-tag
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python
