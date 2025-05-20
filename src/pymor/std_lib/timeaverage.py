@@ -10,18 +10,12 @@ in ~``pymor.frequency``.
 
 Functions
 ---------
-_split_by_chunks(dataset: xr.DataArray) -> Tuple[Dict, xr.DataArray]:
-    Split a large dataset into sub-datasets for each chunk.
-
 _get_time_method(frequency: str) -> str:
     Determine the time method based on the frequency string from
     rule.data_request_variable.frequency.
 
 _frequency_from_approx_interval(interval: str) -> str:
     Convert an interval expressed in days to a frequency string.
-
-_compute_file_timespan(da: xr.DataArray) -> int:
-    Compute the timespan of a given data array.
 
 timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
     Time averages data with respect to time-method (mean/climatology/instant.)
