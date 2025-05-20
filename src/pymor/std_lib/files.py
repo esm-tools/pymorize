@@ -301,16 +301,26 @@ def save_dataset(da: xr.DataArray, rule):
 
     file_timespan = getattr(rule, "file_timespan", None)
     if file_timespan is None:
-        paths = []
-        datasets = split_data_timespan(da, rule)
-        for group_ds in datasets:
-            paths.append(create_filepath(group_ds, rule))
-        return xr.save_mfdataset(
-            datasets,
-            paths,
-            encoding={time_label: time_encoding},
-            **extra_kwargs,
-        )
+        if has_time_axis(da):
+            paths = []
+            datasets = split_data_timespan(da, rule)
+            for group_ds in datasets:
+                paths.append(create_filepath(group_ds, rule))
+            return xr.save_mfdataset(
+                datasets,
+                paths,
+                encoding={time_label: time_encoding},
+                **extra_kwargs,
+            )
+        else:
+            filepath = create_filepath(da, rule)
+            return da.to_netcdf(
+                filepath,
+                mode="w",
+                format="NETCDF4",
+                encoding={time_label: time_encoding},
+                **extra_kwargs,
+            )
     else:
         file_timespan_as_offset = pd.tseries.frequencies.to_offset(file_timespan)
         file_timespan_as_dt = (
