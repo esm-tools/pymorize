@@ -92,8 +92,11 @@ setup(
         ],
         "doc": docs_require,
         "fesom": [
-            # FIXME(PG): We should talk with Nikolay, this is not optimal...
-            "pyfesom2 @ git+https://github.com/fesom/pyfesom2.git@0.3.0",
+            # NOTE(PG): pyfesom2 is now auto-publishing (GH pyfesom2 #215)
+            #           See the relevant information in shell::
+            #
+            #             $ gh pr view 215 --repo fesom/pyfesom2
+            "pyfesom2",
         ],
     },
     entry_points={
