@@ -171,7 +171,11 @@ def file_timespan_tail(rule):
     """Grab the last timestamp in each file and return them as a list.
     Also account for offset (if any) defined on the rule"""
     times = []
-    options = {"decode_times": xr.coders.CFDatetimeCoder(use_cftime=True)}
+    try:
+        options = {"decode_times": xr.coders.CFDatetimeCoder(use_cftime=True)}
+    except AttributeError:
+        # in python3.9, xarray does not have coders
+        options = {"use_cftime": True}
     for _input in rule.inputs:
         for f in sorted(_input.files):
             ds = xr.open_dataset(str(f), **options)
@@ -299,28 +303,27 @@ def save_dataset(da: xr.DataArray, rule):
     if rule._pymor_cfg("xarray_time_remove_fill_value_attr"):
         time_encoding["_FillValue"] = None
 
+    if not has_time_axis(da):
+        filepath = create_filepath(da, rule)
+        return da.to_netcdf(
+            filepath,
+            mode="w",
+            format="NETCDF4",
+            **extra_kwargs,
+        )
+
     file_timespan = getattr(rule, "file_timespan", None)
     if file_timespan is None:
-        if has_time_axis(da):
-            paths = []
-            datasets = split_data_timespan(da, rule)
-            for group_ds in datasets:
-                paths.append(create_filepath(group_ds, rule))
-            return xr.save_mfdataset(
-                datasets,
-                paths,
-                encoding={time_label: time_encoding},
-                **extra_kwargs,
-            )
-        else:
-            filepath = create_filepath(da, rule)
-            return da.to_netcdf(
-                filepath,
-                mode="w",
-                format="NETCDF4",
-                encoding={time_label: time_encoding},
-                **extra_kwargs,
-            )
+        paths = []
+        datasets = split_data_timespan(da, rule)
+        for group_ds in datasets:
+            paths.append(create_filepath(group_ds, rule))
+        return xr.save_mfdataset(
+            datasets,
+            paths,
+            encoding={time_label: time_encoding},
+            **extra_kwargs,
+        )
     else:
         file_timespan_as_offset = pd.tseries.frequencies.to_offset(file_timespan)
         file_timespan_as_dt = (
