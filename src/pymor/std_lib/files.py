@@ -38,6 +38,7 @@ Table 2: Precision of time labels used in file names
 
 """
 
+from collections import deque
 from pathlib import Path
 
 import pandas as pd
@@ -203,8 +204,8 @@ def split_data_timespan(ds, rule):
     list
         A list of datasets, each containing a chunk of the original dataset.
     """
-    from collections import deque
-
+    if not has_time_axis(ds):
+        return [ds]
     time_cuts = deque(file_timespan_tail(rule))
     resampled_times = deque(ds.time.values)
     result = []
