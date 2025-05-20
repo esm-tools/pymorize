@@ -18,7 +18,7 @@ docs_require = read("doc/requirements.txt").splitlines()
 
 
 setup(
-    name="pymor",
+    name="py-cmor",
     python_requires=">=3.9, <4",
     version=versioneer.get_version(),
     cmdclass=versioneer.get_cmdclass(),
