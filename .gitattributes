@@ -1,1 +1,1 @@
-src/pymorize/_version.py export-subst
+src/pymor/_version.py export-subst
