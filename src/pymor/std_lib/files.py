@@ -207,7 +207,17 @@ def split_data_timespan(ds, rule):
     if not has_time_axis(ds):
         return [ds]
     time_cuts = deque(file_timespan_tail(rule))
-    resampled_times = deque(ds.time.values)
+    try:
+        resampled_times = deque(ds.time.values)
+    except AttributeError:
+        logger.warning(
+            "Dataset does not have a time axis but this check is done by"
+            " has_time_axis() already couple of lines above. This exception"
+            " should not happen."
+            f" dims: {ds.dims}"
+            f" coords: {ds.coords}"
+        )
+        resampled_times = deque()
     result = []
     while time_cuts:
         cutoff = time_cuts.popleft()
@@ -227,6 +237,8 @@ def split_data_timespan(ds, rule):
     for timespan in result:
         da = ds.sel(time=slice(timespan[0], timespan[-1]))
         data_chunks.append(da)
+    if not data_chunks:
+        data_chunks.append(ds)
     return data_chunks
 
 
