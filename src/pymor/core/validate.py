@@ -15,6 +15,12 @@ class DirectoryAwareValidator(Validator):
     """
 
     def _validate_is_directory(self, is_directory, field, value):
+        """
+        Checks if a string can be a pathlib.Path object.
+
+        The rule's arguments are validated against this schema:
+        {'type': 'boolean'}
+        """
         if is_directory:
             try:
                 if glob.has_magic(value):
@@ -26,9 +32,6 @@ class DirectoryAwareValidator(Validator):
                     pathlib.Path(value).expanduser().resolve()
                 except TypeError as e:
                     self._error(field, f"{e.args[0]}. Must be a string")
-
-    # Add a schema for the rule arguments
-    _validate_is_directory.schema = {"type": "boolean"}
 
 
 class GeneralSectionValidator(DirectoryAwareValidator):
@@ -48,8 +51,7 @@ class PipelineSectionValidator(Validator):
         """Test if a string is a Python qualname.
 
         The rule's arguments are validated against this schema:
-        {'type': 'boolean'}. This means that you can use a boolean value
-        for the schema argument "is_qualname" in your rule definition.
+        {'type': 'boolean'}
         """
         if is_qualname and not isinstance(value, str):
             self._error(field, "Must be a string")
@@ -72,9 +74,6 @@ class PipelineSectionValidator(Validator):
                         self._error(field, "Must be a valid Python qualname")
                 except (ImportError, ModuleNotFoundError):
                     self._error(field, "Must be a valid Python qualname")
-
-    # Add a schema for the rule arguments
-    _validate_is_qualname_or_script.schema = {"type": "boolean"}
 
     def _validate(self, document):
         super()._validate(document)
