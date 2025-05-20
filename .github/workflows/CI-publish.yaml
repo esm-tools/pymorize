@@ -61,7 +61,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install -U pip
-          pip install build
+          pip install 'setuptools<69' wheel build
       - name: Display proposed version
         run: |
           echo "From setup.py:"
@@ -70,7 +70,8 @@ jobs:
           git describe --tags --dirty
       - name: Build package
         run: |
-          python -m build
+          python -c "import setuptools; print(setuptools.__version__)"
+          python -m build -v
       - name: List files
         run: ls -ratl
       - name: Upload package

@@ -28,6 +28,7 @@ setup(
     author_email="pgierz@awi.de",
     description="Makes CMOR Simple",
     long_description=read("README.rst"),
+    long_description_content_type="text/x-rst",
     package_dir={"": "src"},
     packages=find_packages(where="src", exclude=("tests",)),
     # NOTE: Please keep this list sorted! In vim, you can use
@@ -111,7 +112,6 @@ setup(
     },
     classifiers=[
         "Development Status :: 5 - Production/Stable",
-        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.9",
