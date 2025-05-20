@@ -44,6 +44,7 @@ import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
 
+from ..core.logging import logger
 from .dataset_helpers import get_time_label, has_time_axis
 
 
@@ -158,7 +159,9 @@ def get_offset(rule):
             offset = pd.Timedelta(offset)
         except ValueError:
             # offset is a float value scaled by the approx_interval
-            approx_interval = float(rule.data_request_variable.table_header.approx_interval)
+            approx_interval = float(
+                rule.data_request_variable.table_header.approx_interval
+            )
             dt = pd.Timedelta(approx_interval, unit="d")
             offset = dt * float(offset)
     return offset
@@ -310,7 +313,9 @@ def save_dataset(da: xr.DataArray, rule):
         )
     else:
         file_timespan_as_offset = pd.tseries.frequencies.to_offset(file_timespan)
-        file_timespan_as_dt = pd.Timestamp.now() + file_timespan_as_offset - pd.Timestamp.now()
+        file_timespan_as_dt = (
+            pd.Timestamp.now() + file_timespan_as_offset - pd.Timestamp.now()
+        )
         approx_interval = float(rule.data_request_variable.table_header.approx_interval)
         dt = pd.Timedelta(approx_interval, unit="d")
         if file_timespan_as_dt < dt:
@@ -340,4 +345,4 @@ def save_dataset(da: xr.DataArray, rule):
                 paths,
                 encoding={time_label: time_encoding},
                 **extra_kwargs,
-        )
+            )
