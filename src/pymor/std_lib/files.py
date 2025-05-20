@@ -44,7 +44,7 @@ import pandas as pd
 import xarray as xr
 from xarray.core.utils import is_scalar
 
-from .dataset_helpers import get_time_label, has_time_axis, needs_resampling
+from .dataset_helpers import get_time_label, has_time_axis
 
 
 def _filename_time_range(ds, rule) -> str:
@@ -140,6 +140,88 @@ def create_filepath(ds, rule):
     return filepath
 
 
+def get_offset(rule):
+    """convert offset defined on the rule to a timedelta."""
+    offset = rule.get("adjust_timestamp", None)
+    if offset is not None:
+        offset_presets = {
+            "first": 0,
+            "start": 0,
+            "last": 1,
+            "end": 1,
+            "mid": 0.5,
+            "middle": 0.5,
+        }
+        offset = offset_presets.get(offset, offset)
+        try:
+            # expect offset to a literal string. Example: "14D"
+            offset = pd.Timedelta(offset)
+        except ValueError:
+            # offset is a float value scaled by the approx_interval
+            approx_interval = float(rule.data_request_variable.table_header.approx_interval)
+            dt = pd.Timedelta(approx_interval, unit="d")
+            offset = dt * float(offset)
+    return offset
+
+
+def file_timespan_tail(rule):
+    """Grab the last timestamp in each file and return them as a list.
+    Also account for offset (if any) defined on the rule"""
+    times = []
+    options = {"decode_times": xr.coders.CFDatetimeCoder(use_cftime=True)}
+    for _input in rule.inputs:
+        for f in sorted(_input.files):
+            ds = xr.open_dataset(str(f), **options)
+            times.append(ds.time.values[-1])
+    offset = get_offset(rule)
+    if offset is not None:
+        times = xr.CFTimeIndex(times) + offset
+    return times
+
+
+def split_data_timespan(ds, rule):
+    """
+    Splits the dataset into chunks based on the time axis as defined in the source files.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        The dataset to split.
+    rule : Rule
+        The rule object containing information for generating the
+        filepath.
+
+    Returns
+    -------
+    list
+        A list of datasets, each containing a chunk of the original dataset.
+    """
+    from collections import deque
+
+    time_cuts = deque(file_timespan_tail(rule))
+    resampled_times = deque(ds.time.values)
+    result = []
+    while time_cuts:
+        cutoff = time_cuts.popleft()
+        tmp = []
+        while True:
+            try:
+                ts = resampled_times.popleft()
+            except IndexError:
+                break
+            if ts <= cutoff:
+                tmp.append(ts)
+            else:
+                resampled_times.appendleft(ts)
+                result.append(tmp)
+                break
+    data_chunks = []
+    for timespan in result:
+        da = ds.sel(time=slice(timespan[0], timespan[-1]))
+        data_chunks.append(da)
+    return data_chunks
+
+
 def save_dataset(da: xr.DataArray, rule):
     """
     Save dataset to one or more files.
@@ -215,24 +297,47 @@ def save_dataset(da: xr.DataArray, rule):
         time_encoding["_FillValue"] = None
 
     file_timespan = getattr(rule, "file_timespan", None)
-    if not needs_resampling(da, file_timespan):
-        filepath = create_filepath(da, rule)
-        return da.to_netcdf(
-            filepath,
-            mode="w",
-            format="NETCDF4",
+    if file_timespan is None:
+        paths = []
+        datasets = split_data_timespan(da, rule)
+        for group_ds in datasets:
+            paths.append(create_filepath(group_ds, rule))
+        return xr.save_mfdataset(
+            datasets,
+            paths,
             encoding={time_label: time_encoding},
             **extra_kwargs,
         )
-    groups = da.resample(time=file_timespan)
-    paths = []
-    datasets = []
-    for group_name, group_ds in groups:
-        paths.append(create_filepath(group_ds, rule))
-        datasets.append(group_ds)
-    return xr.save_mfdataset(
-        datasets,
-        paths,
-        encoding={time_label: time_encoding},
-        **extra_kwargs,
-    )
+    else:
+        file_timespan_as_offset = pd.tseries.frequencies.to_offset(file_timespan)
+        file_timespan_as_dt = pd.Timestamp.now() + file_timespan_as_offset - pd.Timestamp.now()
+        approx_interval = float(rule.data_request_variable.table_header.approx_interval)
+        dt = pd.Timedelta(approx_interval, unit="d")
+        if file_timespan_as_dt < dt:
+            logger.warning(
+                f"file_timespan {file_timespan_as_dt} is smaller than approx_interval {dt}"
+                "falling back to timespan as defined in the source file"
+            )
+            paths = []
+            datasets = split_data_timespan(da, rule)
+            for group_ds in datasets:
+                paths.append(create_filepath(group_ds, rule))
+            return xr.save_mfdataset(
+                datasets,
+                paths,
+                encoding={time_label: time_encoding},
+                **extra_kwargs,
+            )
+        else:
+            groups = da.resample(time=file_timespan)
+            paths = []
+            datasets = []
+            for group_name, group_ds in groups:
+                paths.append(create_filepath(group_ds, rule))
+                datasets.append(group_ds)
+            return xr.save_mfdataset(
+                datasets,
+                paths,
+                encoding={time_label: time_encoding},
+                **extra_kwargs,
+        )
