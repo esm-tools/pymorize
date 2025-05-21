@@ -1,10 +1,12 @@
-from pymor.std_lib.files import file_timespan_tail, get_offset, split_data_timespan
-from unittest.mock import Mock
-import pandas as pd
-import xarray as xr
-import numpy as np
 import tempfile
+from unittest.mock import Mock
+
+import numpy as np
+import pandas as pd
 import pytest
+import xarray as xr
+
+from pymor.std_lib.files import file_timespan_tail, get_offset, split_data_timespan
 
 
 @pytest.mark.parametrize(
@@ -49,9 +51,7 @@ def test_file_timespan_tail_no_offset():
             filename = f"{tmpdir}/air_{group_name}.nc"
             files.append(filename)
             group.to_netcdf(filename)
-        rule.inputs = [
-            Mock(files=files)
-        ]
+        rule.inputs = [Mock(files=files)]
         tails = file_timespan_tail(rule)
     timestamps = []
     for group_name, group in air.groupby("time.year"):
@@ -79,9 +79,7 @@ def test_file_timespan_tail_with_offset():
             filename = f"{tmpdir}/air_{group_name}.nc"
             files.append(filename)
             group.to_netcdf(filename)
-        rule.inputs = [
-            Mock(files=files)
-        ]
+        rule.inputs = [Mock(files=files)]
         tails = file_timespan_tail(rule)
     timestamps = []
     offset = get_offset(rule)
@@ -95,7 +93,7 @@ def test_split_data_timespan():
     rule.data_request_variable.table_header.approx_interval = "30"
     rule.adjust_timestamp = "mid"
     # creating 2 years data with daily frequency
-    timeindex = xr.cftime_range("2000", periods=365*2, freq="D", calendar="standard")
+    timeindex = xr.cftime_range("2000", periods=365 * 2, freq="D", calendar="standard")
     air = xr.Dataset(
         data_vars=dict(
             air=(("time", "ncells"), np.random.rand(timeindex.size, 10)),
@@ -112,9 +110,7 @@ def test_split_data_timespan():
             filename = f"{tmpdir}/air_{group_name}.nc"
             files.append(filename)
             group.to_netcdf(filename)
-        rule.inputs = [
-            Mock(files=files)
-        ]
+        rule.inputs = [Mock(files=files)]
         # resample to monthly frequency and calculate mean (simulate cmorize)
         ds = air.resample(time="MS").mean(dim="time")
         offset = get_offset(rule)
