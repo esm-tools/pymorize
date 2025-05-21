@@ -79,3 +79,7 @@ def set_variable_attrs(
         raise TypeError(
             "Given data type is not an xarray Dataset or DataArray, refusing to continue!"
         )
+
+
+# Alias name for the function
+set_variable_attributes = set_variable_attrs
