@@ -129,7 +129,7 @@ def create_filepath(ds, rule):
     source_id = rule.source_id  # AWI-CM-1-1-MR
     experiment_id = rule.experiment_id  # historical
     out_dir = rule.output_directory  # where to save output files
-    institution = rule.get("institution", "AWI")
+    institution = getattr(rule, "institution", "AWI")
     grid = "gn"  # grid_type
     time_range = _filename_time_range(ds, rule)
     # check if output sub-directory is needed

@@ -1,4 +1,5 @@
 import tempfile
+from pathlib import Path
 from unittest.mock import Mock
 
 import numpy as np
@@ -6,7 +7,13 @@ import pandas as pd
 import pytest
 import xarray as xr
 
-from pymor.std_lib.files import file_timespan_tail, get_offset, split_data_timespan
+from pymor.core.config import PymorConfigManager
+from pymor.std_lib.files import (
+    file_timespan_tail,
+    get_offset,
+    save_dataset,
+    split_data_timespan,
+)
 
 
 @pytest.mark.parametrize(
@@ -125,3 +132,47 @@ def test_split_data_timespan():
         for chunk in chunks:
             assert len(set(chunk.time.dt.year.values)) == 1
             assert len(set(chunk.time.dt.month.values)) == 12
+
+
+def test_save_dataset():
+    rule = Mock()
+    rule.data_request_variable.table_header.approx_interval = "30"
+    rule.data_request_variable.frequency = "mon"
+    rule._pymor_cfg = PymorConfigManager.from_pymor_cfg({})
+    rule.cmor_variable = "fgco2"
+    rule.data_request_variable.table_header.table_id = "Omon"
+    rule.variant_label = "r1i1p1f1"
+    rule.source_id = "AWI-CM-1-1-MR"
+    rule.experiment_id = "historical"
+    rule.institution = "AWI"
+    rule.adjust_timestamp = None
+    rule.file_timespan = "6MS"
+    # creating 2 years data with daily frequency
+    timeindex = xr.cftime_range("2000", periods=365 * 2, freq="D", calendar="standard")
+    air = xr.Dataset(
+        data_vars=dict(
+            air=(("time", "ncells"), np.random.rand(timeindex.size, 10)),
+        ),
+        coords=dict(
+            time=timeindex,
+            ncells=np.arange(10),
+        ),
+    )
+    with tempfile.TemporaryDirectory() as tmpdir:
+        rule.output_directory = tmpdir
+        files = []
+        # split time into yearly chunks
+        for group_name, group in air.resample(time="YS"):
+            filename = f"{tmpdir}/air_{group_name}.nc"
+            files.append(filename)
+            group.to_netcdf(filename)
+        rule.inputs = [Mock(files=files)]
+        # resample to monthly frequency and calculate mean (simulate cmorize)
+        ds = air.resample(time="MS").mean(dim="time")
+        offset = get_offset(rule)
+        if offset is not None:
+            ds["time"] = ds.time + offset
+        save_dataset(ds, rule)
+        nfiles = len(list(Path(tmpdir).glob("fgco2*.nc")))
+        # file-timespan is 6MS, so 2 years data should be split into 4 files
+        assert nfiles == 4
