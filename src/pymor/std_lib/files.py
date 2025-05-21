@@ -144,7 +144,7 @@ def create_filepath(ds, rule):
 
 def get_offset(rule):
     """convert offset defined on the rule to a timedelta."""
-    offset = rule.get("adjust_timestamp", None)
+    offset = getattr(rule, "adjust_timestamp", None)
     if offset is not None:
         offset_presets = {
             "first": 0,
@@ -156,9 +156,11 @@ def get_offset(rule):
         }
         offset = offset_presets.get(offset, offset)
         try:
+            offset = float(offset)
+        except (ValueError, TypeError):
             # expect offset to a literal string. Example: "14D"
             offset = pd.Timedelta(offset)
-        except ValueError:
+        else:
             # offset is a float value scaled by the approx_interval
             approx_interval = float(
                 rule.data_request_variable.table_header.approx_interval
@@ -184,6 +186,7 @@ def file_timespan_tail(rule):
     offset = get_offset(rule)
     if offset is not None:
         times = xr.CFTimeIndex(times) + offset
+        times = list(times.values)
     return times
 
 
@@ -204,20 +207,11 @@ def split_data_timespan(ds, rule):
     list
         A list of datasets, each containing a chunk of the original dataset.
     """
-    if not has_time_axis(ds):
-        return [ds]
     time_cuts = deque(file_timespan_tail(rule))
-    try:
-        resampled_times = deque(ds.time.values)
-    except AttributeError:
-        logger.warning(
-            "Dataset does not have a time axis but this check is done by"
-            " has_time_axis() already couple of lines above. This exception"
-            " should not happen."
-            f" dims: {ds.dims}"
-            f" coords: {ds.coords}"
-        )
-        resampled_times = deque()
+    time_label = get_time_label(ds)
+    if not time_label:
+        return [ds]
+    resampled_times = deque(ds[time_label].values)
     result = []
     while time_cuts:
         cutoff = time_cuts.popleft()
