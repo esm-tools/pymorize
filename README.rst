@@ -6,8 +6,8 @@
 
 .. image:: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml/badge.svg
     :target: https://github.com/esm-tools/pymorize/actions/workflows/CI-test.yaml
-.. image:: https://img.shields.io/pypi/v/pymorize.svg
-    :target: https://pypi.python.org/pypi/pymorize
+.. image:: https://img.shields.io/pypi/v/py-cmor.svg
+    :target: https://pypi.python.org/pypi/py-cmor
     :alt: Latest PyPI version
 .. image:: https://readthedocs.org/projects/pymorize/badge/?version=latest
     :target: https://pymorize.readthedocs.io/en/latest/?badge=latest
