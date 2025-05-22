@@ -65,7 +65,7 @@ setup(
         "pyyaml",
         "questionary",
         "randomname",
-        "semver",
+        "semver >= 3.0.4",
         "rich-click",
         "streamlit",
         "tqdm",
