@@ -10,18 +10,12 @@ in ~``pymor.frequency``.
 
 Functions
 ---------
-_split_by_chunks(dataset: xr.DataArray) -> Tuple[Dict, xr.DataArray]:
-    Split a large dataset into sub-datasets for each chunk.
-
 _get_time_method(frequency: str) -> str:
     Determine the time method based on the frequency string from
     rule.data_request_variable.frequency.
 
 _frequency_from_approx_interval(interval: str) -> str:
     Convert an interval expressed in days to a frequency string.
-
-_compute_file_timespan(da: xr.DataArray) -> int:
-    Compute the timespan of a given data array.
 
 timeavg(da: xr.DataArray, rule: Dict) -> xr.DataArray:
     Time averages data with respect to time-method (mean/climatology/instant.)
@@ -33,55 +27,12 @@ _IGNORED_CELL_METHODS : list
 
 """
 
-import itertools
 import re
 
 import pandas as pd
 import xarray as xr
 
 from ..core.logging import logger
-
-
-def _split_by_chunks(dataset: xr.DataArray):
-    """
-    Split a large dataset into sub-datasets for each chunk.
-
-    This function is useful for handling large datasets that cannot fit into memory all at once.
-    It yields a tuple containing the selection dictionary and the corresponding sub-dataset.
-
-    Parameters
-    ----------
-    dataset : xr.DataArray
-        The input dataset to be chunked. It can be either an xarray Dataset or DataArray.
-
-    Yields
-    ------
-    tuple
-        A tuple containing the selection dictionary and the corresponding sub-dataset.
-
-    References
-    ----------
-    .. [1] https://github.com/pydata/xarray/issues/1093#issuecomment-259213382
-    """
-    chunk_slices = {}
-    logger.info(f"{dataset.chunks=}")
-    if not dataset.chunks:
-        raise ValueError("Dataset has no chunks")
-    if isinstance(dataset, xr.Dataset):
-        chunker = dataset.chunks
-    elif isinstance(dataset, xr.DataArray):
-        chunker = {dim: chunk for dim, chunk in zip(dataset.dims, dataset.chunks)}
-    for dim, chunks in chunker.items():
-        slices = []
-        start = 0
-        for chunk in chunks:
-            stop = start + chunk
-            slices.append(slice(start, stop))
-            start = stop
-        chunk_slices[dim] = slices
-    for slices in itertools.product(*chunk_slices.values()):
-        selection = dict(zip(chunk_slices.keys(), slices))
-        yield (selection, dataset[selection])
 
 
 def _get_time_method(frequency: str) -> str:
@@ -176,50 +127,6 @@ def _frequency_from_approx_interval(interval: str):
     return "".join(result)
 
 
-def _compute_file_timespan(da: xr.DataArray):
-    """
-    Compute the timespan of a given data array.
-
-    This function splits the data array into chunks and computes the timespan of each chunk.
-    The timespan of a chunk is defined as the difference between the last and the first time point in the chunk.
-    The function returns the maximum timespan among all chunks.
-
-    Parameters
-    ----------
-    da : xr.DataArray
-        The data array to compute the timespan for.
-
-    Returns
-    -------
-    int
-        The maximum timespan among all chunks of the data array.
-
-    """
-    if "time" not in da.dims:
-        raise ValueError("missing the 'time' dimension")
-    # Check if "time" dimension is empty
-    if da.time.size == 0:
-        raise ValueError("no time values in this chunk")
-    chunks = _split_by_chunks(da)
-    tmp_file_timespan = []
-    for i in range(3):
-        try:
-            subset_name, subset = next(chunks)
-        except StopIteration:
-            break
-        else:
-            logger.info(f"{subset_name=}")
-            logger.info(f"{subset.time.data[-1]=}")
-            logger.info(f"{subset.time.data[0]=}")
-            tmp_file_timespan.append(
-                pd.Timedelta(subset.time.data[-1] - subset.time.data[0]).days
-            )
-    if not tmp_file_timespan:
-        raise ValueError("No chunks found")
-    file_timespan = max(tmp_file_timespan)
-    return file_timespan
-
-
 def timeavg(da: xr.DataArray, rule):
     """
     Time averages data with respect to time-method (mean/climatology/instant.)
@@ -251,10 +158,6 @@ def timeavg(da: xr.DataArray, rule):
     xr.DataArray
         The time averaged data array.
     """
-    file_timespan = _compute_file_timespan(da)
-    rule.file_timespan = getattr(rule, "file_timespan", None) or pd.Timedelta(
-        file_timespan, unit="D"
-    )
     drv = rule.data_request_variable
     approx_interval = drv.table_header.approx_interval
     frequency_str = _frequency_from_approx_interval(approx_interval)

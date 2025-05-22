@@ -174,6 +174,7 @@ def test_save_dataset_saves_to_single_file_when_no_time_axis(tmp_path):
     da = xr.DataArray([1, 2, 3], coords={"ncells": [1, 2, 3]}, dims=["ncells"])
     rule = Mock()
     rule.data_request_variable.table.table_id = "Omon"
+    rule.data_request_variable.table_header.approx_interval = 30
     rule.cmor_variable = "CO2"
     rule.variant_label = "r1i1p1f1"
     rule.source_id = "GFDL-ESM2M"
@@ -192,11 +193,12 @@ def test_save_dataset_saves_to_single_file(tmp_path):
     rule._pymor_cfg = PymorConfigManager.from_pymor_cfg({})
     rule.data_request_variable.frequency = "mon"
     rule.data_request_variable.table.table_id = "Omon"
+    rule.data_request_variable.table_header.approx_interval = 30
     rule.cmor_variable = "CO2"
     rule.variant_label = "r1i1p1f1"
     rule.source_id = "GFDL-ESM2M"
     rule.experiment_id = "historical"
-    rule.file_timespan = "2YE"
+    rule.file_timespan = "2YS"
     rule.output_directory = t
     save_dataset(da, rule)
     files = list(t.iterdir())
@@ -211,6 +213,7 @@ def test_save_dataset_saves_to_multiple_files(tmp_path):
     rule._pymor_cfg = PymorConfigManager.from_pymor_cfg({})
     rule.data_request_variable.frequency = "mon"
     rule.data_request_variable.table.table_id = "Omon"
+    rule.data_request_variable.table_header.approx_interval = 30
     rule.cmor_variable = "CO2"
     rule.variant_label = "r1i1p1f1"
     rule.source_id = "GFDL-ESM2M"
