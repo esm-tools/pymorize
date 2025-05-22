@@ -260,7 +260,7 @@ class DefaultPipeline(FrozenPipeline):
         "pymor.std_lib.timeaverage.timeavg",
         "pymor.std_lib.units.handle_unit_conversion",
         "pymor.std_lib.global_attributes.set_global_attributes",
-        "pymor.std_lib.varialbe_attributes.set_variable_attributes",
+        "pymor.std_lib.variable_attributes.set_variable_attributes",
         "pymor.core.caching.manual_checkpoint",
         "pymor.std_lib.generic.trigger_compute",
         "pymor.std_lib.generic.show_data",
