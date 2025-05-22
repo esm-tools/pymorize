@@ -15,7 +15,8 @@ def test_variable_attrs_dataarray(rule_after_cmip6_cmorizer_init):
     da = set_variable_attrs(da, rule)
     # Get the variable attributes
     d = da.attrs
-    assert d["_FillValue"] == 1.0e30
+    e = da.encoding
+    assert e["_FillValue"] == 1.0e30
     for attr in [
         "standard_name",
         "long_name",

@@ -1,0 +1,8 @@
+include *.py
+include *.rst
+include *.yaml
+include *.yml
+include pytest.ini
+recursive-include doc *
+recursive-include examples *
+recursive-include tests *

@@ -10,31 +10,104 @@ on:
     types:
       - completed
 jobs:
-  check-status:
-    name: Check Test and Lint Status
+  get-upstream-info:
+    name: Get Upstream Info
     runs-on: ubuntu-latest
+    outputs:
+      ref: ${{ steps.read.outputs.ref }}
+      is_tag: ${{ steps.read.outputs.is_tag }}
     steps:
-      - name: Get Ref and Tag Info
+      - name: Checkout
+        uses: actions/checkout@v4.2.2
+      - name: Download artifacts from upstream run
         run: |
-          echo "Ref: ${{ github.event.workflow_run.outputs.ref }}"
-          echo "Is Tag: ${{ github.event.workflow_run.outputs.is_tag }}"
-          if [[ "${{ github.event.workflow_run.outputs.is_tag }}" != "true" ]]; then
+          mkdir artifacts
+          gh run download ${{ github.event.workflow_run.id }} -D artifacts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Read artifact file
+        id: read
+        run: |
+          cat artifacts/status-${{ github.event.workflow_run.id }}/status.dat
+          source artifacts/status-${{ github.event.workflow_run.id }}/status.dat
+          echo "ref=$ref" >> $GITHUB_OUTPUT
+          echo "is_tag=$is_tag" >> $GITHUB_OUTPUT
+  check-tag:
+    name: Check Tag
+    runs-on: ubuntu-latest
+    needs: get-upstream-info
+    outputs:
+      ref: ${{ steps.check.outputs.ref }}
+      is_tag: ${{ steps.check.outputs.is_tag }}
+    steps:
+      - id: check
+        run: |
+          echo "State of workflow_run outputs:"
+          echo "Ref: ${REF}"
+          echo "Is Tag: ${IS_TAG}"
+          if [[ "${IS_TAG}" != "true" ]]; then
             echo "This is not a tag push. Aborting."
             exit 1
           fi
+          echo "ref=${REF}" >> $GITHUB_OUTPUT
+          echo "is_tag=${IS_TAG}" >> $GITHUB_OUTPUT
+        env:
+          REF: ${{ needs.get-upstream-info.outputs.ref }}
+          IS_TAG: ${{ needs.get-upstream-info.outputs.is_tag }}
   build:
     runs-on: ubuntu-latest
-    needs: check-status
+    needs: check-tag
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Checkout tag
+        run: |
+          git tag
+          git checkout $(echo $REF | sed s+refs/tags/++g)
+          git status
+        env:
+          REF: ${{ needs.check-tag.outputs.ref }}
       - name: Set up Python
         uses: actions/setup-python@v5
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install -U pip
+          pip install 'setuptools<69' wheel build
+      - name: Display proposed version
+        run: |
+          echo "From setup.py:"
+          python setup.py --version
+          echo "From git:"
+          git describe --tags --dirty
       - name: Build package
         run: |
-          python -m build
+          python -c "import setuptools; print(setuptools.__version__)"
+          python -m build -v
+      - name: List files
+        run: ls -ratl
+      - name: Upload package
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist
   publish:
     runs-on: ubuntu-latest
     needs: build
+    permissions:
+      id-token: write
+    environment: pypi
     steps:
+      - name: Download package
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
+      - name: List files
+        run: ls -ratlR
       - name: pypi-publish
         uses: pypa/gh-action-pypi-publish@v1.9.0
+        with:
+          verbose: true
+          print-hash: true
